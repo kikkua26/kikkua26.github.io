@@ -79,9 +79,8 @@ class DataLoader {
         const basePath = `/data/${encodeURIComponent(deckName)}`;
 
         try {
-            const [csvResp] = await Promise.all([
-                fetch(`${basePath}/data.csv`).catch(() => null)
-            ]);
+            const csvUrl = `${basePath}/data.csv`;
+            const csvResp = await fetch(csvUrl).catch(e => (console.warn('fetch fail:', e), null));
 
             let template = { front: '', back: '' };
             if (templateName) {
@@ -95,6 +94,8 @@ class DataLoader {
                 const parsed = this.parseCSV(csvText);
                 csvFields = parsed.fields;
                 records = parsed.records;
+            } else {
+                console.warn('CSV not ok:', csvUrl, csvResp?.status);
             }
 
             const result = { template, records, fields: csvFields, chapterField };
@@ -557,6 +558,8 @@ async function renderStudy(deckName) {
     };
 
     await loadStudyData(studyState);
+    // If no records, showComplete was called and DOM is gone
+    if (!studyState.records || !studyState.records.length) return;
     if (studyState.deckInfo.purchaseUrl) {
         const el = $('#sidebarPurchase');
         if (el) {
