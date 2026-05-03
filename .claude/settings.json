@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(npx serve *)",
+      "Bash(curl -s http://localhost:3000)",
+      "Bash(curl -s http://localhost:3000/src/assets/js/app.js)",
+      "Bash(curl -s http://localhost:3000/data)",
+      "Bash(curl -s http://localhost:3000/js/app.js)",
+      "Bash(npm ls *)",
+      "Bash(lsof -ti:3000)",
+      "Bash(gh repo *)",
+      "WebFetch(domain:github.com)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" https://github.com/kikkua/kikkua.github.io)",
+      "Bash(git remote *)"
+    ]
+  }
+}

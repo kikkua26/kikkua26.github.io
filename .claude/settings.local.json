@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git push *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" https://kikkua.github.io/)",
+      "Bash(curl -sL https://kikkua.github.io/)"
+    ]
+  }
+}
