@@ -1,3 +1,3 @@
 User-agent: *
 Allow: /
-Sitemap: https://kikkua.online/sitemap.xml
+Sitemap: https://kikkua26.github.io/sitemap.xml

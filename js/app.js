@@ -975,12 +975,12 @@ function setPageMeta(title, desc) {
         '@context': 'https://schema.org',
         '@type': 'WebSite',
         name: 'kikkua',
-        url: 'https://kikkua.online/',
+        url: 'https://kikkua26.github.io/',
         description: '基于间隔重复的在线卡片学习工具',
         inLanguage: 'zh-CN',
         potentialAction: {
             '@type': 'SearchAction',
-            target: 'https://kikkua.online/decks?tag={search_term_string}',
+            target: 'https://kikkua26.github.io/decks?tag={search_term_string}',
             'query-input': 'required name=search_term_string'
         }
     };
