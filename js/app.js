@@ -76,7 +76,7 @@ class DataLoader {
         const cached = sessionCache.get('deck_' + deckName);
         if (cached) return cached;
 
-        const basePath = `./data/${encodeURIComponent(deckName)}`;
+        const basePath = `/data/${encodeURIComponent(deckName)}`;
 
         try {
             const [csvResp] = await Promise.all([
@@ -110,7 +110,7 @@ class DataLoader {
         const cached = sessionCache.get('tpl_' + templateName);
         if (cached) return cached;
 
-        const basePath = `./templates/${encodeURIComponent(templateName)}`;
+        const basePath = `/templates/${encodeURIComponent(templateName)}`;
 
         try {
             const [frontResp, backResp, cssResp] = await Promise.all([
@@ -175,7 +175,7 @@ class DataLoader {
 
     async discoverDecks() {
         try {
-            const response = await fetch('./data/index.json');
+            const response = await fetch('/data/index.json');
             if (!response.ok) return [];
             const entries = await response.json();
             const decks = [];
