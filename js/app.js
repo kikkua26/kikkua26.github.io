@@ -11,15 +11,12 @@ const ICONS = {
 };
 
 /* ── 会话缓存（sessionStorage 包装） ── */
-const SESSION_CACHE_VER = 'v2';
-
 const sessionCache = {
     get(key) {
         try {
             const raw = sessionStorage.getItem('k_ck_' + key);
             if (!raw) return null;
-            const { data, expires, ver } = JSON.parse(raw);
-            if (ver !== SESSION_CACHE_VER) { sessionStorage.removeItem('k_ck_' + key); return null; }
+            const { data, expires } = JSON.parse(raw);
             if (expires && Date.now() > expires) {
                 sessionStorage.removeItem('k_ck_' + key);
                 return null;
@@ -31,7 +28,6 @@ const sessionCache = {
         try {
             sessionStorage.setItem('k_ck_' + key, JSON.stringify({
                 data: value,
-                ver: SESSION_CACHE_VER,
                 expires: ttlMs ? Date.now() + ttlMs : 0
             }));
         } catch {}
@@ -83,8 +79,7 @@ class DataLoader {
         const basePath = `/data/${encodeURIComponent(deckName)}`;
 
         try {
-            const csvUrl = `${basePath}/data.csv`;
-            const csvResp = await fetch(csvUrl).catch(e => (console.warn('fetch fail:', e), null));
+            const csvResp = await fetch(`${basePath}/data.csv`).catch(() => null);
 
             let template = { front: '', back: '' };
             if (templateName) {
@@ -98,16 +93,13 @@ class DataLoader {
                 const parsed = this.parseCSV(csvText);
                 csvFields = parsed.fields;
                 records = parsed.records;
-            } else {
-                console.warn('CSV not ok:', csvUrl, csvResp?.status);
             }
 
             const result = { template, records, fields: csvFields, chapterField };
-            if (records.length) sessionCache.set('deck_' + deckName, result);
+            sessionCache.set('deck_' + deckName, result);
             return result;
         } catch (e) {
-            console.warn('Failed to load deck:', e);
-            sessionCache.set('deck_' + deckName, null); // clear bad cache
+            console.error('Failed to load deck:', e);
             return { template: { front: '', back: '' }, records: [], fields: [], chapterField: '章节' };
         }
     }
