@@ -358,9 +358,10 @@ async function gh(url, opts = {}) {
 }
 function b64enc(s) { return btoa(unescape(encodeURIComponent(s))); }
 function b64dec(s) { const r = atob(s.replace(/\s/g,'')); return new TextDecoder().decode(Uint8Array.from(r,c=>c.charCodeAt(0))); }
-async function readRepo(path) { const r = await gh(`/repos/${REPO}/contents/${path}`); return { sha: r.sha, text: b64dec(r.content) }; }
+function encGitPath(path) { return path.split('/').map(s => encodeURIComponent(s)).join('/'); }
+async function readRepo(path) { const r = await gh(`/repos/${REPO}/contents/${encGitPath(path)}`); return { sha: r.sha, text: b64dec(r.content) }; }
 async function writeRepo(path, content, sha, msg) {
-    return gh(`/repos/${REPO}/contents/${path}`, {
+    return gh(`/repos/${REPO}/contents/${encGitPath(path)}`, {
         method: 'PUT', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: msg || 'Update from admin', content: b64enc(content), sha })
     });
