@@ -57,12 +57,15 @@ export async function renderDeckDetail(deckName) {
         </div>
     `;
 
+    // 进入详情页立即在后台预加载数据
+    const preloadPromise = preloadDeck(deck.name, deck.template, deck.chapterField);
+
     const studyBtn = $('#startStudyBtn');
     studyBtn.addEventListener('click', async () => {
         studyBtn.disabled = true;
         studyBtn.innerHTML = `<span style="opacity:0.7;">⏳ 加载数据…</span>`;
         try {
-            await preloadDeck(deck.name, deck.template, deck.chapterField);
+            await preloadPromise;
             navigate(`/${ROUTES.study}${encodeURIComponent(deck.name)}`);
         } catch {
             studyBtn.disabled = false;
