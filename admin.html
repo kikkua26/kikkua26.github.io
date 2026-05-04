@@ -496,9 +496,11 @@ async function selectDeck(i) {
     let csvFields = [], csvCount = 0;
     try {
         if (!csvMeta[d.name]) { const r = await readRepo('data/' + d.name + '/data.csv'); csvMeta[d.name] = { sha: r.sha, text: r.text }; }
-        const lines = csvMeta[d.name].text.trim().split('\n');
+        const text = csvMeta[d.name].text.replace(/^﻿/, '');
+        const lines = text.trim().split('\n');
         if (lines.length > 0) {
-            csvFields = parseCsvRow(lines[0]).map(f => f.trim());
+            const sep = detectSep(lines[0]);
+            csvFields = parseCsvRow(lines[0], sep).map(f => f.trim());
             csvCount = lines.length - 1;
         }
     } catch (e) { /* 数据文件还不存在 */ }
@@ -576,12 +578,13 @@ async function delDeck(i) {
 
 // ─── CSV ───
 let csvMeta = {};
-function parseCsvRow(l) {
+function detectSep(line) { const c = line.indexOf(','), t = line.indexOf('\t'); return t >= 0 && (c < 0 || t < c) ? '\t' : ','; }
+function parseCsvRow(l, sep = ',') {
     const r = []; let c = '', q = false;
     for (let i = 0; i < l.length; i++) {
         const ch = l[i];
         if (ch === '"') { q ? (l[i+1]=='"'?(c+='"',i++):q=false) : q=true; }
-        else if (ch === ',' && !q) { r.push(c); c = ''; }
+        else if (ch === sep && !q) { r.push(c); c = ''; }
         else c += ch;
     }
     r.push(c); return r;
@@ -590,14 +593,16 @@ async function previewCsv(deck) {
     try {
         const r = await readRepo('data/' + deck + '/data.csv');
         csvMeta[deck] = { sha: r.sha, text: r.text };
-        const lines = r.text.trim().split('\n');
-        const rows = lines.map(parseCsvRow);
+        const text = r.text.replace(/^﻿/, '');
+        const lines = text.trim().split('\n');
+        const sep = detectSep(lines[0] || '');
+        const rows = lines.map(l => parseCsvRow(l, sep));
         $('#csvPreviewTitle').textContent = deck + '/data.csv';
-        $('#csvPreviewInfo').textContent = `共 ${rows.length-1} 条记录`;
+        $('#csvPreviewInfo').textContent = `共 ${rows.length-1} 条记录 · ${sep === '\t' ? '制表符分隔' : '逗号分隔'}`;
         $('#csvTable').innerHTML = `<tr>${rows[0].map(h=>`<th>${esc(h)}</th>`).join('')}</tr>` +
             rows.slice(1, 101).map(r => `<tr>${r.map(c=>`<td>${esc(c.slice(0,80))}</td>`).join('')}</tr>`).join('');
         $('#csvPreviewOverlay').classList.add('show');
-    } catch (e) { toast('加载失败', 'error'); }
+    } catch (e) { toast('加载失败: ' + e.message, 'error'); }
 }
 async function downloadCsv(deck) {
     try {

@@ -51,8 +51,10 @@ export class DataLoader {
     }
 
     parseCSV(csvText) {
-        const lines = csvText.trim().split(/\r?\n/);
+        const text = csvText.replace(/^﻿/, '');
+        const lines = text.trim().split(/\r?\n/);
         if (lines.length === 0) return { fields: [], records: [] };
+        const sep = lines[0].includes('\t') && !lines[0].includes(',') ? '\t' : ',';
         const parseLine = (line) => {
             const result = []; let current = ''; let inQuotes = false;
             for (let i = 0; i < line.length; i++) {
@@ -60,7 +62,7 @@ export class DataLoader {
                 if (ch === '"') {
                     if (inQuotes && line[i + 1] === '"') { current += '"'; i++; }
                     else { inQuotes = !inQuotes; }
-                } else if (ch === ',' && !inQuotes) { result.push(current); current = ''; }
+                } else if (ch === sep && !inQuotes) { result.push(current); current = ''; }
                 else { current += ch; }
             }
             result.push(current);
