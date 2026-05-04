@@ -140,11 +140,16 @@ function closeSidebar() {
     document.body.style.overflow = '';
 }
 
+function frontBody(html) {
+    const m = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+    return m ? m[1] : html;
+}
+
 function buildCardHTML(state) {
     const record = state.records[state.currentIndex];
     state.frontHTML = replaceFields(state.template.front, record);
-    // 在替换其他字段前，先把背面模板中的 {{FrontSide}} 换成正面渲染内容
-    const backWithFront = state.template.back.replace(/\{\{FrontSide\}\}/g, state.frontHTML);
+    // 把正面 body 内容嵌入背面模板的 {{FrontSide}}
+    const backWithFront = state.template.back.replace(/\{\{FrontSide\}\}/g, frontBody(state.frontHTML));
     state.backHTML = replaceFields(backWithFront, record);
 }
 

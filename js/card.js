@@ -22,6 +22,11 @@ export function extractFieldsFromTemplate(template) {
     return [...new Set(matches.map(m => m[1].trim()))];
 }
 
+function extractBody(html) {
+    const m = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+    return m ? m[1] : html;
+}
+
 export function wrapWithCSS(html, css) {
     if (html.includes('<html') || html.includes('<!DOCTYPE')) {
         if (css) {
