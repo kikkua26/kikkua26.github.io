@@ -674,10 +674,11 @@ async function connect() {
         setBadge('⏳ 加载数据…');
         await Promise.all([loadDecks(), loadTemplates()]);
         setBadge(`✅ 已连接 · 📋 ${decks.length} 牌组 · 🎨 ${tplNames.length} 模板`, 'success');
-        $('#connectBtn').textContent = '已连接';
+        $('#connectBtn').textContent = '✅ 已连接';
         $('#connectBtn').disabled = true;
+        $('#disconnectBtn').style.display = 'inline-flex';
         $('#tokenInput').disabled = true;
-        setBottom('就绪，点击牌组开始编辑');
+        setBottom('就绪');
     } catch (e) {
         setBadge('❌ 连接失败: ' + e.message, 'error');
     }
