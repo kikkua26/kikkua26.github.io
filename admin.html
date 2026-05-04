@@ -593,7 +593,8 @@ async function uploadCsv(deck) {
         const ok = await confirmModal('替换 CSV', `确认替换 ${deck}/data.csv？`);
         if (!ok) { input.value = ''; return; }
         try {
-            const sha = csvMeta[deck] ? csvMeta[deck].sha : null;
+            if (!csvMeta[deck]) { const r = await readRepo('data/' + deck + '/data.csv'); csvMeta[deck] = { sha: r.sha, text: r.text }; }
+            const sha = csvMeta[deck].sha;
             const r = await writeRepo('data/' + deck + '/data.csv', text, sha, 'Update ' + deck);
             csvMeta[deck] = { sha: r.content.sha, text };
             toast('CSV 已更新');
