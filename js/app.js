@@ -1009,15 +1009,8 @@ document.addEventListener('click', e => {
 async function handleRoute() {
     let path = location.pathname;
     if (path.startsWith('/')) path = path.slice(1);
-
-    // Parse query params
-    const qIdx = path.indexOf('?');
-    let query = '';
-    if (qIdx >= 0) {
-        query = path.slice(qIdx + 1);
-        path = path.slice(0, qIdx);
-    }
-    // Remove trailing slash
+    let query = location.search;
+    if (query.startsWith('?')) query = query.slice(1);
     if (path.endsWith('/')) path = path.slice(0, -1);
 
     if (!path) {
