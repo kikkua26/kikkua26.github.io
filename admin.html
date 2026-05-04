@@ -234,6 +234,7 @@ body {
             <button class="btn btn-secondary btn-sm" id="disconnectBtn" style="display:none;">✕</button>
         </div>
         <div class="status" id="statusBadge">⚪ 未连接</div>
+        <div style="font-size:11px;margin-top:2px;"><a href="https://github.com/settings/tokens" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;">生成 Token →</a></div>
         <div class="stat" id="footerStats"></div>
     </div>
 </aside>
@@ -467,6 +468,7 @@ function renderDeckList() {
         <div class="deck-list-item${i===currentDeckIdx?' active':''}" onclick="selectDeck(${i})">
             <div class="name">${esc(d.name)}</div>
             <div class="meta"><span>📄 ${d.totalCards||0}</span><span class="badge">${esc(d.template||'?')}</span></div>
+            ${d.summary ? `<div style="font-size:11px;color:var(--text3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(d.summary)}</div>` : ''}
         </div>
     `).join('');
 }
@@ -505,6 +507,7 @@ function selectDeck(i) {
             <div class="field"><label>章节字段</label><input value="${esc(d.chapterField||'章节')}" onchange="upd(${i},'chapterField',this.value)"></div>
         </div>
         <div class="field"><label>标签 (逗号分隔)</label><input value="${esc(tagStr)}" onchange="upd(${i},'tags',this.value.split(/,\s*/).filter(Boolean))"></div>
+        <div class="field"><label>简述</label><input value="${esc(d.summary||'')}" onchange="upd(${i},'summary',this.value)" placeholder="卡片列表中显示的简短介绍"></div>
         <div class="field"><label>购买链接</label><input value="${esc(d.purchaseUrl||'')}" onchange="upd(${i},'purchaseUrl',this.value)"></div>
         <div class="field"><label>介绍 (Markdown)</label><textarea rows="3" onchange="upd(${i},'detail',this.value)">${esc(d.detail||'')}</textarea></div>
 
@@ -673,7 +676,7 @@ $('#addDeckBtn').addEventListener('click', async () => {
     const name = await inputModal('新建牌组', '牌组名称', '新牌组');
     if (!name) return;
     if (decks.find(d => d.name === name)) { toast('已存在', 'error'); return; }
-    decks.push({ name, totalCards: 0, tags: [], template: tplNames[0]||'', chapterField:'章节', detail:'', purchaseUrl:'' });
+    decks.push({ name, totalCards: 0, tags: [], template: tplNames[0]||'', chapterField:'章节', detail:'', purchaseUrl:'', summary:'' });
     renderDeckList(); selectDeck(decks.length-1);
     toast('已添加，点击保存提交');
 });
