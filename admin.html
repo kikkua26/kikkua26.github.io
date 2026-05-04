@@ -551,17 +551,17 @@ async function selectDeck(i) {
     `;
 }
 function upd(i, k, v) { decks[i][k] = v; }
-async function saveDecks() {
+async function saveDecks(quiet) {
     const btn = $('#saveBtn');
     try {
-        btn.textContent = '⏳ 保存中…'; btn.disabled = true;
+        if (!quiet) { btn.textContent = '⏳ 保存中…'; btn.disabled = true; }
         const json = JSON.stringify(decks, null, 2);
         await writeRepo('data/index.json', json, dataSha, 'Update decks from admin');
         const r = await readRepo('data/index.json'); dataSha = r.sha;
         updateDashboard();
-        toast('✅ 已保存到 GitHub');
-    } catch (e) { toast('❌ ' + e.message, 'error'); }
-    finally { btn.textContent = '💾 保存'; btn.disabled = false; }
+        if (!quiet) toast('✅ 已保存到 GitHub');
+    } catch (e) { if (!quiet) toast('❌ ' + e.message, 'error'); }
+    finally { if (!quiet) { btn.textContent = '💾 保存'; btn.disabled = false; } }
 }
 async function delDeck(i) {
     const ok = await confirmModal('删除', `确认删除"${decks[i].name}"？`);
@@ -623,10 +623,11 @@ async function uploadCsv(deck) {
             }
             const r = await writeRepo('data/' + deck + '/data.csv', text, sha, 'Update ' + deck);
             csvMeta[deck] = { sha: r.content.sha, text };
-            // 更新记录数并刷新显示
+            // 更新记录数、保存到 index.json、刷新显示
             if (currentDeckIdx >= 0 && decks[currentDeckIdx]?.name === deck) {
                 const count = text.trim().split('\n').length - 1;
                 decks[currentDeckIdx].totalCards = count > 0 ? count : 0;
+                await saveDecks(true);
                 renderDeckList();
                 await selectDeck(currentDeckIdx);
             }
