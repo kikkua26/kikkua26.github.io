@@ -64,31 +64,33 @@ export class DataLoader {
     }
 
     parseCSV(csvText) {
-        const text = csvText.replace(/^﻿/, '');
-        const lines = text.trim().split(/\r?\n/);
-        if (lines.length === 0) return { fields: [], records: [] };
-        const sep = lines[0].includes('\t') && !lines[0].includes(',') ? '\t' : ',';
-        const parseLine = (line) => {
-            const result = []; let current = ''; let inQuotes = false;
-            for (let i = 0; i < line.length; i++) {
-                const ch = line[i];
-                if (ch === '"') {
-                    if (inQuotes && line[i + 1] === '"') { current += '"'; i++; }
-                    else { inQuotes = !inQuotes; }
-                } else if (ch === sep && !inQuotes) { result.push(current); current = ''; }
-                else { current += ch; }
+        const text = csvText.replace(/^﻿/, '').trim();
+        if (!text) return { fields: [], records: [] };
+        const sep = text.includes('\t') && !text.includes(',') ? '\t' : ',';
+        const rows = [];
+        let row = [], field = '', q = false;
+        for (let i = 0; i < text.length; i++) {
+            const ch = text[i], next = text[i + 1];
+            if (q) {
+                if (ch === '"') { if (next === '"') { field += '"'; i++; } else q = false; }
+                else field += ch;
+            } else {
+                if (ch === '"') q = true;
+                else if (ch === sep) { row.push(field); field = ''; }
+                else if (ch === '\r') { /* skip */ }
+                else if (ch === '\n') { row.push(field); field = ''; rows.push(row); row = []; }
+                else field += ch;
             }
-            result.push(current);
-            return result;
-        };
-        const header = parseLine(lines[0]).map(f => f.trim());
+        }
+        row.push(field); rows.push(row);
+        if (rows.length === 0) return { fields: [], records: [] };
+        const header = rows[0].map(f => f.trim());
         const records = [];
-        for (let i = 1; i < lines.length; i++) {
-            const line = lines[i].trim();
-            if (!line) continue;
-            const values = parseLine(line);
+        for (let i = 1; i < rows.length; i++) {
+            const r = rows[i];
+            if (r.length === 1 && !r[0]) continue;
             const record = {};
-            header.forEach((field, idx) => { record[field] = values[idx] !== undefined ? values[idx] : ''; });
+            header.forEach((f, idx) => { record[f] = r[idx] !== undefined ? r[idx] : ''; });
             records.push(record);
         }
         return { fields: header, records };

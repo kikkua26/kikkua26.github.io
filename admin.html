@@ -494,12 +494,11 @@ async function selectDeck(i) {
     let csvFields = [], csvCount = 0;
     try {
         if (!csvMeta[d.name]) { const r = await readRepo('data/' + d.name + '/data.csv'); csvMeta[d.name] = { sha: r.sha, text: r.text }; }
-        const text = csvMeta[d.name].text.replace(/^﻿/, '');
-        const lines = text.trim().split('\n');
-        if (lines.length > 0) {
-            const sep = detectSep(lines[0]);
-            csvFields = parseCsvRow(lines[0], sep).map(f => f.trim());
-            csvCount = lines.length - 1;
+        const text = csvMeta[d.name].text.replace(/^﻿/, '').trim();
+        const rows = parseCsvFull(text);
+        if (rows.length > 0) {
+            csvFields = rows[0].map(f => f.trim());
+            csvCount = rows.length - 1;
         }
     } catch (e) { /* 数据文件还不存在 */ }
 
@@ -576,25 +575,32 @@ async function delDeck(i) {
 
 // ─── CSV ───
 let csvMeta = {};
-function detectSep(line) { const c = line.indexOf(','), t = line.indexOf('\t'); return t >= 0 && (c < 0 || t < c) ? '\t' : ','; }
-function parseCsvRow(l, sep = ',') {
-    const r = []; let c = '', q = false;
-    for (let i = 0; i < l.length; i++) {
-        const ch = l[i];
-        if (ch === '"') { q ? (l[i+1]=='"'?(c+='"',i++):q=false) : q=true; }
-        else if (ch === sep && !q) { r.push(c); c = ''; }
-        else c += ch;
+function parseCsvFull(text) {
+    const sep = text.indexOf('\t') >= 0 && text.indexOf(',') < 0 ? '\t' : ',';
+    const rows = []; let row = [], field = '', q = false;
+    for (let i = 0; i < text.length; i++) {
+        const ch = text[i], next = text[i + 1];
+        if (q) {
+            if (ch === '"') { if (next === '"') { field += '"'; i++; } else q = false; }
+            else field += ch;
+        } else {
+            if (ch === '"') q = true;
+            else if (ch === '\r') continue;
+            else if (ch === '\n') { row.push(field); field = ''; rows.push(row); row = []; }
+            else if (ch === sep) { row.push(field); field = ''; }
+            else field += ch;
+        }
     }
-    r.push(c); return r;
+    row.push(field); rows.push(row);
+    return rows;
 }
 async function previewCsv(deck) {
     try {
         const r = await readRepo('data/' + deck + '/data.csv');
         csvMeta[deck] = { sha: r.sha, text: r.text };
-        const text = r.text.replace(/^﻿/, '');
-        const lines = text.trim().split('\n');
-        const sep = detectSep(lines[0] || '');
-        const rows = lines.map(l => parseCsvRow(l, sep));
+        const text = r.text.replace(/^﻿/, '').trim();
+        const rows = parseCsvFull(text);
+        const sep = text.indexOf('\t') >= 0 && text.indexOf(',') < 0 ? '\t' : ',';
         $('#csvPreviewTitle').textContent = deck + '/data.csv';
         $('#csvPreviewInfo').textContent = `共 ${rows.length-1} 条记录 · ${sep === '\t' ? '制表符分隔' : '逗号分隔'}`;
         $('#csvTable').innerHTML = `<tr>${rows[0].map(h=>`<th>${esc(h)}</th>`).join('')}</tr>` +
@@ -629,7 +635,7 @@ async function uploadCsv(deck) {
             csvMeta[deck] = { sha: r.content.sha, text };
             // 更新记录数、保存到 index.json、刷新显示
             if (currentDeckIdx >= 0 && decks[currentDeckIdx]?.name === deck) {
-                const count = text.trim().split('\n').length - 1;
+                const count = parseCsvFull(text).length - 1;
                 decks[currentDeckIdx].totalCards = count > 0 ? count : 0;
                 await saveDecks(true);
                 renderDeckList();
