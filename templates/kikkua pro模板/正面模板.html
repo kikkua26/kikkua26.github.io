@@ -1,1 +1,2042 @@
-{{Front}}
+<!--
+  Anki卡片模板默认配置（可直接修改）
+  只需修改下方注释中的值即可改变默认配置（优先级高于JS默认值，低于用户localStorage）
+  例如：要关闭倒计时，将 showTimer 改为 false
+
+    配置项说明：
+    themeMode           默认主题模式（light/dark/eyeCare/system）
+    shuffleOptions      是否随机打乱选项（true/false）
+    showOptionLabels    是否显示选项标签（正面）（true/false）
+    showTimer           是否显示倒计时（true/false）
+    timerDuration       倒计时长（秒）（数字）
+    showAnalysis        是否显示解析区域（true/false）
+    showRefrence        是否显示知识点区域（true/false）
+    showSessionStats    是否显示做题统计（背面）（true/false）
+    cardWidthPercent    卡片宽度百分比（50-100，数字）
+    
+    
+-->
+<!-- config:themeMode=system -->
+<!-- config:shuffleOptions=true -->
+<!-- config:showOptionLabels=true -->
+<!-- config:showTimer=true -->
+<!-- config:timerDuration=30 -->
+<!-- config:showAnalysis=true -->
+<!-- config:showRefrence=true -->
+<!-- config:showSessionStats=true --><!-- config:cardWidthPercent=55 --><div class="anki-card-root" id="kikkua-v2-root">
+<div class="header">
+<div class="timer-bar-container" id="timer-bar-container">
+<div class="timer-bar" id="timer-bar"></div>
+<div class="timer-text" id="timer-text">0s</div>
+</div>
+{{#Chapter}}<span class="chapter">{{Chapter}}</span>{{/Chapter}}
+{{#Type}}<span class="type">{{Type}}</span>{{/Type}}
+{{^Type}}<div style="flex-grow: 1;"></div>{{/Type}}
+<div id="layout-toggle-button" class="layout-toggle-button" title="切换布局" style="display: none;">||</div>
+<div id="anki-settings-button" class="settings-button" title="设置">⚙️</div>
+</div><div id="anki-settings-panel" class="settings-panel">
+<div class="settings-panel-content">
+<div class="settings-panel-header">
+<span>卡片设置</span>
+<div class="settings-header-actions">
+<button id="anki-settings-reset-button" class="settings-reset-button">恢复</button>
+<button id="anki-settings-save-button" class="settings-save-button">应用</button>
+<span id="anki-settings-close-button" class="settings-close-button" title="关闭">×</span>
+</div>
+</div>
+<div class="settings-panel-body" id="anki-settings-panel-body"></div>
+<div class="settings-panel-footer">
+<div class="settings-footer-info-block"><div class="footer-contact-row">
+<span class="footer-contact-label">售后微信：</span>
+<span class="footer-contact-value" id="footer-wechat" onclick="copyWechatToClipboard()">kikkua2649</span>
+<a href="https://www.xiaohongshu.com/user/profile/65fefa42000000000d026220" target="_blank" class="footer-xhs-link" title="小红书">
+<span class="footer-xhs-icon">📕</span>
+<span>小红书</span>
+</a>
+<a href="https://lcnnq7jvkb5p.feishu.cn/wiki/Bgjjw8C4AihMyUkDFybcSZwEn7d" target="_blank" class="footer-tutorial-link" title="使用教程">
+<span class="footer-tutorial-icon">📚</span>
+<span>教程</span>
+</a>
+</div><div class="footer-auth-row" id="auth-row-container">
+<span class="footer-auth-label">授权号：</span>
+<span class="footer-auth-value" id="auth-code-display"></span>
+<a href="https://xhslink.com/m/52z3NAdFSLN" target="_blank" class="footer-buy-link">获取正版</a>
+</div><div class="footer-copyright">
+@2025 kikkua V2.9.1 仅个人学习使用，禁止商用
+</div>
+</div>
+</div>
+</div>
+</div><div class="footer-auth-tooltip" id="footer-auth-tooltip">
+<strong>版权声明</strong>
+本牌组模板受知识产权法保护。未经授权的复制、分发或修改将构成侵权行为。创作不易，感谢支持！
+</div><div class="question" id="main-content-area">{{Question}}</div><div class="options-container" id="options-container"></div>
+</div><script>
+window.ankiStorage = (function() {
+  const prefix = 'anki_sel_'; 
+  const configPrefix = 'anki_cfg_'; 
+  console.log('【调试】front.html window.ankiStorage 定义');
+  return {
+    set: function(key, data) {
+      const safeKey = prefix + btoa(encodeURIComponent(key)).slice(0, 50);
+      try {
+        localStorage.setItem(safeKey, JSON.stringify(data));
+        console.log('【调试】front.html set localStorage:', safeKey, data);
+      } catch(e) {
+        console.warn('localStorage setItem failed, falling back to window object for key:', safeKey, e);
+        window[safeKey] = data;
+      }
+    },
+    get: function(key) {
+      const safeKey = prefix + btoa(encodeURIComponent(key)).slice(0, 50);
+      try {
+        const data = localStorage.getItem(safeKey);
+        console.log('【调试】front.html get localStorage:', safeKey, data);
+        return data ? JSON.parse(data) : null;
+      } catch(e) {
+        console.warn('localStorage getItem failed, falling back to window object for key:', safeKey, e);
+        return window[safeKey] || null;
+      }
+    },
+    clear: function(key) {
+      const safeKey = prefix + btoa(encodeURIComponent(key)).slice(0, 50);
+      try {
+        localStorage.removeItem(safeKey);
+        console.log('【调试】front.html clear localStorage:', safeKey);
+      } catch(e) {
+        console.warn('localStorage removeItem failed, attempting to delete from window object for key:', safeKey, e);
+        delete window[safeKey];
+      }
+    },
+    setConfig: function(configKey, value) {
+      try {
+        localStorage.setItem(configPrefix + configKey, JSON.stringify(value));
+      } catch (e) {
+        console.error('Error saving config to localStorage:', configKey, e);
+      }
+    },
+    getConfig: function(configKey) {
+      try {
+        const value = localStorage.getItem(configPrefix + configKey);
+        return value !== null ? JSON.parse(value) : undefined; 
+      } catch (e) {
+        console.error('Error reading config from localStorage:', configKey, e);
+        return undefined;
+      }
+    }
+  };
+})();
+(function() {
+  const cardElementForCleanup = document.querySelector('.anki-card-root');
+  if (cardElementForCleanup) {
+    const analysisBoxes = cardElementForCleanup.querySelectorAll('.kikkua-analysis-box');
+    analysisBoxes.forEach(box => box.remove());
+    const refrenceBoxes = cardElementForCleanup.querySelectorAll('.kikkua-refrence-box');
+    refrenceBoxes.forEach(box => box.remove());
+    const contentSectionBack = cardElementForCleanup.querySelector('.kikkua-content-section-back');
+    if (contentSectionBack) contentSectionBack.remove();
+  }
+  function isIOS() {
+    return [
+      'iPad Simulator',
+      'iPhone Simulator',
+      'iPod Simulator',
+      'iPad',
+      'iPhone',
+      'iPod'
+    ].includes(navigator.platform)
+    || (navigator.userAgent.includes("Mac") && "ontouchend" in document);
+  }
+  const clozeTextContent = `{{ClozeText}}`.trim();
+  const questionContent = `{{Question}}`.trim();
+  const optionsString = `{{Options}}`.trim();
+  const choiceAnswerString = `{{Answer}}`.trim();
+  const answerTextContent = `{{AnswerText}}`.trim();
+  const mainContentArea = document.getElementById('main-content-area');
+  const optionsContainer = document.getElementById('options-container');
+  const cardElement = document.querySelector('.anki-card-root');
+  const settingsButton = document.getElementById('anki-settings-button');
+  const settingsPanel = document.getElementById('anki-settings-panel');
+  const settingsCloseButton = document.getElementById('anki-settings-close-button');
+  const settingsSaveButton = document.getElementById('anki-settings-save-button');
+  const settingsPanelBody = document.getElementById('anki-settings-panel-body');
+  const settingsResetButton = document.getElementById('anki-settings-reset-button');
+  const layoutToggleButton = document.getElementById('layout-toggle-button');
+  if (isIOS() && cardElement) {
+    console.log("iOS detected, creating click shield.");
+    const clickShield = document.createElement('div');
+    clickShield.id = 'ios-click-shield';
+    clickShield.onclick = function(event) {
+      console.log("iOS Click Shield intercepted click.");
+      event.stopPropagation();
+    };
+    cardElement.appendChild(clickShield);
+  }
+  function getConfig(name, defaultValue) {
+    const storedValue = window.ankiStorage.getConfig(name);
+    if (storedValue !== undefined) {
+      if (typeof defaultValue === 'boolean') {
+        if (storedValue === 'true') return true;
+        if (storedValue === 'false') return false;
+      }
+      if (typeof defaultValue === 'number' && !isNaN(parseFloat(storedValue))) {
+        return parseFloat(storedValue);
+      }
+      return storedValue;
+    }
+    const regex = new RegExp(`<!-- config:${name}=([\\w.-]+) -->`); 
+    const match = document.documentElement.innerHTML.match(regex);
+    if (match) {
+      const value = match[1];
+      if (value === 'true') return true;
+      if (value === 'false') return false;
+      if (typeof defaultValue === 'number' && !isNaN(parseFloat(value))) {
+        return parseFloat(value);
+      }
+      return value;
+    }
+    return defaultValue;
+  }
+  function addFlipHintIfNeeded(anchorElement) {
+    const showFlipHintConfig = true; 
+    if (!showFlipHintConfig || !anchorElement || !anchorElement.parentNode) return;
+    if (document.querySelector('.flip-to-show-answer-hint')) return;
+    const flipHintElement = document.createElement('div');
+    flipHintElement.className = 'flip-to-show-answer-hint';
+    flipHintElement.innerHTML = '<span>🔄 翻面以查看答案</span>';
+    anchorElement.parentNode.insertBefore(flipHintElement, anchorElement.nextSibling);
+  }
+  function escapeHTMLTextSegment(str) {
+    if (typeof str !== 'string') return '';
+    return str.replace(/&/g, '&amp;');
+  }
+  function generateInitialClozeHTML(text) {
+    let output = "";
+    let i = 0;
+    while (i < text.length) {
+      let openBracket = text.indexOf('[[', i);
+      if (openBracket === -1) {
+        output += escapeHTMLTextSegment(text.substring(i));
+        break;
+      }
+      output += escapeHTMLTextSegment(text.substring(i, openBracket));
+      let balance = 0;
+      let startContent = openBracket + 2;
+      let endContent = -1;
+      let k = startContent;
+      for (; k < text.length; k++) {
+        if (text.substring(k, k + 2) === '[[') {
+          balance++;
+          k++; 
+        } else if (text.substring(k, k + 2) === ']]') {
+          if (balance === 0) {
+            endContent = k;
+            break;
+          }
+          balance--;
+          k++; 
+        }
+      }
+      if (endContent === -1) { 
+        output += escapeHTMLTextSegment(text.substring(openBracket));
+        break;
+      }
+      const clozeContentForAttr = text.substring(startContent, endContent);
+      const escapedClozeContentForAttr = clozeContentForAttr
+          .replace(/&/g, '&amp;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
+      let dynamicPlaceholderText = '';
+      const hiddenContentLength = clozeContentForAttr.trim().length;
+      const minPlaceholderRepetitions = 3;
+      const maxPlaceholderRepetitions = 12;
+      const charsPerRepetitionUnit = 4;
+      let repetitions = Math.floor(hiddenContentLength / charsPerRepetitionUnit);
+      repetitions = Math.max(minPlaceholderRepetitions, repetitions);
+      repetitions = Math.min(maxPlaceholderRepetitions, repetitions);
+      const placeholderChar = '·';
+      dynamicPlaceholderText = placeholderChar.repeat(repetitions);
+      output += `<span class="cloze-block" data-original-content="${escapedClozeContentForAttr}" data-placeholder-text="${dynamicPlaceholderText}">${dynamicPlaceholderText}</span>`;
+      i = endContent + 2;
+    }
+    return output;
+  }
+  function revealThisCloze(event) {
+    event.stopPropagation();
+    const block = this;
+    let tempElem = document.createElement('textarea');
+    tempElem.innerHTML = block.getAttribute('data-original-content');
+    const rawOriginalContent = tempElem.value;
+    block.innerHTML = generateInitialClozeHTML(rawOriginalContent); 
+    setupClozeInteractions(block); 
+    block.classList.remove('cloze-block');
+    block.classList.add('revealed');    
+    block.style.cursor = 'pointer'; 
+    block.onclick = hideThisCloze; 
+  }
+  function hideThisCloze(event) {
+    event.stopPropagation();
+    const block = this;
+    const placeholderText = block.getAttribute('data-placeholder-text');
+    block.innerHTML = placeholderText;
+    block.classList.remove('revealed');
+    block.classList.add('cloze-block');
+    block.style.cursor = 'pointer'; 
+    block.onclick = revealThisCloze; 
+  }
+  function setupClozeInteractions(container) {
+    const newClozeBlocks = container.querySelectorAll('.cloze-block:not(.cloze-handler-attached)');
+    newClozeBlocks.forEach(block => {
+      block.classList.add('cloze-handler-attached'); 
+      block.onclick = revealThisCloze;
+    });
+  }
+  const optionsArray = optionsString.split('||').map(option => option.trim()).filter(option => option);
+  const choiceAnswerDefined = choiceAnswerString.length > 0;
+  const isClozeMode = clozeTextContent.length > 0;
+  const isClozeChoiceMode = (() => {
+    const trimmedQuestion = questionContent.trim();
+    const startsWithDoubleOrTripleDollar = trimmedQuestion.startsWith('$$') || trimmedQuestion.startsWith('$$$');
+    if (!startsWithDoubleOrTripleDollar) return false;
+    if (!optionsString.trim() || !choiceAnswerString.trim()) return false;
+    if (!trimmedQuestion.includes('##')) return false;
+    return true;
+  })();
+  const isQAMode = !isClozeMode && !isClozeChoiceMode && questionContent.length > 0 && answerTextContent.length > 0 && (optionsArray.length === 0 || !choiceAnswerDefined);
+const isChoiceMode = !isClozeMode && !isClozeChoiceMode && !isQAMode && questionContent.length > 0 && optionsArray.length > 0 && choiceAnswerDefined;
+  const isImageClozeMode = (() => {
+    try {
+      const masks = JSON.parse(questionContent);
+      if (Array.isArray(masks) && masks.length > 0) {
+        const firstMask = masks[0];
+        return firstMask.hasOwnProperty('x') && firstMask.hasOwnProperty('y') && 
+               firstMask.hasOwnProperty('w') && firstMask.hasOwnProperty('h');
+      }
+    } catch(e) {
+    }
+    return false;
+  })();
+  const SettingsPanelModule = (function() {
+    let isOpen = false;
+    const configOptions = [
+      { key: 'themeMode', label: '主题模式', type: 'select', options: [
+          {value: 'light', text: '明亮'}, {value: 'dark', text: '暗黑'},
+          {value: 'eyeCare', text: '护眼'}, {value: 'system', text: '跟随系统'}
+        ], default: 'system' },
+      { key: 'cardWidthPercent', label: '卡片宽度百分比', type: 'number', default: 55, min: 50, max: 100, step: 5 },
+      { key: 'shuffleOptions', label: '随机打乱选项', type: 'toggle', default: true },
+      { key: 'showOptionLabels', label: '显示选项标签 (正面)', type: 'toggle', default: true },
+      { key: 'showTimer', label: '显示倒计时', type: 'toggle', default: true },
+      { key: 'timerDuration', label: '倒计时长 (秒)', type: 'number', default: 15, min: 5, max: 120, step: 1 },
+      { key: 'showSessionStats', label: '显示做题统计 (选择题背面)', type: 'toggle', default: true },
+    ];
+    function createSettingItem(config) {
+      const itemDiv = document.createElement('div');
+      itemDiv.className = 'setting-item';
+      const label = document.createElement('label');
+      label.htmlFor = `setting-${config.key}`;
+      label.textContent = config.label;
+      itemDiv.appendChild(label);
+      if (config.type === 'toggle') {
+        const switchContainer = document.createElement('label');
+        switchContainer.className = 'toggle-switch-container';
+        const input = document.createElement('input');
+        input.type = 'checkbox';
+        input.id = `setting-${config.key}`;
+        input.name = config.key;
+        const slider = document.createElement('span');
+        slider.className = 'toggle-switch-slider';
+        switchContainer.appendChild(input);
+        switchContainer.appendChild(slider);
+        switchContainer.onclick = function(event) {
+          event.stopPropagation();
+          console.log('Toggle switch container clicked, stopped propagation.');
+        };
+        itemDiv.appendChild(switchContainer);
+      } else if (config.type === 'select') {
+        const select = document.createElement('select');
+        select.id = `setting-${config.key}`;
+        select.name = config.key;
+        config.options.forEach(opt => {
+          const option = document.createElement('option');
+          option.value = opt.value;
+          option.textContent = opt.text;
+          select.appendChild(option);
+        });
+        select.onclick = function(event) {
+          event.stopPropagation();
+          console.log('Select element clicked, stopped propagation.');
+        };
+        select.onmousedown = function(event) {
+            event.stopPropagation();
+            console.log('Select element mousedown, stopped propagation.');
+        }
+        itemDiv.appendChild(select);
+      } else if (config.type === 'number') {
+        const adjusterContainer = document.createElement('div');
+        adjusterContainer.className = 'setting-number-adjuster';
+        const minusButton = document.createElement('button');
+        minusButton.type = 'button'; 
+        minusButton.className = 'setting-adjust-button minus';
+        minusButton.textContent = '−'; 
+        minusButton.setAttribute('aria-label', '减少');
+        const valueSpan = document.createElement('span');
+        valueSpan.id = `setting-${config.key}`; 
+        valueSpan.className = 'setting-number-value';
+        valueSpan.textContent = config.default; 
+        const plusButton = document.createElement('button');
+        plusButton.type = 'button';
+        plusButton.className = 'setting-adjust-button plus';
+        plusButton.textContent = '+';
+        plusButton.setAttribute('aria-label', '增加');
+        minusButton.onclick = (event) => {
+          event.stopPropagation();
+          let currentValue = parseInt(valueSpan.textContent, 10);
+          const step = config.step || 1;
+          const min = config.min !== undefined ? config.min : -Infinity;
+          if (!isNaN(currentValue)) {
+            currentValue = Math.max(min, currentValue - step);
+            valueSpan.textContent = currentValue;
+          }
+        };
+        plusButton.onclick = (event) => {
+          event.stopPropagation();
+          let currentValue = parseInt(valueSpan.textContent, 10);
+          const step = config.step || 1;
+          const max = config.max !== undefined ? config.max : Infinity;
+          if (!isNaN(currentValue)) {
+            currentValue = Math.min(max, currentValue + step);
+            valueSpan.textContent = currentValue;
+          }
+        };
+        adjusterContainer.appendChild(minusButton);
+        adjusterContainer.appendChild(valueSpan);
+        adjusterContainer.appendChild(plusButton);
+        itemDiv.appendChild(adjusterContainer);
+      }
+      return itemDiv;
+    }
+    function populatePanel() {
+      if (!settingsPanelBody) return;
+      settingsPanelBody.innerHTML = ''; 
+      configOptions.forEach(config => {
+        const currentValue = getConfig(config.key, config.default);
+        const itemElement = createSettingItem(config);
+        const inputElement = itemElement.querySelector(`#setting-${config.key}`);
+        if (inputElement) {
+          if (config.type === 'toggle') {
+             const boolValue = currentValue === true || String(currentValue).toLowerCase() === 'true';
+             inputElement.checked = boolValue;
+          } else if (config.type === 'number') {
+             inputElement.textContent = parseInt(currentValue, 10) || config.default;
+          } else { 
+            inputElement.value = currentValue;
+          }
+        }
+        settingsPanelBody.appendChild(itemElement);
+      });
+    }
+    function openPanel() {
+      if (!settingsPanel) return;
+      populatePanel(); 
+      settingsPanel.classList.add('visible');
+      isOpen = true;
+    }
+    function closePanel() {
+      if (!settingsPanel) return;
+      settingsPanel.classList.remove('visible');
+      isOpen = false;
+    }
+    function togglePanel() {
+      if (isOpen) {
+        closePanel();
+      } else {
+        openPanel();
+      }
+    }
+    function applySettings() {
+      ThemeManager.init(); 
+      TimerModule.init(); 
+      const cardWidthPercent = getConfig('cardWidthPercent', 55);
+      const cardElement = document.querySelector('.anki-card-root');
+      if (cardElement) {
+        const originalTransition = cardElement.style.transition;
+        cardElement.style.transition = 'none';
+        cardElement.classList.remove('width-percent');
+        if (window.innerWidth >= 769) {
+          cardElement.classList.add('width-percent');
+          cardElement.style.setProperty('--card-width-percent', `${cardWidthPercent}vw`);
+        } else {
+          cardElement.style.removeProperty('--card-width-percent');
+        }
+        cardElement.offsetHeight; 
+        cardElement.style.transition = originalTransition;
+      }
+    }
+    function saveSettings() {
+      if (!settingsPanelBody) return;
+      configOptions.forEach(config => {
+        const inputElement = settingsPanelBody.querySelector(`#setting-${config.key}`);
+        if (inputElement) {
+          let value;
+          if (config.type === 'toggle') {
+            value = inputElement.checked;
+          } else if (config.type === 'number') {
+            value = parseInt(inputElement.textContent, 10);
+            if (isNaN(value)) value = config.default;
+            if (config.min !== undefined && value < config.min) value = config.min;
+            if (config.max !== undefined && value > config.max) value = config.max;
+          } else { 
+            value = inputElement.value;
+          }
+          window.ankiStorage.setConfig(config.key, value);
+        }
+      });
+      console.log("Settings saved to localStorage.");
+      applySettings();
+      closePanel();
+    }
+    function handleResetSettings() {
+      if (confirm("您确定要将所有卡片设置恢复为默认值吗？此操作不可撤销。")) {
+        const configPrefix = 'anki_cfg_'; 
+        configOptions.forEach(config => {
+          try {
+            localStorage.removeItem(configPrefix + config.key);
+          } catch (e) {
+            console.warn(`Error removing ${configPrefix + config.key} from localStorage`, e);
+          }
+        });
+        console.log("All settings reset to defaults (localStorage cleared).");
+        populatePanel(); 
+        applySettings(); 
+      }
+    }
+    return {
+      init: function() {
+        if (settingsPanel) {
+          settingsPanel.addEventListener('click', function(event) {
+            if (isIOS() && event.target === settingsPanel) {
+              console.log("iOS Settings Panel background click intercepted.");
+              event.stopPropagation();
+            }
+          });
+        }
+        if (settingsButton) {
+          settingsButton.onclick = (event) => {
+            event.stopPropagation();
+            togglePanel();
+          };
+        }
+        if (settingsCloseButton) {
+          settingsCloseButton.onclick = (event) => {
+             event.stopPropagation();
+             closePanel();
+          };
+        }
+        if (settingsSaveButton) {
+          settingsSaveButton.onclick = (event) => {
+             event.stopPropagation();
+             saveSettings();
+          };
+        }
+        if (settingsResetButton) {
+           settingsResetButton.onclick = (event) => {
+             event.stopPropagation();
+             handleResetSettings();
+          };
+        }
+        document.addEventListener('keydown', function(event) {
+          if (event.key === 'Escape' && isOpen) {
+            event.preventDefault();
+            closePanel();
+          }
+        });
+      },
+      isOpen: () => isOpen, 
+      applySettings: applySettings 
+    };
+  })();
+  const TimerModule = (function() {
+    const showTimerConfig = getConfig('showTimer', true);
+    const timerDurationConfig = parseInt(getConfig('timerDuration', 15), 10);
+    const timerContainer = document.getElementById('timer-bar-container');
+    const timerBar = document.getElementById('timer-bar');
+    const timerTextElement = document.getElementById('timer-text');
+    let timerInterval;
+    let remainingTimeInSeconds;
+    function updateDisplay(currentTime, totalTime) {
+      if (!timerBar || !timerTextElement || !timerContainer) return;
+      const percentage = (currentTime / totalTime) * 100;
+      timerBar.style.width = percentage + '%';
+      if (currentTime > 0) {
+        timerTextElement.textContent = `${Math.ceil(currentTime)}s`;
+        timerTextElement.style.fontWeight = '500';
+        timerTextElement.style.color = 'var(--text-secondary)';
+      } else {
+        timerTextElement.textContent = "Time's Up!";
+        timerTextElement.style.fontWeight = 'bold';
+      }
+      if (currentTime <= 0) {
+        timerBar.style.backgroundColor = 'var(--color-danger)';
+        timerContainer.classList.add('timer-expired');
+        timerTextElement.style.color = 'var(--color-danger)';
+      } else if (percentage <= 35) {
+        timerBar.style.backgroundColor = 'var(--color-danger)';
+      } else if (percentage <= 70) {
+        timerBar.style.backgroundColor = 'var(--color-warning)';
+      } else {
+        timerBar.style.backgroundColor = 'var(--color-primary)';
+      }
+    }
+    function start(duration) {
+      if (!timerContainer || !timerBar) return;
+      timerContainer.style.display = 'flex';
+      remainingTimeInSeconds = duration;
+      updateDisplay(remainingTimeInSeconds, duration);
+      timerInterval = setInterval(() => {
+        remainingTimeInSeconds -= 0.1;
+        if (remainingTimeInSeconds < 0) remainingTimeInSeconds = 0;
+        updateDisplay(remainingTimeInSeconds, duration);
+        if (remainingTimeInSeconds <= 0) {
+          clearInterval(timerInterval);
+        }
+      }, 100);
+    }
+    return {
+      init: function() {
+        if (showTimerConfig && timerDurationConfig > 0 && timerContainer) {
+          start(timerDurationConfig);
+        } else if (timerContainer) {
+          timerContainer.style.display = 'none';
+        }
+      }
+    };
+  })();
+  const CardTypeHandlers = {
+    cloze: {
+      front: {
+        setup: function() {
+          if (!mainContentArea) return;
+          console.log('[Cloze Front Setup] Initializing...');
+          mainContentArea.innerHTML = ''; 
+          if (optionsContainer) optionsContainer.style.display = 'none';
+          mainContentArea.classList.add('cloze-active-area');
+          mainContentArea.classList.remove('contains-table');
+          if (cardElement) cardElement.classList.remove('anki-card-root-contains-table');
+          console.log('[Cloze Front Setup] Original clozeTextContent from Anki field:', clozeTextContent);
+          let tempElemForDecoding = document.createElement('textarea');
+          tempElemForDecoding.innerHTML = clozeTextContent; 
+          let rawHtmlClozeText = tempElemForDecoding.value;
+          console.log('[Cloze Front Setup] After HTML entity decoding:', JSON.stringify(rawHtmlClozeText));
+          rawHtmlClozeText = rawHtmlClozeText.replace(/\r\n?/g, '\n');
+          console.log('[Cloze Front Setup] After step 1 (newline std):', JSON.stringify(rawHtmlClozeText));
+          rawHtmlClozeText = rawHtmlClozeText
+            .replace(/<p(?:\s[^>]*)?>([\s\S]*?)<\/p>/gi, function(match, content) {
+              if (/^(\s|&nbsp;|<br\s*\/?>)*$/.test(content)) return '';
+              return content + '<br>';
+            })
+            .replace(/<div(?:\s[^>]*)?>([\s\S]*?)<\/div>/gi, function(match, content) {
+              if (/^(\s|&nbsp;|<br\s*\/?>)*$/.test(content)) return '';
+              return content + '<br>';
+            });
+          console.log('[Cloze Front Setup] After step 2 (p/div to br):', JSON.stringify(rawHtmlClozeText));
+          rawHtmlClozeText = rawHtmlClozeText.replace(/(?:<br\s*\/?>\s*){2,}/gi, '<br>');
+          console.log('[Cloze Front Setup] After step 3 (multiple br removal):', JSON.stringify(rawHtmlClozeText));
+          rawHtmlClozeText = rawHtmlClozeText.replace(/>\s*<br\s*\/?>\s*</gi, '><');
+          console.log('[Cloze Front Setup] After step 3a (remove br between tags):', JSON.stringify(rawHtmlClozeText));
+          rawHtmlClozeText = rawHtmlClozeText.replace(/>\s+</gi, '><');
+          console.log('[Cloze Front Setup] After step 3b (remove whitespace between tags):', JSON.stringify(rawHtmlClozeText));
+          rawHtmlClozeText = rawHtmlClozeText.trim();
+          console.log('[Cloze Front Setup] After step 4 (trim):', JSON.stringify(rawHtmlClozeText));
+          rawHtmlClozeText = rawHtmlClozeText.replace(/(\n\s*){2,}/g, '\n');
+          console.log('[Cloze Front Setup] After step 5 (collapse newlines):', JSON.stringify(rawHtmlClozeText));
+          rawHtmlClozeText = rawHtmlClozeText.replace(/(<\/h3\b[^>]*>)(?:\s*<br\s*\/?>\s*|\s+)*?(<table\b[^>]*>)/gi, '$1$2');
+          console.log('[Cloze Front Setup] After step 6 (h3-table gap cleanup):', JSON.stringify(rawHtmlClozeText));
+          rawHtmlClozeText = rawHtmlClozeText.trim();
+          console.log('[Cloze Front Setup] After step 7 (final trim):', JSON.stringify(rawHtmlClozeText));
+          if (rawHtmlClozeText.toLowerCase().includes('<table')) {
+            mainContentArea.classList.add('contains-table');
+            if (cardElement) { 
+              cardElement.classList.add('anki-card-root-contains-table');
+            }
+            console.log('[Cloze Front Setup] Table detected, classes added.');
+          } else {
+            console.log('[Cloze Front Setup] No table detected.');
+          }
+          console.log('[Cloze Front Setup] Final rawHtmlClozeText passed to generateInitialClozeHTML:', JSON.stringify(rawHtmlClozeText));
+          mainContentArea.innerHTML = generateInitialClozeHTML(rawHtmlClozeText);
+          setupClozeInteractions(mainContentArea);
+          addFlipHintIfNeeded(mainContentArea);
+          console.log('[Cloze Front Setup] Setup complete.');
+        }
+      }
+    },
+    qa: {
+      front: {
+        setup: function() {
+          if (!mainContentArea) return;
+          mainContentArea.innerHTML = questionContent.replace(/\n/g, '<br>');
+          if (optionsContainer) optionsContainer.style.display = 'none';
+          mainContentArea.classList.add('qa-active-area');
+    if (!mainContentArea.classList.contains('question')) {
+        mainContentArea.classList.add('question');
+    }
+    mainContentArea.classList.remove('cloze-active-area');
+          addFlipHintIfNeeded(mainContentArea);
+        }
+      }
+    },
+    choice: {
+      front: {
+        setup: function() {
+          if (!mainContentArea || !optionsContainer) return;
+          const questionParts = questionContent.split('##');
+          const mainStem = questionParts[0];
+          const subQuestions = questionParts.slice(1);
+          const optionsGroups = optionsString.split('##').map(g => g.split('||'));
+          const answers = choiceAnswerString.split('##');
+          const isMultiSub = subQuestions.length > 0 && optionsGroups.length === subQuestions.length && answers.length === subQuestions.length;
+          const showOptionLabelsConfig = getConfig('showOptionLabels', true);
+          const shuffleOptionsConfig = getConfig('shuffleOptions', true);
+          /*
+          if (isMultiSub) {
+            subQuestions.forEach((q, idx) => {
+              const subQuestionHash = (q + '_' + idx).slice(0, 100);
+              if (window.ankiStorage && typeof window.ankiStorage.clear === 'function') {
+                window.ankiStorage.clear(subQuestionHash);
+              }
+            });
+          } else {
+            const questionHash = questionContent.slice(0, 100);
+            if (window.ankiStorage && typeof window.ankiStorage.clear === 'function') {
+              window.ankiStorage.clear(questionHash);
+            }
+          }
+          */
+          function renderChoiceQuestion({container, question, options, answer, idx, showOptionLabels, shuffle, onAnswered, isMultiSubMode}) {
+            const opts = options.slice();
+            let order = opts.map((_, i) => i);
+            if (shuffle && opts.length > 1) {
+              for (let i = order.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [order[i], order[j]] = [order[j], order[i]];
+              }
+            }
+            const optionsDiv = isMultiSubMode ? document.createElement('div') : 
+                              (container.classList.contains('options-container') ? container : document.createElement('div'));
+            if (isMultiSubMode) {
+              optionsDiv.className = 'sub-options';
+            } else if (!container.classList.contains('options-container')) {
+              optionsDiv.className = 'options-container';
+            }
+            const originalKeys = opts.map((_, i) => String.fromCharCode(65 + i));
+            let keyBase, selected;
+            if (isMultiSubMode) {
+              const uniqueStr = question + '_' + idx;
+              let hash = 0;
+              for (let i = 0; i < uniqueStr.length; i++) {
+                hash = ((hash << 5) - hash) + uniqueStr.charCodeAt(i);
+                hash = hash & hash;
+              }
+              keyBase = 'subq_' + idx + '_' + Math.abs(hash).toString(36);
+              selected = ankiStorage.get(keyBase) || [];
+            } else {
+              keyBase = questionContent.slice(0, 100);
+              selected = ankiStorage.get(keyBase) || [];
+            }
+            const correctAnswers = answer.toUpperCase().split('');
+            const isMulti = correctAnswers.length > 1;
+            order.forEach((shuffledIdx, i) => {
+              const key = originalKeys[shuffledIdx];
+              const optDiv = document.createElement('div');
+              optDiv.className = 'option';
+              if (showOptionLabels) optDiv.setAttribute('data-key', originalKeys[i]);
+              optDiv.setAttribute('data-original', key);
+              optDiv.setAttribute('data-index', i);
+              optDiv.setAttribute('data-content', opts[shuffledIdx]);
+              optDiv.innerHTML = opts[shuffledIdx];
+              if (selected.includes(key)) {
+                optDiv.classList.add('selected');
+              }
+              optDiv.style.pointerEvents = 'auto';
+              optDiv.classList.remove('disabled');
+              optDiv.onclick = function(event) {
+                event.stopPropagation();
+                let selected = ankiStorage.get(keyBase) || [];
+                if (!isMulti) {
+                  optionsDiv.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+                  selected = [];
+                }
+                const indexInSelected = selected.indexOf(key);
+                if(indexInSelected > -1) {
+                  selected.splice(indexInSelected, 1);
+                  this.classList.remove('selected');
+                } else {
+                  selected.push(key);
+                  this.classList.add('selected');
+                }
+                ankiStorage.set(keyBase, selected);
+                console.log('【调试】front.html 选项点击 set:', keyBase, selected);
+                console.log('【调试】front.html localStorage keys:', Object.keys(localStorage));
+                const safeKey = 'anki_sel_' + btoa(encodeURIComponent(keyBase)).slice(0, 50);
+                console.log('【调试】front.html localStorage value:', localStorage.getItem(safeKey));
+                if (!isMulti && typeof onAnswered === 'function') {
+                  setTimeout(() => { onAnswered(); }, 300);
+                } else if (isMulti && typeof onAnswered === 'function') {
+                  onAnswered();
+                }
+              };
+              optionsDiv.appendChild(optDiv);
+            });
+            if (isMultiSubMode || !container.classList.contains('options-container')) {
+              container.appendChild(optionsDiv);
+            }
+          }
+          if (!isMultiSub) {
+  mainContentArea.innerHTML = questionContent.replace(/\n/g, '<br>');
+  optionsContainer.innerHTML = '';
+  mainContentArea.classList.remove('cloze-active-area', 'qa-active-area');
+  renderChoiceQuestion({
+    container: optionsContainer,
+    question: questionContent,
+    options: optionsArray,
+    answer: choiceAnswerString,
+    idx: 0,
+    showOptionLabels: showOptionLabelsConfig,
+    shuffle: shuffleOptionsConfig,
+    onAnswered: function() { 
+      if (typeof pycmd === 'function') {
+        pycmd("showAnswer");
+      }
+    },
+    isMultiSubMode: false
+  });
+  optionsContainer.style.display = '';
+  addFlipHintIfNeeded(optionsContainer);
+  return;
+}
+          mainContentArea.innerHTML = '';
+          optionsContainer.innerHTML = '';
+          const mainStemDiv = document.createElement('div');
+          mainStemDiv.className = 'main-stem';
+          mainStemDiv.innerHTML = mainStem;
+          mainContentArea.appendChild(mainStemDiv);
+          let answeredArr = new Array(subQuestions.length).fill(false);
+          function checkAllAnswered() {
+            let all = true;
+            for (let i = 0; i < subQuestions.length; i++) {
+              const subQuestionHash = (subQuestions[i] + '_' + i).slice(0, 100);
+              const selected = ankiStorage.get(subQuestionHash) || [];
+              answeredArr[i] = selected.length > 0;
+              if (!answeredArr[i]) all = false;
+            }
+                      if (all && typeof pycmd === 'function') {
+            pycmd("showAnswer");
+          }
+          }
+          subQuestions.forEach((q, idx) => {
+  const subDiv = document.createElement('div');
+  subDiv.className = 'sub-question';
+  const ans = answers[idx] || '';
+  const isMulti = ans.length > 1;
+  const tag = document.createElement('span');
+  tag.className = isMulti ? 'question-type-tag multi' : 'question-type-tag single';
+  tag.textContent = isMulti ? '多选' : '单选';
+  const subTitle = document.createElement('div');
+  subTitle.className = 'sub-q-title';
+  subTitle.appendChild(tag);
+  const textSpan = document.createElement('span');
+  textSpan.innerHTML = `(${idx+1}) ${q}`;
+  subTitle.appendChild(textSpan);
+  subDiv.appendChild(subTitle);
+  const subOptionsDiv = document.createElement('div');
+  subOptionsDiv.className = 'sub-options';
+  renderChoiceQuestion({
+    container: subOptionsDiv,
+    question: q,
+    options: optionsGroups[idx] || [],
+    answer: answers[idx] || '',
+    idx,
+    showOptionLabels: showOptionLabelsConfig,
+    shuffle: shuffleOptionsConfig,
+    onAnswered: checkAllAnswered,
+    isMultiSubMode: true
+  });
+  subDiv.appendChild(subOptionsDiv);
+  optionsContainer.appendChild(subDiv);
+});
+          addFlipHintIfNeeded(optionsContainer);
+        }
+      }
+    },
+    fallback: {
+      front: {
+        setup: function() {
+          if (!mainContentArea) return;
+          mainContentArea.innerHTML = questionContent.replace(/\n/g, '<br>');
+          if (optionsContainer) optionsContainer.style.display = 'none';
+          mainContentArea.classList.remove('cloze-active-area', 'qa-active-area');
+          let hintMessage = '';
+          const baseStyle = `display:block; margin-top:15px; padding:10px; border-radius:8px; background-color: var(--bg-warning); color: var(--text-type); font-size: 14px; line-height:1.5;`;
+          if (questionContent.length > 0 && !answerTextContent.length && optionsArray.length === 0 && !clozeTextContent.length && !choiceAnswerDefined) {
+              hintMessage = `<br><span class="empty-hint" style="${baseStyle}">⚠️ 卡片类型不明确或缺少答案！<br>请补充以下任一字段组：<br> • 填空题: <code>{{ClozeText}}</code><br> • 选择题: <code>{{Options}}</code> 和 <code>{{Answer}}</code><br> • 问答题: <code>{{AnswerText}}</code></span>`;
+          } else if (!questionContent.length && !clozeTextContent.length) {
+              hintMessage = `<span class="empty-hint" style="${baseStyle}">⚠️ 卡片缺少问题！<br>请填写 <code>{{Question}}</code> (用于选择/问答题) 或 <code>{{ClozeText}}</code> (用于填空题)。</span>`;
+          } else if (isChoiceMode && optionsArray.length === 0) {
+              hintMessage = `<br><span class="empty-hint" style="${baseStyle}">⚠️ 选择题缺少选项！<br>请填写 <code>{{Options}}</code> 字段，用 <code>||</code> 分隔。</span>`;
+          } else if (isChoiceMode && !choiceAnswerDefined) {
+              hintMessage = `<br><span class="empty-hint" style="${baseStyle}">⚠️ 选择题缺少答案！<br>请填写 <code>{{Answer}}</code> 字段（如 A, BC）。</span>`;
+          } else if (isClozeMode && !clozeTextContent.includes('[[')) {
+               hintMessage = `<br><span class="empty-hint" style="${baseStyle}">⚠️ 填空题缺少挖空标记！<br>请在 <code>{{ClozeText}}</code> 中使用 <code>[[挖空内容]]</code>。</span>`;
+          }
+          if (hintMessage) mainContentArea.innerHTML += hintMessage;
+          addFlipHintIfNeeded(mainContentArea);
+        }
+      }
+    },
+    imageCloze: {
+      front: {
+        setup: function() {
+          if (!mainContentArea) return;
+          if (optionsContainer) optionsContainer.style.display = 'none';
+          mainContentArea.innerHTML = '';
+          mainContentArea.classList.remove('cloze-active-area', 'qa-active-area');
+          mainContentArea.classList.add('image-cloze-active-area');
+          const imgClozeViewport = document.createElement('div');
+          imgClozeViewport.className = 'img-cloze-viewport';
+          imgClozeViewport.id = 'imgClozeViewport';
+          const imageClozeContent = `{{ImageCloze}}`.trim();
+          if (imageClozeContent) {
+            imgClozeViewport.innerHTML = imageClozeContent;
+          } else {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = questionContent;
+            const img = tempDiv.querySelector('img');
+            if (img) {
+              imgClozeViewport.appendChild(img.cloneNode(true));
+            }
+          }
+          mainContentArea.appendChild(imgClozeViewport);
+          (function() {
+            let masks = [];
+            try { 
+              masks = JSON.parse(questionContent); 
+            } catch(e) {
+              console.warn('Failed to parse image cloze masks:', e);
+            }
+            const viewport = document.getElementById('imgClozeViewport');
+            const img = viewport.querySelector('img');
+            if (!img) {
+              console.warn('No image found for image cloze');
+              return;
+            }
+            img.classList.add('img-cloze-img');
+            function handleImageLoad() {
+              console.log('图片加载完成，开始设置样式...');
+              const styleProperties = {
+                'width': '100%',
+                'height': 'auto',
+                'max-width': '100%',
+                'object-fit': 'contain',
+                'margin': '0',
+                'padding': '0',
+                'display': 'block',
+                'vertical-align': 'top',
+                'min-width': '0',
+                'opacity': '1',
+                'visibility': 'visible',
+                'max-height': 'none',
+                'box-sizing': 'border-box',
+                'font-size': '0',
+                'line-height': '0'
+              };
+              Object.entries(styleProperties).forEach(([property, value]) => {
+                img.style.setProperty(property, value, 'important');
+                img.style[property] = value;
+              });
+              if (viewport) {
+                const viewportStyles = {
+                  'width': '100%',
+                  'max-width': '100%',
+                  'height': 'auto',
+                  'display': 'block',
+                  'min-height': '0',
+                  'position': 'relative',
+                  'overflow': 'auto'
+                };
+                Object.entries(viewportStyles).forEach(([property, value]) => {
+                  viewport.style.setProperty(property, value, 'important');
+                  viewport.style[property] = value;
+                });
+              }
+              img.removeAttribute('width');
+              img.removeAttribute('height');
+              img.removeAttribute('style');
+              setTimeout(() => {
+                Object.entries(styleProperties).forEach(([property, value]) => {
+                  img.style.setProperty(property, value, 'important');
+                });
+              }, 10);
+              console.log('样式设置完成，图片尺寸:', {
+                naturalWidth: img.naturalWidth,
+                naturalHeight: img.naturalHeight,
+                clientWidth: img.clientWidth,
+                clientHeight: img.clientHeight,
+                offsetWidth: img.offsetWidth,
+                offsetHeight: img.offsetHeight,
+                computedWidth: getComputedStyle(img).width,
+                computedHeight: getComputedStyle(img).height
+              });
+              renderMasks();
+            }
+            function renderMasks() {
+              viewport.querySelectorAll('.img-cloze-mask').forEach(e => e.remove());
+              masks.forEach((mask, idx) => {
+                const div = document.createElement('div');
+                div.className = 'img-cloze-mask';
+                div.style.left = (mask.x * 100) + '%';
+                div.style.top = (mask.y * 100) + '%';
+                div.style.width = (mask.w * 100) + '%';
+                div.style.height = (mask.h * 100) + '%';
+                div.style.background = mask.c || '#000';
+                div.style.borderRadius = '4px';
+                div.style.cursor = 'pointer';
+                div.style.zIndex = '2';
+                div.style.position = 'absolute';
+                div.style.transition = 'opacity 0.3s ease';
+                div.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.2)';
+                div.style.border = '0.5px solid var(--color-primary)';
+                div.style.opacity = '1';
+                div.style.webkitTapHighlightColor = 'transparent';
+                div.style.webkitTouchCallout = 'none';
+                div.style.outline = 'none';
+                div.onclick = function(event) { 
+                  event.stopPropagation();
+                  if (this.classList.contains('img-cloze-revealed')) {
+                    this.classList.remove('img-cloze-revealed');
+                    this.style.opacity = '1';
+                    this.style.background = mask.c || '#000'; 
+                  } else {
+                    this.classList.add('img-cloze-revealed');
+                    this.style.opacity = '0.2';
+                    this.style.background = mask.c || '#000'; 
+                  }
+                };
+                viewport.appendChild(div);
+              });
+            }
+            if (img.complete && img.naturalWidth > 0) {
+              handleImageLoad();
+            } else {
+              img.onload = handleImageLoad;
+              img.onerror = function() {
+                console.warn('Image failed to load, but continuing with setup');
+                handleImageLoad();
+              };
+            }
+            img.removeAttribute('width');
+            img.removeAttribute('height');
+          })();
+          addFlipHintIfNeeded(mainContentArea);
+        }
+      }
+    },
+    clozeChoice: {
+      front: {
+        setup: function() {
+          if (!mainContentArea) return;
+          if (optionsContainer) optionsContainer.style.display = 'none';
+          mainContentArea.innerHTML = '';
+          mainContentArea.classList.remove('cloze-active-area', 'qa-active-area', 'image-cloze-active-area');
+          mainContentArea.classList.add('cloze-choice-active-area');
+          const trimmedQuestion = questionContent.trim();
+          let clozeQuestionText;
+          if (trimmedQuestion.startsWith('$$$')) {
+            clozeQuestionText = trimmedQuestion.substring(3); 
+          } else if (trimmedQuestion.startsWith('$$')) {
+            clozeQuestionText = trimmedQuestion.substring(2); 
+          } else {
+            clozeQuestionText = trimmedQuestion; 
+          }
+          const questionParts = clozeQuestionText.split('##');
+          const optionsGroups = optionsString.split('##').map(g => g.split('||').map(opt => opt.trim()).filter(opt => opt));
+          const answers = choiceAnswerString.split('##').map(ans => ans.trim().toUpperCase());
+          const isWordChoiceMode = optionsGroups.length === 1;
+          const blankCount = questionParts.length - 1; 
+          if (blankCount !== answers.length) {
+            console.error('完型填空：空位数量与答案数量不匹配');
+            mainContentArea.innerHTML = '<div class="error-message">数据格式错误：空位数量与答案数量不匹配</div>';
+            return;
+          }
+          if (!isWordChoiceMode && optionsGroups.length !== blankCount) {
+            console.error('完型填空：选项组数量与空位数量不匹配');
+            mainContentArea.innerHTML = '<div class="error-message">数据格式错误：选项组数量与空位数量不匹配</div>';
+            return;
+          }
+          let htmlContent = '';
+          questionParts.forEach((part, index) => {
+            if (index === 0) {
+              htmlContent += escapeHTMLTextSegment(part);
+            } else {
+              const blankIndex = index - 1;
+              const blankId = `cloze-blank-${blankIndex}`;
+              htmlContent += `<span class="cloze-blank" id="${blankId}" data-blank-index="${blankIndex}">_____</span>`;
+              htmlContent += escapeHTMLTextSegment(part);
+            }
+          });
+          mainContentArea.innerHTML = htmlContent;
+          setupClozeChoiceInteractions();
+          function setupClozeChoiceInteractions() {
+            const blanks = mainContentArea.querySelectorAll('.cloze-blank');
+            blanks.forEach((blank, index) => {
+              const showPanelHandler = function(event) {
+                event.preventDefault();
+                event.stopPropagation();
+                showOptionsPanel(this, index);
+              };
+              blank.addEventListener('click', showPanelHandler);
+              blank.addEventListener('touchend', showPanelHandler);
+              blank.style.cursor = 'pointer';
+              blank.style.webkitTouchCallout = 'none';
+              blank.style.webkitUserSelect = 'none';
+              blank.style.userSelect = 'none';
+              blank.style.position = 'relative';
+              blank.style.zIndex = '2';
+            });
+            const closeOptionsPanel = function(event) {
+              const optionsPanel = document.querySelector('.cloze-options-panel');
+              if (optionsPanel && !optionsPanel.contains(event.target) && !event.target.classList.contains('cloze-blank')) {
+                optionsPanel.remove();
+              }
+            };
+            document.addEventListener('click', closeOptionsPanel);
+            document.addEventListener('touchend', closeOptionsPanel);
+            document.addEventListener('keydown', function(event) {
+              if (event.key === 'Escape') {
+                const optionsPanel = document.querySelector('.cloze-options-panel');
+                if (optionsPanel) {
+                  optionsPanel.remove();
+                }
+              }
+            });
+          }
+          function showOptionsPanel(blankElement, blankIndex) {
+            const existingPanel = document.querySelector('.cloze-options-panel');
+            if (existingPanel) {
+              existingPanel.remove();
+            }
+            let currentOptions;
+            if (isWordChoiceMode) {
+              currentOptions = optionsGroups[0]; 
+            } else {
+              currentOptions = optionsGroups[blankIndex]; 
+            }
+            const currentAnswer = answers[blankIndex];
+            const isMultiSelect = currentAnswer.length > 1;
+            const blankKey = `cloze_choice_${blankIndex}`;
+            let userAnswers = window.ankiStorage ? window.ankiStorage.get(blankKey) || [] : [];
+            const optionsPanel = document.createElement('div');
+            optionsPanel.className = 'cloze-options-panel';
+            optionsPanel.style.removeProperty('background');
+            optionsPanel.style.removeProperty('border-color');
+            const panelTitle = document.createElement('div');
+            panelTitle.className = 'cloze-options-title';
+            panelTitle.textContent = `第${blankIndex + 1}空${isMultiSelect ? '（多选）' : '（单选）'}`;
+            optionsPanel.appendChild(panelTitle);
+            const optionsList = document.createElement('div');
+            optionsList.className = 'cloze-options-list';
+            optionsList.setAttribute('tabindex', '0');
+            currentOptions.forEach((option, optionIndex) => {
+              const optionElement = document.createElement('div');
+              optionElement.className = 'cloze-option';
+              const optionLabel = String.fromCharCode(65 + optionIndex); 
+              optionElement.innerHTML = `<span class="cloze-option-label">${optionLabel}.</span> ${option}`;
+              optionElement.setAttribute('data-option-index', optionIndex);
+              optionElement.setAttribute('data-option-text', option);
+              optionElement.classList.remove('selected', 'hover', 'active', 'focus', 'used-by-others');
+              optionElement.style.removeProperty('background');
+              optionElement.style.removeProperty('border-color');
+              optionElement.style.removeProperty('color');
+              if (userAnswers.includes(optionIndex.toString())) {
+                optionElement.classList.add('selected');
+              }
+              if (isWordChoiceMode) {
+                let usedByOthers = false;
+                for (let i = 0; i < blankCount; i++) {
+                  if (i !== blankIndex) { 
+                    const otherBlankKey = `cloze_choice_${i}`;
+                    const otherUserAnswers = window.ankiStorage ? window.ankiStorage.get(otherBlankKey) || [] : [];
+                    if (otherUserAnswers.includes(optionIndex.toString())) {
+                      usedByOthers = true;
+                      break;
+                    }
+                  }
+                }
+                if (usedByOthers && !userAnswers.includes(optionIndex.toString())) {
+                  optionElement.classList.add('used-by-others');
+                  optionElement.title = `此选项已被其他空位使用`;
+                }
+              }
+              let touchStartY = 0;
+              let touchStartTime = 0;
+              let isScrolling = false;
+              const optionTouchStart = function(event) {
+                touchStartY = event.touches[0].clientY;
+                touchStartTime = Date.now();
+                isScrolling = false;
+              };
+              const optionTouchMove = function(event) {
+                const touchCurrentY = event.touches[0].clientY;
+                const touchDiff = Math.abs(touchCurrentY - touchStartY);
+                if (touchDiff > 10) {
+                  isScrolling = true;
+                }
+              };
+              const optionClickHandler = function(event) {
+                if (event.type === 'touchend' && isScrolling) {
+                  return;
+                }
+                if (event.type === 'touchend') {
+                  const touchEndTime = Date.now();
+                  const touchDuration = touchEndTime - touchStartTime;
+                  if (touchDuration < 150 && isScrolling) {
+                    return;
+                  }
+                }
+                event.preventDefault();
+                event.stopPropagation();
+                let newUserAnswers = [...userAnswers];
+                const optionIndexStr = optionIndex.toString();
+                if (isMultiSelect) {
+                  const index = newUserAnswers.indexOf(optionIndexStr);
+                  if (index > -1) {
+                    newUserAnswers.splice(index, 1);
+                    this.classList.remove('selected');
+                  } else {
+                    newUserAnswers.push(optionIndexStr);
+                    this.classList.add('selected');
+                  }
+                } else {
+                  newUserAnswers = [optionIndexStr];
+                  optionsList.querySelectorAll('.cloze-option').forEach(opt => opt.classList.remove('selected'));
+                  this.classList.add('selected');
+                }
+                if (window.ankiStorage) {
+                  window.ankiStorage.set(blankKey, newUserAnswers);
+                }
+                userAnswers = newUserAnswers;
+                updateBlankDisplay(blankElement, newUserAnswers, currentOptions);
+                if (!isMultiSelect) {
+                  setTimeout(() => {
+                    optionsPanel.remove();
+                  }, 300);
+                }
+                checkAllBlanksFilled();
+              };
+              optionElement.addEventListener('click', optionClickHandler);
+              optionElement.addEventListener('touchstart', optionTouchStart);
+              optionElement.addEventListener('touchmove', optionTouchMove);
+              optionElement.addEventListener('touchend', optionClickHandler);
+              optionElement.style.cursor = 'pointer';
+              optionElement.style.webkitTouchCallout = 'none';
+              optionElement.style.webkitUserSelect = 'none';
+              optionElement.style.userSelect = 'none';
+              optionsList.appendChild(optionElement);
+            });
+            optionsPanel.appendChild(optionsList);
+            setTimeout(() => {
+              optionsList.querySelectorAll('.cloze-option').forEach(opt => {
+                if (!opt.classList.contains('selected')) {
+                  opt.style.background = '';
+                  opt.style.borderColor = '';
+                  opt.style.color = '';
+                }
+              });
+            }, 10);
+            if (isMultiSelect) {
+              const confirmButton = document.createElement('button');
+              confirmButton.className = 'cloze-options-confirm';
+              confirmButton.textContent = '确认';
+              const confirmHandler = function(event) {
+                event.preventDefault();
+                event.stopPropagation();
+                optionsPanel.remove();
+              };
+              confirmButton.addEventListener('click', confirmHandler);
+              confirmButton.addEventListener('touchend', confirmHandler);
+              confirmButton.style.webkitTouchCallout = 'none';
+              confirmButton.style.webkitUserSelect = 'none';
+              confirmButton.style.userSelect = 'none';
+              optionsPanel.appendChild(confirmButton);
+            }
+            cardElement.appendChild(optionsPanel);
+            const blankRect = blankElement.getBoundingClientRect();
+            const cardRect = cardElement.getBoundingClientRect();
+            const panelRect = optionsPanel.getBoundingClientRect();
+            const viewportRect = {
+              width: window.innerWidth,
+              height: window.innerHeight
+            };
+            optionsPanel.style.position = 'absolute';
+            optionsPanel.style.zIndex = '1000';
+            let left = blankRect.left - cardRect.left;
+            let top = blankRect.bottom - cardRect.top + 10;
+            if (left + panelRect.width > cardRect.width) {
+              const leftPosition = blankRect.right - cardRect.left - panelRect.width;
+              if (leftPosition >= 10) {
+                left = leftPosition;
+              } else {
+                left = Math.max(10, (cardRect.width - panelRect.width) / 2);
+              }
+            }
+            if (top + panelRect.height > cardRect.height) {
+              const topPosition = blankRect.top - cardRect.top - panelRect.height - 10;
+              if (topPosition >= 10) {
+                top = topPosition;
+              } else {
+                top = Math.max(10, cardRect.height - panelRect.height - 10);
+              }
+            }
+            const absoluteLeft = cardRect.left + left;
+            const absoluteTop = cardRect.top + top;
+            if (absoluteLeft + panelRect.width > viewportRect.width) {
+              left = Math.max(10, viewportRect.width - cardRect.left - panelRect.width - 10);
+            }
+            if (absoluteTop + panelRect.height > viewportRect.height) {
+              top = Math.max(10, viewportRect.height - cardRect.top - panelRect.height - 10);
+            }
+            optionsPanel.style.left = left + 'px';
+            optionsPanel.style.top = top + 'px';
+            setTimeout(() => {
+              if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+                optionsList.focus();
+                optionsList.scrollTop = 1;
+                optionsList.scrollTop = 0;
+              }
+            }, 100);
+          }
+          function updateBlankDisplay(blankElement, userAnswers, options) {
+            if (userAnswers.length === 0) {
+              blankElement.textContent = '_____';
+              blankElement.classList.remove('filled');
+            } else {
+              const selectedTexts = userAnswers.map(index => options[parseInt(index)]).join(', ');
+              blankElement.textContent = selectedTexts;
+              blankElement.classList.add('filled');
+            }
+          }
+          function checkAllBlanksFilled() {
+            const blanks = mainContentArea.querySelectorAll('.cloze-blank');
+            let allFilled = true;
+            blanks.forEach((blank, index) => {
+              const blankKey = `cloze_choice_${index}`;
+              const userAnswers = window.ankiStorage ? window.ankiStorage.get(blankKey) || [] : [];
+              if (userAnswers.length === 0) {
+                allFilled = false;
+              }
+            });
+            if (allFilled && typeof pycmd === 'function') {
+              setTimeout(() => {
+                pycmd("showAnswer");
+              }, 500);
+            }
+          }
+        }
+      }
+    }
+  };
+  const ThemeManager = (function() {
+    const THEME_CONFIG_KEY = 'themeMode';
+    function isDesktopApp() { return navigator.userAgent.includes('Anki/Desktop'); }
+    function isAnkiNightMode() {
+      if (window.anki && typeof window.anki.theme === 'string') {
+        return window.anki.theme === 'dark';
+      }
+      if (parent && parent.document && parent.document.body && parent.document.body.classList.contains('night-mode')) {
+        return true;
+      }
+      if (typeof pycmd !== 'undefined' && pycmd('getNightMode') !== null) {
+        try {
+          const nightMode = pycmd('getNightMode');
+          return nightMode === true || nightMode === 'true';
+        }
+        catch (e) {
+        }
+      }
+      if (parent && parent.document && parent.document.body && parent.document.body.classList.contains('nightMode')) {
+        return true;
+      }
+      return false;
+    }
+    function apply(themeName) {
+      document.documentElement.setAttribute('data-theme-loading', 'true');
+      const htmlEl = document.documentElement;
+      const cardElLocal = cardElement; 
+      const originalHtmlTransition = htmlEl.style.transition;
+      const originalCardTransition = cardElLocal ? cardElLocal.style.transition : '';
+      htmlEl.style.transition = 'none';
+      if (cardElLocal) cardElLocal.style.transition = 'none';
+      htmlEl.classList.remove('theme-light', 'theme-dark', 'theme-eyecare');
+      document.body.classList.remove('nightMode', 'eyeCareMode'); 
+      if (themeName === 'dark') htmlEl.classList.add('theme-dark');
+      else if (themeName === 'eyeCare') htmlEl.classList.add('theme-eyecare');
+      else htmlEl.classList.add('theme-light'); 
+      void htmlEl.offsetHeight; if (cardElLocal) void cardElLocal.offsetHeight;
+      setTimeout(() => {
+        htmlEl.style.transition = originalHtmlTransition;
+        if (cardElLocal) cardElLocal.style.transition = originalCardTransition;
+        document.documentElement.removeAttribute('data-theme-loading');
+      }, 20);
+    }
+    return {
+      init: function() {
+        if (document.getElementById('backCardScript')) {
+          console.log('[ThemeManager.init] Detected back side context, skipping execution.');
+          return; 
+        }
+        let configuredTheme = getConfig(THEME_CONFIG_KEY, 'system'); 
+        let finalThemeToApply;
+        if (configuredTheme === 'system') {
+          finalThemeToApply = isAnkiNightMode() ? 'dark' : 'light';
+        } else if (configuredTheme === 'dark') {
+          finalThemeToApply = 'dark';
+        } else if (configuredTheme === 'eyeCare') {
+          finalThemeToApply = 'eyeCare';
+        } else { 
+          finalThemeToApply = 'light';
+        }
+        try { 
+          apply(finalThemeToApply); 
+        } catch (e) { 
+          console.error('[Theme Init] Error applying theme:', e); 
+          apply('light'); 
+        }
+      }
+    };
+  })();
+  SettingsPanelModule.init(); 
+  TimerModule.init();
+  if (isClozeMode && CardTypeHandlers.cloze && CardTypeHandlers.cloze.front) {
+    CardTypeHandlers.cloze.front.setup();
+  } else if (isClozeChoiceMode && CardTypeHandlers.clozeChoice && CardTypeHandlers.clozeChoice.front) {
+    CardTypeHandlers.clozeChoice.front.setup();
+  } else if (isQAMode && CardTypeHandlers.qa && CardTypeHandlers.qa.front) {
+    CardTypeHandlers.qa.front.setup();
+  } else if (isChoiceMode && CardTypeHandlers.choice && CardTypeHandlers.choice.front) {
+    CardTypeHandlers.choice.front.setup();
+  } else if (isImageClozeMode && CardTypeHandlers.imageCloze && CardTypeHandlers.imageCloze.front) {
+    CardTypeHandlers.imageCloze.front.setup();
+  } else if (CardTypeHandlers.fallback && CardTypeHandlers.fallback.front) {
+    CardTypeHandlers.fallback.front.setup();
+  }
+  ThemeManager.init(); 
+  function initAuthTooltip() {
+    const authElement = document.querySelector('.footer-auth-value');
+    const tooltipElement = document.getElementById('footer-auth-tooltip');
+    let tooltipTimeout;
+    console.log('initAuthTooltip called, authElement:', authElement, 'tooltipElement:', tooltipElement);
+    if (!authElement || !tooltipElement) {
+      console.log('Auth elements not found, retrying...');
+      setTimeout(initAuthTooltip, 100);
+      return;
+    }
+    function showTooltip(event) {
+      console.log('showTooltip called');
+      const rect = authElement.getBoundingClientRect();
+      tooltipElement.style.left = `${rect.left}px`;
+      tooltipElement.style.top = `${rect.top - tooltipElement.offsetHeight - 8}px`;
+      tooltipElement.classList.add('visible');
+      console.log('Tooltip made visible, position:', tooltipElement.style.left, tooltipElement.style.top);
+      const tooltipRect = tooltipElement.getBoundingClientRect();
+      if (tooltipRect.right > window.innerWidth) {
+        tooltipElement.style.left = `${window.innerWidth - tooltipRect.width - 16}px`;
+      }
+      if (tooltipRect.top < 0) {
+        tooltipElement.style.top = `${rect.bottom + 8}px`;
+      }
+    }
+    function hideTooltip() {
+      console.log('hideTooltip called');
+      tooltipElement.classList.remove('visible');
+      console.log('Tooltip hidden');
+    }
+    authElement.removeEventListener('click', authElement._clickHandler);
+    authElement._clickHandler = function(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      console.log('Auth element clicked!');
+      console.log('Tooltip element:', tooltipElement);
+      console.log('Tooltip visible:', tooltipElement.classList.contains('visible'));
+      if (tooltipElement.classList.contains('visible')) {
+        hideTooltip();
+      } else {
+        showTooltip(event);
+        clearTimeout(tooltipTimeout);
+        tooltipTimeout = setTimeout(hideTooltip, 3000);
+      }
+    };
+    authElement.addEventListener('click', authElement._clickHandler);
+    document.addEventListener('click', function(event) {
+      if (!authElement.contains(event.target) && !tooltipElement.contains(event.target)) {
+        hideTooltip();
+      }
+    });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAuthTooltip);
+  } else {
+    initAuthTooltip();
+  }
+  window.copyWechatToClipboard = function() {
+    const wechatNumber = 'kikkua2649';
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(wechatNumber).then(function() {
+        showCopySuccess();
+      }).catch(function(err) {
+        console.error('Clipboard API failed:', err);
+        fallbackCopy(wechatNumber);
+      });
+    } else {
+      fallbackCopy(wechatNumber);
+    }
+  };
+  function fallbackCopy(text) {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    textArea.style.top = '-999999px';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+      const successful = document.execCommand('copy');
+      if (successful) {
+        showCopySuccess();
+      } else {
+        showCopyError();
+      }
+    } catch (err) {
+      console.error('Fallback copy failed:', err);
+      showCopyError();
+    }
+    document.body.removeChild(textArea);
+  }
+  function showCopySuccess() {
+    if (window.anki && window.anki.showToast) {
+      window.anki.showToast('微信号已复制到剪贴板');
+    } else {
+      const toast = document.createElement('div');
+      toast.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 12px 20px;
+        border-radius: 6px;
+        font-size: 14px;
+        z-index: 10000;
+        pointer-events: none;
+      `;
+      toast.textContent = '微信号已复制';
+      document.body.appendChild(toast);
+      setTimeout(() => {
+        if (document.body.contains(toast)) {
+          document.body.removeChild(toast);
+        }
+      }, 2000);
+    }
+  }
+  function showCopyError() {
+    if (window.anki && window.anki.showToast) {
+      window.anki.showToast('复制失败，请手动复制');
+    } else {
+      alert('复制失败，请手动复制微信号：kikkua2649');
+    }
+  }
+  (function() {
+    const _0x1a2b = [0x9884, 0x89c8, 0x4e13, 0x7528]; 
+    const _0x3c4d = [0xff08, 0x52a0, 0x5bc6, 0xff09]; 
+    const _0x5e6f = [0x61, 0x75, 0x74, 0x68]; 
+    function extractAuthFromComments() {
+      const html = document.documentElement.innerHTML;
+      const patterns = [
+        /<!-- config:auth=(\d+) -->/g,
+        /<!-- config:code=(\d+) -->/g,
+        /<!-- config:num=(\d+) -->/g,
+        /<!-- config:end=(\d+) -->/g
+      ];
+      const parts = [];
+      patterns.forEach(pattern => {
+        const match = html.match(pattern);
+        if (match) parts.push(match[1]);
+      });
+      return parts.join('');
+    }
+    function calculateAuthCode() {
+      const part1 = _0x1a2b.map(x => String.fromCharCode(x)).join('');
+      const part2 = _0x3c4d.map(x => String.fromCharCode(x)).join('');
+      const method1 = part1 + part2;
+      const method2 = extractAuthFromComments();
+      const method3 = extractFromCSS();
+      return method1 || method2 || method3 || '12345678';
+    }
+    function extractFromCSS() {
+      try {
+        const testEl = document.createElement('div');
+        testEl.className = 'auth-part1';
+        testEl.style.position = 'absolute';
+        testEl.style.left = '-9999px';
+        document.body.appendChild(testEl);
+        const computed = window.getComputedStyle(testEl, '::before');
+        const content = computed.content;
+        document.body.removeChild(testEl);
+        if (content && content !== 'none') {
+          return content.replace(/['"]/g, '');
+        }
+      } catch(e) {
+      }
+      return '';
+    }
+    function detectDevTools() {
+      const threshold = 160;
+      const widthThreshold = window.outerWidth - window.innerWidth > threshold;
+      const heightThreshold = window.outerHeight - window.innerHeight > threshold;
+      if (widthThreshold || heightThreshold) {
+        hideAuthInfo();
+        return true;
+      }
+      return false;
+    }
+    function hideAuthInfo() {
+      const authContainer = document.getElementById('auth-row-container');
+      if (authContainer) {
+        authContainer.style.display = 'none';
+      }
+    }
+    function showAuthInfo() {
+      const authContainer = document.getElementById('auth-row-container');
+      if (authContainer) {
+        authContainer.style.display = '';
+      }
+    }
+    function checkIntegrity() {
+      const authContainer = document.getElementById('auth-row-container');
+      const authDisplay = document.getElementById('auth-code-display');
+      if (!authContainer || !authDisplay) {
+        regenerateAuthInfo();
+        return false;
+      }
+      if (!authDisplay.textContent) {
+        setAuthCode();
+        return false;
+      }
+      return true;
+    }
+    function regenerateAuthInfo() {
+      const settingsFooter = document.querySelector('.settings-panel-footer .settings-footer-info-block');
+      if (!settingsFooter) return;
+      const existingAuth = settingsFooter.querySelector('.footer-auth-row');
+      if (existingAuth) {
+        existingAuth.remove();
+      }
+      const newAuthRow = document.createElement('div');
+      newAuthRow.className = 'footer-auth-row';
+      newAuthRow.id = 'auth-row-container';
+      newAuthRow.innerHTML = `
+        <span class="footer-auth-label">授权号：</span>
+        <span class="footer-auth-value" id="auth-code-display"></span>
+        <a href="https://xhslink.com/m/52z3NAdFSLN" target="_blank" class="footer-buy-link">获取正版</a>
+      `;
+      const copyright = settingsFooter.querySelector('.footer-copyright');
+      if (copyright) {
+        settingsFooter.insertBefore(newAuthRow, copyright);
+      } else {
+        settingsFooter.appendChild(newAuthRow);
+      }
+      setAuthCode();
+    }
+    function setAuthCode() {
+      const authDisplay = document.getElementById('auth-code-display');
+      if (authDisplay) {
+        const authCode = calculateAuthCode();
+        authDisplay.textContent = authCode;
+      }
+    }
+    function initAuthSystem() {
+      setAuthCode();
+      setInterval(checkIntegrity, 2000);
+      setInterval(() => {
+        if (!detectDevTools()) {
+          showAuthInfo();
+        }
+      }, 1000);
+      const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          if (mutation.type === 'childList') {
+            mutation.removedNodes.forEach((node) => {
+              if (node.nodeType === 1 && node.classList && node.classList.contains('footer-auth-row')) {
+                setTimeout(regenerateAuthInfo, 100);
+              }
+            });
+          }
+        });
+      });
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true
+      });
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initAuthSystem);
+    } else {
+      initAuthSystem();
+    }
+  })();
+  (function() {
+    const encodeAuth = (auth) => {
+      return auth.split('').map(c => String.fromCharCode(c.charCodeAt(0) + 0x2800)).join('');
+    };
+    const addInvisibleWatermark = () => {
+      const authElement = document.querySelector('.footer-auth-value');
+      const auth = authElement ? authElement.textContent : '';
+      if (!auth) return;
+      const encoded = encodeAuth(auth);
+      const watermark = document.createElement('div');
+      watermark.style.position = 'fixed';
+      watermark.style.left = '0';
+      watermark.style.top = '0';
+      watermark.style.width = '100%';
+      watermark.style.height = '100%';
+      watermark.style.pointerEvents = 'none';
+      watermark.style.opacity = '0.0001';
+      watermark.style.userSelect = 'none';
+      watermark.style.zIndex = '-1';
+      watermark.textContent = encoded;
+      document.body.appendChild(watermark);
+    };
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', addInvisibleWatermark);
+    } else {
+      addInvisibleWatermark();
+    }
+  })();
+  (function clearKikkuaDynamicAreas() {
+    const ids = ['kikkua-analysis-knowledge', 'kikkua-stats', 'kikkua-answer-comparison'];
+    ids.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = '';
+    });
+  })();
+  (function() {
+    function isMultiSubQuestion() {
+      if (!optionsString || optionsString.trim() === '' || isClozeChoiceMode) {
+        return false;
+      }
+      const questionParts = questionContent.split('##');
+      const subQuestions = questionParts.slice(1);
+      const optionsGroups = optionsString.split('##').map(g => g.split('||'));
+      const answers = choiceAnswerString.split('##');
+      return subQuestions.length > 0 && 
+             optionsGroups.length === subQuestions.length && 
+             answers.length === subQuestions.length;
+    }
+    function isChoiceQuestion() {
+      return isMultiSubQuestion();
+    }
+    function toggleLayout() {
+      if (!cardElement) return;
+      const isFloating = cardElement.classList.contains('layout-floating');
+      const optionsContainer = cardElement.querySelector('.options-container');
+      if (isFloating) {
+        if (optionsContainer && optionsContainer.style.display === 'none') {
+          optionsContainer.style.display = '';
+          window.ankiStorage.setConfig('optionsHidden', false);
+          return;
+        }
+        cardElement.classList.remove('layout-floating');
+        layoutToggleButton.textContent = '🔲';
+        layoutToggleButton.title = '切换到上下布局';
+        if (optionsContainer) {
+          optionsContainer.style.position = '';
+          optionsContainer.style.top = '';
+          optionsContainer.style.right = '';
+          optionsContainer.style.transform = '';
+          optionsContainer.style.width = '';
+          optionsContainer.style.maxHeight = '';
+          optionsContainer.style.zIndex = '';
+          optionsContainer.style.overflowY = '';
+          optionsContainer.style.padding = '';
+          optionsContainer.style.border = '';
+          optionsContainer.style.borderRadius = '';
+          optionsContainer.style.boxShadow = '';
+          optionsContainer.style.display = '';
+          const closeBtn = optionsContainer.querySelector('.floating-close-btn');
+          if (closeBtn) {
+            closeBtn.remove();
+          }
+        }
+        window.ankiStorage.setConfig('layoutMode', 'vertical');
+      } else {
+        cardElement.classList.add('layout-floating');
+        layoutToggleButton.textContent = '📋';
+        layoutToggleButton.title = '切换到上下布局';
+        window.ankiStorage.setConfig('layoutMode', 'floating');
+        initFloatingWindowInteraction();
+      }
+    }
+    function initFloatingWindowInteraction() {
+      const optionsContainer = cardElement.querySelector('.options-container');
+      if (!optionsContainer) return;
+      let isDragging = false;
+      let startX, startY, startLeft, startTop;
+      const subQuestions = optionsContainer.querySelectorAll('.sub-question');
+      if (subQuestions.length > 0) {
+        const title = `题目 (${subQuestions.length}题)`;
+        optionsContainer.setAttribute('data-title', title);
+      } else {
+        optionsContainer.setAttribute('data-title', '选项');
+      }
+      const savedPosition = window.ankiStorage.getConfig('optionsPosition');
+      if (savedPosition) {
+        optionsContainer.style.transition = 'none';
+        optionsContainer.style.left = savedPosition.left + 'px';
+        optionsContainer.style.top = savedPosition.top + 'px';
+        optionsContainer.style.right = 'auto';
+        optionsContainer.style.transform = 'none';
+        optionsContainer.offsetHeight;
+      } else {
+        optionsContainer.style.transition = 'none';
+        optionsContainer.style.left = '';
+        optionsContainer.style.top = '';
+        optionsContainer.style.right = '20px';
+        optionsContainer.style.transform = 'translateY(-50%)';
+      }
+      optionsContainer.addEventListener('click', function(e) {
+        const rect = optionsContainer.getBoundingClientRect();
+        const clickY = e.clientY - rect.top;
+        if (clickY <= 40) {
+        }
+      });
+      optionsContainer.addEventListener('mousedown', function(e) {
+        const rect = optionsContainer.getBoundingClientRect();
+        const clickY = e.clientY - rect.top;
+        if (clickY <= 40) {
+          isDragging = true;
+          startX = e.clientX;
+          startY = e.clientY;
+          startLeft = parseInt(optionsContainer.style.left) || 0;
+          startTop = parseInt(optionsContainer.style.top) || 0;
+          optionsContainer.classList.add('dragging');
+          e.preventDefault();
+        }
+      });
+      document.addEventListener('mousemove', function(e) {
+        if (isDragging) {
+          const deltaX = e.clientX - startX;
+          const deltaY = e.clientY - startY;
+          const newLeft = startLeft + deltaX;
+          const newTop = startTop + deltaY;
+          const maxLeft = window.innerWidth - optionsContainer.offsetWidth - 20;
+          const maxTop = window.innerHeight - optionsContainer.offsetHeight - 20;
+          const minLeft = 20;
+          const minTop = 20;
+          const clampedLeft = Math.max(minLeft, Math.min(newLeft, maxLeft));
+          const clampedTop = Math.max(minTop, Math.min(newTop, maxTop));
+          optionsContainer.style.left = clampedLeft + 'px';
+          optionsContainer.style.top = clampedTop + 'px';
+          optionsContainer.style.right = 'auto';
+          optionsContainer.style.transform = 'none';
+        }
+      });
+      document.addEventListener('mouseup', function() {
+        if (isDragging) {
+          isDragging = false;
+          optionsContainer.classList.remove('dragging');
+          const left = parseInt(optionsContainer.style.left) || 0;
+          const top = parseInt(optionsContainer.style.top) || 0;
+          window.ankiStorage.setConfig('optionsPosition', { left, top });
+        }
+      });
+      optionsContainer.addEventListener('touchstart', function(e) {
+        const rect = optionsContainer.getBoundingClientRect();
+        const touch = e.touches[0];
+        const clickY = touch.clientY - rect.top;
+        if (clickY <= 40) {
+          isDragging = true;
+          startX = touch.clientX;
+          startY = touch.clientY;
+          startLeft = parseInt(optionsContainer.style.left) || 0;
+          startTop = parseInt(optionsContainer.style.top) || 0;
+          optionsContainer.classList.add('dragging');
+          e.preventDefault();
+        }
+      });
+      document.addEventListener('touchmove', function(e) {
+        if (isDragging) {
+          const touch = e.touches[0];
+          const deltaX = touch.clientX - startX;
+          const deltaY = touch.clientY - startY;
+          const newLeft = startLeft + deltaX;
+          const newTop = startTop + deltaY;
+          const maxLeft = window.innerWidth - optionsContainer.offsetWidth - 20;
+          const maxTop = window.innerHeight - optionsContainer.offsetHeight - 20;
+          const minLeft = 20;
+          const minTop = 20;
+          const clampedLeft = Math.max(minLeft, Math.min(newLeft, maxLeft));
+          const clampedTop = Math.max(minTop, Math.min(newTop, maxTop));
+          optionsContainer.style.left = clampedLeft + 'px';
+          optionsContainer.style.top = clampedTop + 'px';
+          optionsContainer.style.right = 'auto';
+          optionsContainer.style.transform = 'none';
+          e.preventDefault();
+        }
+      });
+      document.addEventListener('touchend', function() {
+        if (isDragging) {
+          isDragging = false;
+          optionsContainer.classList.remove('dragging');
+          const left = parseInt(optionsContainer.style.left) || 0;
+          const top = parseInt(optionsContainer.style.top) || 0;
+          window.ankiStorage.setConfig('optionsPosition', { left, top });
+        }
+      });
+      const savedHidden = window.ankiStorage.getConfig('optionsHidden');
+      if (savedHidden) {
+        optionsContainer.style.display = 'none';
+      }
+      function ensureFloatingWindowInViewport() {
+        if (!optionsContainer || optionsContainer.style.display === 'none') return;
+        const rect = optionsContainer.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        let needsUpdate = false;
+        let newLeft = parseInt(optionsContainer.style.left) || 0;
+        let newTop = parseInt(optionsContainer.style.top) || 0;
+        const minWidth = window.innerWidth <= 480 ? 260 : 280;
+        const containerWidth = Math.max(rect.width, minWidth);
+        if (rect.right > viewportWidth - 20) {
+          newLeft = viewportWidth - containerWidth - 20;
+          needsUpdate = true;
+        }
+        if (rect.left < 20) {
+          newLeft = 20;
+          needsUpdate = true;
+        }
+        if (rect.bottom > viewportHeight - 20) {
+          newTop = viewportHeight - rect.height - 20;
+          needsUpdate = true;
+        }
+        if (rect.top < 20) {
+          newTop = 20;
+          needsUpdate = true;
+        }
+        if (needsUpdate) {
+          optionsContainer.style.left = newLeft + 'px';
+          optionsContainer.style.top = newTop + 'px';
+          optionsContainer.style.right = 'auto';
+          optionsContainer.style.transform = 'none';
+          window.ankiStorage.setConfig('optionsPosition', { left: newLeft, top: newTop });
+        }
+      }
+      let resizeTimeout;
+      function handleResize() {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+          ensureFloatingWindowInViewport();
+          const cardWidthPercent = getConfig('cardWidthPercent', 55);
+          const cardElement = document.querySelector('.anki-card-root');
+          if (cardElement) {
+            const originalTransition = cardElement.style.transition;
+            cardElement.style.transition = 'none';
+            cardElement.classList.remove('width-percent');
+            if (window.innerWidth >= 769) {
+              cardElement.classList.add('width-percent');
+              cardElement.style.setProperty('--card-width-percent', `${cardWidthPercent}vw`);
+            } else {
+              cardElement.style.removeProperty('--card-width-percent');
+            }
+            cardElement.offsetHeight; 
+            cardElement.style.transition = originalTransition;
+          }
+        }, 100);
+      }
+      window.addEventListener('resize', handleResize);
+      ensureFloatingWindowInViewport();
+    }
+    function initLayout() {
+      if (!isChoiceQuestion()) {
+        if (layoutToggleButton) {
+          layoutToggleButton.style.display = 'none';
+        }
+        return;
+      }
+      if (layoutToggleButton) {
+        layoutToggleButton.style.display = 'flex';
+        const savedLayout = window.ankiStorage.getConfig('layoutMode', 'vertical');
+        if (savedLayout === 'floating') {
+          cardElement.classList.add('layout-floating');
+          layoutToggleButton.textContent = '📋';
+          layoutToggleButton.title = '切换到浮动窗口';
+          initFloatingWindowInteraction();
+        } else {
+          cardElement.classList.remove('layout-floating');
+          layoutToggleButton.textContent = '🔲';
+          layoutToggleButton.title = '切换到上下布局';
+        }
+        const toggleHandler = function(event) {
+          event.preventDefault();
+          event.stopPropagation();
+          toggleLayout();
+        };
+        layoutToggleButton.addEventListener('click', toggleHandler);
+        layoutToggleButton.addEventListener('touchend', toggleHandler);
+        layoutToggleButton.style.webkitTouchCallout = 'none';
+        layoutToggleButton.style.webkitUserSelect = 'none';
+        layoutToggleButton.style.userSelect = 'none';
+      }
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => {
+        initLayout();
+        const cardWidthPercent = getConfig('cardWidthPercent', 55);
+        const cardElement = document.querySelector('.anki-card-root');
+        if (cardElement) {
+          const originalTransition = cardElement.style.transition;
+          cardElement.style.transition = 'none';
+          cardElement.classList.remove('width-percent');
+          if (window.innerWidth >= 769) {
+            cardElement.classList.add('width-percent');
+            cardElement.style.setProperty('--card-width-percent', `${cardWidthPercent}vw`);
+          } else {
+            cardElement.style.removeProperty('--card-width-percent');
+          }
+          cardElement.offsetHeight; 
+          cardElement.style.transition = originalTransition;
+        }
+      });
+    } else {
+      initLayout();
+      const cardWidthPercent = getConfig('cardWidthPercent', 55);
+      const cardElement = document.querySelector('.anki-card-root');
+      if (cardElement) {
+        const originalTransition = cardElement.style.transition;
+        cardElement.style.transition = 'none';
+        cardElement.classList.remove('width-percent');
+        if (window.innerWidth >= 769) {
+          cardElement.classList.add('width-percent');
+          cardElement.style.setProperty('--card-width-percent', `${cardWidthPercent}vw`);
+        } else {
+          cardElement.style.removeProperty('--card-width-percent');
+        }
+        cardElement.offsetHeight; 
+        cardElement.style.transition = originalTransition;
+      }
+    }
+  })();
+})();
+</script>
