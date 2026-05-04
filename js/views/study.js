@@ -142,7 +142,8 @@ function closeSidebar() {
 
 function frontBody(html) {
     const m = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
-    return m ? m[1] : html;
+    const body = m ? m[1] : html;
+    return body.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
 }
 
 function buildCardHTML(state) {
