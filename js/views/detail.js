@@ -1,9 +1,10 @@
 import { $, esc } from '../utils.js';
 import { ICONS } from '../storage.js';
-import { dataLoader } from '../data-loader.js';
+import { dataLoader, preloadDeck } from '../data-loader.js';
 import { mdToHtml } from '../md.js';
 import { setPageMeta } from '../seo.js';
 import { getDecks } from './decks.js';
+import { navigate } from '../navigation.js';
 import { UI, ROUTES } from '../config.js';
 
 export async function renderDeckDetail(deckName) {
@@ -44,10 +45,10 @@ export async function renderDeckDetail(deckName) {
                 </div>
                 ${deck.detail ? `<div class="detail-body">${mdToHtml(deck.detail)}</div>` : ''}
                 <div class="detail-actions">
-                    <a href="/${ROUTES.study}${encodeURIComponent(deck.name)}" class="btn-primary">
+                    <button class="btn-primary" id="startStudyBtn">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
                         ${UI.detail.startStudy}
-                    </a>
+                    </button>
                     ${deck.purchaseUrl ? `
                     <div class="detail-sep">${UI.detail.or}</div>
                     <a href="${deck.purchaseUrl}" target="_blank" rel="noopener" class="purchase-link">${UI.detail.purchase}</a>` : ''}
@@ -55,4 +56,17 @@ export async function renderDeckDetail(deckName) {
             </div>
         </div>
     `;
+
+    const studyBtn = $('#startStudyBtn');
+    studyBtn.addEventListener('click', async () => {
+        studyBtn.disabled = true;
+        studyBtn.innerHTML = `<span style="opacity:0.7;">⏳ 加载数据…</span>`;
+        try {
+            await preloadDeck(deck.name);
+            navigate(`/${ROUTES.study}${encodeURIComponent(deck.name)}`);
+        } catch {
+            studyBtn.disabled = false;
+            studyBtn.innerHTML = `${UI.detail.startStudy}`;
+        }
+    });
 }

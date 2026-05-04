@@ -2,8 +2,27 @@ import { storage, sessionCache } from './storage.js';
 import { wrapWithCSS } from './card.js';
 import { DATA_PATHS, DEFAULTS } from './config.js';
 
+const _preloaded = new Map();
+
+export function preloadDeck(deckName) {
+    if (_preloaded.has(deckName)) return _preloaded.get(deckName);
+    const promise = dataLoader._loadDeck(deckName).then(data => { _preloaded.set(deckName, data); return data; });
+    _preloaded.set(deckName, promise);
+    return promise;
+}
+
 export class DataLoader {
     async loadDeck(deckName, { template: templateName = '', chapterField = DEFAULTS.chapterField } = {}) {
+        if (_preloaded.has(deckName)) {
+            const data = _preloaded.get(deckName);
+            _preloaded.delete(deckName);
+            if (data.then) return data; // was a promise, wait for it
+            return data;
+        }
+        return this._loadDeck(deckName, { template: templateName, chapterField });
+    }
+
+    async _loadDeck(deckName, { template: templateName = '', chapterField = DEFAULTS.chapterField } = {}) {
         const basePath = DATA_PATHS.deckData(deckName);
         try {
             const csvResp = await fetch(basePath).catch(() => null);
