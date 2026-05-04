@@ -205,6 +205,7 @@ body {
     .tpl-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
     .deck-list-view, .deck-detail-view { display: none !important; }
     .deck-list-view.mob-show, .deck-detail-view.mob-show { display: block !important; }
+    .mob-back { display: inline-flex; }
 }
 </style>
 </head>
@@ -273,7 +274,7 @@ body {
                 </div>
                 <div class="deck-detail-view" id="deckDetailView">
                 <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
-                    <button class="btn btn-secondary btn-sm" onclick="showDeckList()">← 返回</button>
+                    <button class="btn btn-secondary btn-sm mob-back" onclick="showDeckList()">← 返回</button>
                     <span style="font-size:13px;font-weight:600;color:var(--text2);">编辑牌组</span>
                 </div>
                 <div class="deck-edit-panel" id="deckEditPanel"></div>
