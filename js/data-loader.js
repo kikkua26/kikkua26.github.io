@@ -9,7 +9,7 @@ export class DataLoader {
 
         const basePath = DATA_PATHS.deckData(deckName);
         try {
-            const csvResp = await fetch(basePath).catch(() => null);
+            const csvResp = await fetch(basePath, { cache: 'no-cache' }).catch(() => null);
             let template = { front: DEFAULTS.templateFront, back: DEFAULTS.templateBack };
             if (templateName) template = await this.loadTemplate(templateName);
 
@@ -21,7 +21,7 @@ export class DataLoader {
                 records = parsed.records;
             }
             const result = { template, records, fields: csvFields, chapterField };
-            sessionCache.set('deck_' + deckName, result);
+            sessionCache.set('deck_' + deckName, result, 300000);
             return result;
         } catch (e) {
             console.error('Failed to load deck:', e);
@@ -83,7 +83,7 @@ export class DataLoader {
 
     async discoverDecks() {
         try {
-            const response = await fetch(DATA_PATHS.index);
+            const response = await fetch(DATA_PATHS.index, { cache: 'no-cache' });
             if (!response.ok) return [];
             const entries = await response.json();
             const decks = [];
