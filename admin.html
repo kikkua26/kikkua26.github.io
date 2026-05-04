@@ -407,7 +407,7 @@ function switchSection(name) {
     const titles = { dashboard: '📊 仪表盘', decks: '📋 牌组', templates: '🎨 模板' };
     $('#pageTitle').textContent = titles[name] || name;
     if (window.innerWidth <= 767) closeSidebar();
-    if (name === 'decks') renderDeckList();
+    if (name === 'decks') { renderDeckList(); if (window.innerWidth <= 767) { document.getElementById('deckListView').classList.add('mob-show'); document.getElementById('deckDetailView').classList.remove('mob-show'); } }
     if (name === 'templates') renderTplGrid();
 }
 $$('.nav-item').forEach(n => n.addEventListener('click', () => switchSection(n.dataset.section)));
