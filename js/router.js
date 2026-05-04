@@ -7,27 +7,33 @@ import { setRouteHandler } from './navigation.js';
 import { ROUTES, SITE } from './config.js';
 
 async function handleRoute() {
-    let path = location.pathname;
-    if (path.startsWith('/')) path = path.slice(1);
-    let query = location.search;
-    if (query.startsWith('?')) query = query.slice(1);
-    if (path.endsWith('/')) path = path.slice(0, -1);
+    try {
+        let path = location.pathname;
+        if (path.startsWith('/')) path = path.slice(1);
+        let query = location.search;
+        if (query.startsWith('?')) query = query.slice(1);
+        if (path.endsWith('/')) path = path.slice(0, -1);
 
-    if (path === ROUTES.home) {
-        setPageMeta('知识卡片', SITE.description);
-        renderHome();
-    } else if (path === ROUTES.decks) {
-        const tag = query.startsWith('tag=') ? decodeURIComponent(query.slice(4)) : '';
-        await renderDeckList(tag);
-    } else if (path.startsWith(ROUTES.deckDetail)) {
-        const name = decodeURIComponent(path.slice(ROUTES.deckDetail.length));
-        await renderDeckDetail(name);
-    } else if (path.startsWith(ROUTES.study)) {
-        const name = decodeURIComponent(path.slice(ROUTES.study.length));
-        renderStudy(name);
-    } else {
+        if (path === ROUTES.home) {
+            setPageMeta('知识卡片', SITE.description);
+            renderHome();
+        } else if (path === ROUTES.decks) {
+            const tag = query.startsWith('tag=') ? decodeURIComponent(query.slice(4)) : '';
+            await renderDeckList(tag);
+        } else if (path.startsWith(ROUTES.deckDetail)) {
+            const name = decodeURIComponent(path.slice(ROUTES.deckDetail.length));
+            await renderDeckDetail(name);
+        } else if (path.startsWith(ROUTES.study)) {
+            const name = decodeURIComponent(path.slice(ROUTES.study.length));
+            renderStudy(name);
+        } else {
+            history.pushState(null, '', '/');
+            handleRoute();
+        }
+    } catch (e) {
+        console.error('Route error:', e);
         history.pushState(null, '', '/');
-        handleRoute();
+        renderHome();
     }
 }
 
