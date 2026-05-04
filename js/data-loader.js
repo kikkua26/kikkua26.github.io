@@ -66,42 +66,38 @@ export class DataLoader {
     parseCSV(csvText) {
         const text = csvText.replace(/^﻿/, '').trim();
         if (!text) return { fields: [], records: [] };
-        // 按换行分割，引号平衡合并跨行字段
-        const rawLines = text.replace(/\r/g, '').split('\n');
-        const merged = [];
-        let buf = '';
-        for (const line of rawLines) {
-            buf = buf ? buf + '\n' + line : line;
-            let q = false;
-            for (let i = 0; i < buf.length; i++) {
-                if (buf[i] === '"') { if (i + 1 < buf.length && buf[i + 1] === '"') i++; else q = !q; }
-            }
-            if (!q) { merged.push(buf.split('\n')); buf = ''; }
-        }
-        if (buf) merged.push([buf]);
-        // 解析
         const sep = text.includes('\t') && !text.includes(',') ? '\t' : ',';
-        const rows = [];
-        for (const lines of merged) {
-            let field = ''; let q = false;
-            const row = [];
-            for (let li = 0; li < lines.length; li++) {
-                const line = lines[li];
-                for (let i = 0; i < line.length; i++) {
-                    const ch = line[i], next = line[i + 1];
-                    if (q) { if (ch === '"') { if (next === '"') { field += '"'; i++; } else q = false; } else field += ch; }
-                    else { if (ch === '"') q = true; else if (ch === sep) { row.push(field); field = ''; } else field += ch; }
-                }
-                if (q && li < lines.length - 1) field += '\n';
+        // 逐字符解析
+        const rows = []; let row = [], field = '', q = false;
+        for (let i = 0; i < text.length; i++) {
+            const ch = text[i], next = text[i + 1];
+            if (q) {
+                if (ch === '"') { if (next === '"') { field += '"'; i++; } else q = false; }
+                else field += ch;
+            } else {
+                if (ch === '"') q = true;
+                else if (ch === '\r') continue;
+                else if (ch === '\n') { row.push(field); field = ''; rows.push(row); row = []; }
+                else if (ch === sep) { row.push(field); field = ''; }
+                else field += ch;
             }
-            row.push(field);
-            rows.push(row);
         }
-        if (rows.length === 0) return { fields: [], records: [] };
-        const header = rows[0].map(f => f.trim());
-        const records = [];
+        row.push(field); rows.push(row);
+        // 合并列数不足的行
+        if (rows.length < 2) return { fields: [], records: [] };
+        const cols = rows[0].length;
+        const merged = [rows[0]];
         for (let i = 1; i < rows.length; i++) {
-            const r = rows[i];
+            if (rows[i].length < cols && i + 1 < rows.length) {
+                rows[i + 1][0] = rows[i][0] + '\n' + rows[i + 1][0];
+                continue;
+            }
+            merged.push(rows[i]);
+        }
+        const header = merged[0].map(f => f.trim());
+        const records = [];
+        for (let i = 1; i < merged.length; i++) {
+            const r = merged[i];
             if (r.length === 1 && !r[0]) continue;
             const record = {};
             header.forEach((f, idx) => { record[f] = r[idx] !== undefined ? r[idx] : ''; });
