@@ -203,6 +203,8 @@ body {
     .deck-list-panel { max-height: 250px; }
     .stat-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
     .tpl-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+    .deck-list-view, .deck-detail-view { display: none !important; }
+    .deck-list-view.mob-show, .deck-detail-view.mob-show { display: block !important; }
 }
 </style>
 </head>
@@ -261,13 +263,19 @@ body {
 
         <!-- Decks -->
         <div class="page-section" id="secDecks">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-                <span style="font-size:13px;font-weight:600;color:var(--text2);">牌组列表</span>
-                <button class="btn btn-secondary btn-sm" id="addDeckBtn">+ 新建</button>
-            </div>
-            <div class="deck-layout">
+            <div class="deck-list-view" id="deckListView">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+                    <span style="font-size:13px;font-weight:600;color:var(--text2);">牌组列表</span>
+                    <button class="btn btn-secondary btn-sm" id="addDeckBtn">+ 新建</button>
+                </div>
                 <div class="deck-list-panel" id="deckListPanel"><div class="deck-edit-panel empty">加载中…</div></div>
-                <div class="deck-edit-panel empty" id="deckEditPanel"><span>选择一个牌组开始编辑</span></div>
+            </div>
+            <div class="deck-detail-view" id="deckDetailView" style="display:none;">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+                    <button class="btn btn-secondary btn-sm" onclick="showDeckList()">← 返回</button>
+                    <span style="font-size:13px;font-weight:600;color:var(--text2);">编辑牌组</span>
+                </div>
+                <div class="deck-edit-panel" id="deckEditPanel"></div>
             </div>
         </div>
 
@@ -458,8 +466,22 @@ function renderDeckList() {
     `).join('');
 }
 
+function showDeckList() {
+    if (window.innerWidth <= 767) {
+        document.getElementById('deckListView').classList.add('mob-show');
+        document.getElementById('deckDetailView').classList.remove('mob-show');
+    }
+    renderDeckList();
+    var ep = document.getElementById('deckEditPanel');
+    if (ep) { ep.className = 'deck-edit-panel empty'; ep.innerHTML = '<span>选择一个牌组开始编辑</span>'; }
+    currentDeckIdx = -1;
+}
 function selectDeck(i) {
     currentDeckIdx = i; renderDeckList();
+    if (window.innerWidth <= 767) {
+        document.getElementById('deckListView').classList.remove('mob-show');
+        document.getElementById('deckDetailView').classList.add('mob-show');
+    }
     const d = decks[i];
     const tplOpts = tplNames.map(n => `<option value="${esc(n)}"${n===d.template?' selected':''}>${esc(n)}</option>`).join('');
     const tagStr = (d.tags||[]).join(', ');
