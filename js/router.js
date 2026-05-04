@@ -4,6 +4,7 @@ import { renderDeckList } from './views/decks.js';
 import { renderDeckDetail } from './views/detail.js';
 import { renderStudy } from './views/study.js';
 import { setRouteHandler } from './navigation.js';
+import { ROUTES, SITE } from './config.js';
 
 async function handleRoute() {
     let path = location.pathname;
@@ -12,17 +13,17 @@ async function handleRoute() {
     if (query.startsWith('?')) query = query.slice(1);
     if (path.endsWith('/')) path = path.slice(0, -1);
 
-    if (!path) {
-        setPageMeta('知识卡片', '精选 Anki 牌组预览选购平台 — 先看后买，高效备考。');
+    if (path === ROUTES.home) {
+        setPageMeta('知识卡片', SITE.description);
         renderHome();
-    } else if (path === 'decks') {
+    } else if (path === ROUTES.decks) {
         const tag = query.startsWith('tag=') ? decodeURIComponent(query.slice(4)) : '';
         await renderDeckList(tag);
-    } else if (path.startsWith('deck/')) {
-        const name = decodeURIComponent(path.slice(5));
+    } else if (path.startsWith(ROUTES.deckDetail)) {
+        const name = decodeURIComponent(path.slice(ROUTES.deckDetail.length));
         await renderDeckDetail(name);
-    } else if (path.startsWith('study/')) {
-        const name = decodeURIComponent(path.slice(6));
+    } else if (path.startsWith(ROUTES.study)) {
+        const name = decodeURIComponent(path.slice(ROUTES.study.length));
         renderStudy(name);
     } else {
         history.pushState(null, '', '/');

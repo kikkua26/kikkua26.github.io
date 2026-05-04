@@ -1,37 +1,44 @@
 :root {
     /* ── 文字 ── */
-    --ink-dark: #1a1512;
-    --ink-medium: #5e5246;
-    --ink-light: #95877a;
-    --ink-muted: #bfb3a6;
+    --text-primary: #1a1a1e;
+    --text-secondary: #5c5c66;
+    --text-muted: #94949e;
 
-    /* ── 底色 ── */
-    --paper-white: #fcf9f5;
-    --paper-cream: #f6f1ea;
-    --paper-warm: #ebe3d8;
-    --paper-deep: #ddd3c5;
+    /* ── 底色（保留暖纸质感） ── */
+    --bg-primary: #fcf9f5;
+    --bg-secondary: #f6f1ea;
+    --bg-tertiary: #ebe3d8;
+    --bg-hover: rgba(13, 148, 136, 0.04);
 
-    /* ── 强调色 ── */
-    --terracotta: #c5532c;
-    --terracotta-light: #d66f4a;
-    --terracotta-dark: #a84628;
-    --terracotta-glow: rgba(197, 83, 44, 0.08);
-    --terracotta-glow-strong: rgba(197, 83, 44, 0.18);
+    /* ── 主强调色：Eucalyptus（尤加利绿） ── */
+    --accent: #0d9488;
+    --accent-light: #14b8a6;
+    --accent-dark: #0f766e;
+    --accent-glow: rgba(13, 148, 136, 0.08);
+    --accent-glow-strong: rgba(13, 148, 136, 0.18);
 
-    /* ── 点缀 ── */
-    --gold: #caa34d;
-    --gold-light: #e0c07a;
-    --sage: #6b8f72;
-    --sage-light: #8fb096;
-    --sage-bg: rgba(107, 143, 114, 0.08);
+    /* ── 辅强调色：Saffron（藏红花金） ── */
+    --amber: #f59e0b;
+    --amber-light: #fbbf24;
+    --amber-dark: #d97706;
+    --amber-glow: rgba(245, 158, 11, 0.1);
+
+    /* ── 成功色 ── */
+    --success: #059669;
+    --success-light: #10b981;
+    --success-glow: rgba(5, 150, 105, 0.08);
+
+    /* ── 边框 ── */
+    --border: #e4e4e7;
+    --border-light: #f0f0f2;
 
     /* ── 阴影 ── */
-    --shadow-sm: 0 1px 3px rgba(44,33,22,.06), 0 1px 2px rgba(44,33,22,.04);
-    --shadow-md: 0 4px 14px rgba(44,33,22,.08), 0 2px 4px rgba(44,33,22,.04);
-    --shadow-lg: 0 12px 44px rgba(44,33,22,.12), 0 4px 12px rgba(44,33,22,.05);
-    --shadow-card: 0 2px 10px rgba(44,33,22,.07), 0 8px 28px rgba(44,33,22,.05);
-    --shadow-card-hover: 0 8px 32px rgba(44,33,22,.10), 0 2px 8px rgba(44,33,22,.06);
-    --shadow-glow: 0 0 40px rgba(197,83,44,.06), 0 4px 20px rgba(44,33,22,.08);
+    --shadow-sm: 0 1px 2px rgba(0,0,0,.04), 0 1px 3px rgba(0,0,0,.06);
+    --shadow-md: 0 4px 12px rgba(0,0,0,.06), 0 2px 4px rgba(0,0,0,.04);
+    --shadow-lg: 0 12px 40px rgba(0,0,0,.08), 0 4px 12px rgba(0,0,0,.04);
+    --shadow-card: 0 1px 3px rgba(0,0,0,.04), 0 4px 16px rgba(0,0,0,.05);
+    --shadow-card-hover: 0 4px 20px rgba(0,0,0,.07), 0 2px 6px rgba(0,0,0,.04);
+    --shadow-glow: 0 0 40px rgba(13,148,136,.06), 0 4px 20px rgba(0,0,0,.06);
 
     /* ── 圆角 ── */
     --radius-sm: 6px; --radius-md: 10px; --radius-lg: 18px;
@@ -45,4 +52,23 @@
     /* ── 字体 ── */
     --font-display: 'Newsreader', 'Noto Serif SC', serif;
     --font-body: 'DM Sans', 'PingFang SC', sans-serif;
+
+    /* ── 向后兼容（旧变量 → 新变量映射） ── */
+    --ink-dark: var(--text-primary);
+    --ink-medium: var(--text-secondary);
+    --ink-light: var(--text-muted);
+    --ink-muted: var(--text-muted);
+    --paper-white: var(--bg-primary);
+    --paper-cream: var(--bg-secondary);
+    --paper-warm: var(--bg-tertiary);
+    --terracotta: var(--accent);
+    --terracotta-light: var(--accent-light);
+    --terracotta-dark: var(--accent-dark);
+    --terracotta-glow: var(--accent-glow);
+    --terracotta-glow-strong: var(--accent-glow-strong);
+    --gold: var(--amber);
+    --gold-light: var(--amber-light);
+    --sage: var(--success);
+    --sage-light: var(--success-light);
+    --sage-bg: var(--success-glow);
 }

@@ -1,5 +1,7 @@
+import { SITE } from './config.js';
+
 export function setPageMeta(title, desc) {
-    const base = 'kikkua · ';
+    const base = SITE.brand + ' · ';
     document.title = base + title;
     const setMeta = (prop, name, val) => {
         let el = document.querySelector(`meta[${prop}="${name}"]`);
@@ -21,13 +23,13 @@ export function setPageMeta(title, desc) {
     const data = {
         '@context': 'https://schema.org',
         '@type': 'WebSite',
-        name: 'kikkua',
-        url: 'https://kikkua.online/',
-        description: '精选 Anki 牌组预览选购平台 — 先看后买，高效备考',
-        inLanguage: 'zh-CN',
+        name: SITE.brand,
+        url: SITE.url,
+        description: SITE.description,
+        inLanguage: SITE.locale,
         potentialAction: {
             '@type': 'SearchAction',
-            target: 'https://kikkua.online/decks?tag={search_term_string}',
+            target: SITE.url + 'decks?tag={search_term_string}',
             'query-input': 'required name=search_term_string'
         }
     };

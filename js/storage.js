@@ -7,14 +7,16 @@ export const ICONS = {
     scroll: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>`
 };
 
+import { STORAGE } from './config.js';
+
 export const sessionCache = {
     get(key) {
         try {
-            const raw = sessionStorage.getItem('k_ck_' + key);
+            const raw = sessionStorage.getItem(STORAGE.cache + key);
             if (!raw) return null;
             const { data, expires } = JSON.parse(raw);
             if (expires && Date.now() > expires) {
-                sessionStorage.removeItem('k_ck_' + key);
+                sessionStorage.removeItem(STORAGE.cache + key);
                 return null;
             }
             return data;
@@ -22,7 +24,7 @@ export const sessionCache = {
     },
     set(key, value, ttlMs = 0) {
         try {
-            sessionStorage.setItem('k_ck_' + key, JSON.stringify({
+            sessionStorage.setItem(STORAGE.cache + key, JSON.stringify({
                 data: value, expires: ttlMs ? Date.now() + ttlMs : 0
             }));
         } catch {}
@@ -30,7 +32,7 @@ export const sessionCache = {
 };
 
 export class Storage {
-    constructor() { this.prefix = 'kikkua_'; }
+    constructor() { this.prefix = STORAGE.progress; }
     get(key) {
         try {
             const data = localStorage.getItem(this.prefix + key);

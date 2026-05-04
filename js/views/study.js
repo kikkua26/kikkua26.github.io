@@ -4,6 +4,7 @@ import { dataLoader } from '../data-loader.js';
 import { replaceFields, renderCard } from '../card.js';
 import { setPageMeta } from '../seo.js';
 import { getDecks } from './decks.js';
+import { UI, ROUTES, DEFAULTS } from '../config.js';
 
 /* ── Tree helpers ── */
 
@@ -42,7 +43,7 @@ function expandToPath(nodes, path) {
 /* ── Build directory tree from records ── */
 
 function buildDirectory(state) {
-    const chapterField = state.chapterField || '章节';
+    const chapterField = state.chapterField || DEFAULTS.chapterField;
     const group = new Map();
     state.records.forEach((r, i) => {
         const ch = r[chapterField] || '';
@@ -201,16 +202,16 @@ function showComplete(state) {
         <div class="page">
             <header class="header">
                 <div class="header-inner">
-                    <div class="header-left"><a href="/deck/${encodeURIComponent(state.deckName)}" class="back-btn">${ICONS.back}</a></div>
+                    <div class="header-left"><a href="/${ROUTES.deckDetail}${encodeURIComponent(state.deckName)}" class="back-btn">${ICONS.back}</a></div>
                     <h1 class="header-title">${state.deckName}</h1>
                 </div>
             </header>
             <div class="container">
                 <div class="complete-page">
                     <div class="complete-icon">${ICONS.check}</div>
-                    <h2 class="complete-title">暂无卡片</h2>
-                    <p class="complete-subtitle">这个牌组还没有任何卡片</p>
-                    <div class="complete-actions"><a href="/deck/${encodeURIComponent(state.deckName)}" class="btn btn-secondary">返回</a></div>
+                    <h2 class="complete-title">${UI.study.empty}</h2>
+                    <p class="complete-subtitle">${UI.study.emptyHint}</p>
+                    <div class="complete-actions"><a href="/${ROUTES.deckDetail}${encodeURIComponent(state.deckName)}" class="btn btn-secondary">${UI.study.back}</a></div>
                 </div>
             </div>
         </div>`;
@@ -229,16 +230,16 @@ export async function renderStudy(deckName) {
                     <div class="header-inner">
                         <div class="header-left">
                             <button class="menu-btn" id="menuBtn">☰</button>
-                            <a href="/deck/${encodeURIComponent(deckName)}" class="back-btn">${ICONS.back}</a>
+                            <a href="/${ROUTES.deckDetail}${encodeURIComponent(deckName)}" class="back-btn">${ICONS.back}</a>
                         </div>
                         <h1 class="header-title">${deckName}</h1>
-                        <div class="header-right"><span class="progress-text" id="progress-text">加载中...</span></div>
+                        <div class="header-right"><span class="progress-text" id="progress-text">${UI.study.loading}</span></div>
                     </div>
                 </div>
             </header>
             <div class="study-body">
                 <aside class="sidebar" id="sidebar">
-                    <div class="sidebar-header"><span class="sidebar-title">目录</span><button class="sidebar-close" id="sidebarClose">×</button></div>
+                    <div class="sidebar-header"><span class="sidebar-title">${UI.study.sidebarTitle}</span><button class="sidebar-close" id="sidebarClose">×</button></div>
                     <div class="sidebar-content" id="dirContent"></div>
                     <div class="sidebar-purchase" id="sidebarPurchase"></div>
                 </aside>
@@ -246,9 +247,9 @@ export async function renderStudy(deckName) {
                 <main class="study-main">
                     <iframe id="card-frame" class="card-frame"></iframe>
                     <div class="action-bar">
-                        <button class="action-btn action-btn-nav" id="prevBtn">上一张</button>
-                        <button class="action-btn action-btn-toggle" id="toggleBtn">翻转</button>
-                        <button class="action-btn action-btn-nav" id="nextBtn">下一张</button>
+                        <button class="action-btn action-btn-nav" id="prevBtn">${UI.study.prev}</button>
+                        <button class="action-btn action-btn-toggle" id="toggleBtn">${UI.study.flip}</button>
+                        <button class="action-btn action-btn-nav" id="nextBtn">${UI.study.next}</button>
                     </div>
                 </main>
             </div>
@@ -264,12 +265,12 @@ export async function renderStudy(deckName) {
 
     if (studyState.deckInfo.purchaseUrl) {
         const el = $('#sidebarPurchase');
-        if (el) el.innerHTML = `<a href="${studyState.deckInfo.purchaseUrl}" target="_blank" rel="noopener" class="purchase-link">购买完整牌组 →</a>`;
+        if (el) el.innerHTML = `<a href="${studyState.deckInfo.purchaseUrl}" target="_blank" rel="noopener" class="purchase-link">${UI.study.purchase}</a>`;
     }
 
     initDirectoryHandlers(studyState);
     initStudyHandlers(studyState);
-    setPageMeta(deckName + ' · 学习', '');
+    setPageMeta(deckName + UI.study.titleSuffix, '');
 }
 
 function initStudyHandlers(state) {

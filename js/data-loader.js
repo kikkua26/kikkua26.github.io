@@ -1,15 +1,16 @@
 import { storage, sessionCache } from './storage.js';
 import { wrapWithCSS } from './card.js';
+import { DATA_PATHS, DEFAULTS } from './config.js';
 
 export class DataLoader {
-    async loadDeck(deckName, { template: templateName = '', chapterField = '章节' } = {}) {
+    async loadDeck(deckName, { template: templateName = '', chapterField = DEFAULTS.chapterField } = {}) {
         const cached = sessionCache.get('deck_' + deckName);
         if (cached) return cached;
 
-        const basePath = `/data/${encodeURIComponent(deckName)}`;
+        const basePath = DATA_PATHS.deckData(deckName);
         try {
-            const csvResp = await fetch(`${basePath}/data.csv`).catch(() => null);
-            let template = { front: '', back: '' };
+            const csvResp = await fetch(basePath).catch(() => null);
+            let template = { front: DEFAULTS.templateFront, back: DEFAULTS.templateBack };
             if (templateName) template = await this.loadTemplate(templateName);
 
             let records = [], csvFields = [];
@@ -24,7 +25,7 @@ export class DataLoader {
             return result;
         } catch (e) {
             console.error('Failed to load deck:', e);
-            return { template: { front: '', back: '' }, records: [], fields: [], chapterField: '章节' };
+            return { template: { front: DEFAULTS.templateFront, back: DEFAULTS.templateBack }, records: [], fields: [], chapterField };
         }
     }
 
@@ -32,21 +33,20 @@ export class DataLoader {
         const cached = sessionCache.get('tpl_' + templateName);
         if (cached) return cached;
 
-        const basePath = `/templates/${encodeURIComponent(templateName)}`;
         try {
             const [frontResp, backResp, cssResp] = await Promise.all([
-                fetch(`${basePath}/正面模板.html`).catch(() => null),
-                fetch(`${basePath}/背面模板.html`).catch(() => null),
-                fetch(`${basePath}/样式.css`).catch(() => null)
+                fetch(DATA_PATHS.templateFront(templateName)).catch(() => null),
+                fetch(DATA_PATHS.templateBack(templateName)).catch(() => null),
+                fetch(DATA_PATHS.templateCss(templateName)).catch(() => null)
             ]);
             const css = cssResp?.ok ? await cssResp.text() : '';
-            const front = frontResp?.ok ? await frontResp.text() : '{{Front}}';
-            const back = backResp?.ok ? await backResp.text() : '{{FrontSide}}\n\n<hr>\n\n{{Back}}';
+            const front = frontResp?.ok ? await frontResp.text() : DEFAULTS.templateFront;
+            const back = backResp?.ok ? await backResp.text() : DEFAULTS.templateBack;
             const result = { front: wrapWithCSS(front, css), back: wrapWithCSS(back, css) };
             sessionCache.set('tpl_' + templateName, result);
             return result;
         } catch {
-            return { front: wrapWithCSS('{{Front}}', ''), back: wrapWithCSS('{{FrontSide}}\n\n<hr>\n\n{{Back}}', '') };
+            return { front: wrapWithCSS(DEFAULTS.templateFront, ''), back: wrapWithCSS(DEFAULTS.templateBack, '') };
         }
     }
 
@@ -81,7 +81,7 @@ export class DataLoader {
 
     async discoverDecks() {
         try {
-            const response = await fetch('/data/index.json');
+            const response = await fetch(DATA_PATHS.index);
             if (!response.ok) return [];
             const entries = await response.json();
             const decks = [];
@@ -94,7 +94,7 @@ export class DataLoader {
                     tags: entry.tags || [],
                     detail: entry.detail || '',
                     template: entry.template || '',
-                    chapterField: entry.chapterField || '章节',
+                    chapterField: entry.chapterField || DEFAULTS.chapterField,
                     purchaseUrl: entry.purchaseUrl || ''
                 });
             }

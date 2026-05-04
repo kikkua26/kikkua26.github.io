@@ -3,6 +3,7 @@ import { ICONS } from '../storage.js';
 import { dataLoader } from '../data-loader.js';
 import { setPageMeta } from '../seo.js';
 import { navigate } from '../navigation.js';
+import { UI, ROUTES, SITE } from '../config.js';
 
 let _gDecks = [];
 
@@ -47,7 +48,7 @@ export async function renderDeckList(filterPath) {
         let cum = [];
         for (let i = 0; i <= parts.length; i++) {
             const prev = parts.slice(0, i).join('::');
-            const label = i === 0 ? '全部' : parts[i - 1];
+            const label = i === 0 ? UI.decks.allLabel : parts[i - 1];
             cum.push(`<span class="tag-crumb${prev === filterPath ? ' current' : ''}" data-path="${prev}">${label}</span>`);
         }
         crumbHtml = `<div class="tag-crumbs">${cum.join('<span class="tag-crumb-sep">›</span>')}</div>`;
@@ -55,7 +56,7 @@ export async function renderDeckList(filterPath) {
 
     const pills = filterPath
         ? childTags.map(t => ({ label: t, path: filterPath + '::' + t, active: false }))
-        : [{ label: '全部', path: '', active: true }, ...rootTags.map(t => ({ label: t, path: t, active: false }))];
+        : [{ label: UI.decks.allLabel, path: '', active: true }, ...rootTags.map(t => ({ label: t, path: t, active: false }))];
 
     const pillsHtml = pills.map(p =>
         `<span class="tag-pill${p.active ? ' active' : ''}" data-path="${p.path}">${p.label}</span>`
@@ -66,24 +67,24 @@ export async function renderDeckList(filterPath) {
             <div class="container">
                 <header class="header">
                     <div class="header-inner" style="justify-content: flex-start;">
-                        <a href="/" class="back-btn" title="首页">${ICONS.back}</a>
-                        <h1 class="header-title" style="margin-left: 4px;">牌组列表</h1>
+                        <a href="/" class="back-btn" title="${SITE.brand}">${ICONS.back}</a>
+                        <h1 class="header-title" style="margin-left: 4px;">${UI.decks.title}</h1>
                     </div>
                 </header>
                 <div class="tag-bar">
                     ${crumbHtml}
                     <div class="tag-pills-wrap">${pillsHtml}</div>
-                    ${filtered.length > 0 ? `<div class="tag-result">${filtered.length} 个牌组</div>` : ''}
+                    ${filtered.length > 0 ? `<div class="tag-result">${filtered.length}${UI.decks.deckUnit}</div>` : ''}
                 </div>
                 <div class="deck-grid" id="deck-list">
                     ${filtered.length === 0 ? `
                     <div class="empty-state">
                         <div class="empty-icon">📚</div>
-                        <h3 class="empty-title">没有匹配的牌组</h3>
-                        <p class="empty-desc">换一个标签试试</p>
+                        <h3 class="empty-title">${UI.decks.noResults}</h3>
+                        <p class="empty-desc">${UI.decks.noResultsHint}</p>
                     </div>` :
                     filtered.map(deck => {
-                        const lastStudyText = deck.lastStudy ? formatTimeAgo(deck.lastStudy) : '尚未学习';
+                        const lastStudyText = deck.lastStudy ? formatTimeAgo(deck.lastStudy) : UI.decks.notStudied;
                         const tagsHtml = (deck.tags || []).map(t => {
                             const { label } = getRootAndLeaf(t);
                             return `<span class="deck-tag">${label}</span>`;
@@ -92,7 +93,7 @@ export async function renderDeckList(filterPath) {
                         <div class="deck-card" data-deck="${deck.name}">
                             <div class="deck-card-header">
                                 <div class="deck-icon">📜</div>
-                                <span class="deck-badge">${deck.totalCards} 张卡片</span>
+                                <span class="deck-badge">${deck.totalCards}${UI.decks.cardUnit}</span>
                             </div>
                             <h3 class="deck-title">${deck.name}</h3>
                             <div class="deck-meta">
@@ -109,20 +110,20 @@ export async function renderDeckList(filterPath) {
     $$('.tag-pill').forEach(p => {
         p.addEventListener('click', () => {
             const path = p.dataset.path;
-            navigate(path ? `/decks?tag=${encodeURIComponent(path)}` : '/decks');
+            navigate(path ? `/${ROUTES.decks}?tag=${encodeURIComponent(path)}` : `/${ROUTES.decks}`);
         });
     });
     $$('.tag-crumb:not(.current)').forEach(c => {
         c.addEventListener('click', () => {
             const path = c.dataset.path;
-            navigate(path ? `/decks?tag=${encodeURIComponent(path)}` : '/decks');
+            navigate(path ? `/${ROUTES.decks}?tag=${encodeURIComponent(path)}` : `/${ROUTES.decks}`);
         });
     });
     $$('.deck-card[data-deck]').forEach(card => {
         card.addEventListener('click', () => {
-            navigate(`/deck/${encodeURIComponent(card.dataset.deck)}`);
+            navigate(`/${ROUTES.deckDetail}${encodeURIComponent(card.dataset.deck)}`);
         });
     });
 
-    setPageMeta('牌组列表', '浏览所有可用的学习牌组，按标签筛选。');
+    setPageMeta(UI.decks.title, UI.decks.desc);
 }
