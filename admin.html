@@ -492,15 +492,20 @@ async function selectDeck(i) {
 
     // 加载 CSV 获取实际数据和字段
     let csvFields = [], csvCount = 0;
+    async function loadCsvText(name) {
+        if (csvMeta[name]) return csvMeta[name].text;
+        try { const r = await readRepo('data/' + name + '/data.csv'); csvMeta[name] = { sha: r.sha, text: r.text }; return r.text; }
+        catch { const r = await fetch('/data/' + encodeURIComponent(name) + '/data.csv'); csvMeta[name] = { sha: '', text: await r.text() }; return csvMeta[name].text; }
+    }
     try {
-        if (!csvMeta[d.name]) { const r = await readRepo('data/' + d.name + '/data.csv'); csvMeta[d.name] = { sha: r.sha, text: r.text }; }
-        const text = csvMeta[d.name].text.replace(/^﻿/, '').trim();
+        const raw = await loadCsvText(d.name);
+        const text = raw.replace(/^﻿/, '').trim();
         const rows = parseCsvFull(text);
         if (rows.length > 0) {
             csvFields = rows[0].map(f => f.trim());
             csvCount = rows.length - 1;
         }
-    } catch (e) { console.warn("CSV load:", e.message); }
+    } catch (e) { console.warn('CSV load:', e.message); }
 
     // 自动从实际数据更新卡片数
     if (csvCount > 0 && d.totalCards !== csvCount) {
