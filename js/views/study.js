@@ -144,6 +144,8 @@ function buildCardHTML(state) {
     const record = state.records[state.currentIndex];
     state.frontHTML = replaceFields(state.template.front, record);
     state.backHTML = replaceFields(state.template.back, record);
+    // 将 {{FrontSide}} 替换为正面渲染内容
+    state.backHTML = state.backHTML.replace(/\{\{FrontSide\}\}/g, state.frontHTML);
 }
 
 function updateProgress(state, skipHighlight = false) {
