@@ -357,7 +357,11 @@ async function gh(url, opts = {}) {
 function b64enc(s) { return btoa(unescape(encodeURIComponent(s))); }
 function b64dec(s) { const r = atob(s.replace(/\s/g,'')); return new TextDecoder().decode(Uint8Array.from(r,c=>c.charCodeAt(0))); }
 function encGitPath(path) { return path.split('/').map(s => encodeURIComponent(s)).join('/'); }
-async function readRepo(path) { const r = await gh(`/repos/${REPO}/contents/${encGitPath(path)}`); return { sha: r.sha, text: b64dec(r.content) }; }
+async function readRepo(path) {
+    const r = await gh(`/repos/${REPO}/contents/${encGitPath(path)}`);
+    if (r.content && r.encoding === 'base64') return { sha: r.sha, text: b64dec(r.content) };
+    const resp = await fetch(r.download_url); return { sha: r.sha, text: await resp.text() };
+}
 async function writeRepo(path, content, sha, msg) {
     return gh(`/repos/${REPO}/contents/${encGitPath(path)}`, {
         method: 'PUT', headers: { 'Content-Type': 'application/json' },
