@@ -234,7 +234,7 @@ export async function renderStudy(deckName) {
                         </div>
                         <h1 class="header-title">${deckName}</h1>
                         <div class="header-right">
-                            ${deckInfo.purchaseUrl ? `<a href="${deckInfo.purchaseUrl}" target="_blank" rel="noopener" class="header-purchase">${UI.study.purchase}</a>` : ''}
+                            ${deckInfo.purchaseUrl ? `<a href="${deckInfo.purchaseUrl}" target="_blank" rel="noopener" class="header-purchase" id="studyPurchaseBtn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>购买</a>` : ''}
                             <span class="progress-text" id="progress-text">${UI.study.loading}</span>
                         </div>
                     </div>

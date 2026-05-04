@@ -15,6 +15,7 @@ body {
 .page {
     flex: 1;
     padding: 0;
+    overflow-y: auto;
     animation: pageIn 0.6s var(--ease-out) forwards;
 }
 
