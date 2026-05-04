@@ -1,22 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://kikkua26.github.io/</loc>
+    <loc>https://kikkua.online/</loc>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://kikkua26.github.io/decks</loc>
+    <loc>https://kikkua.online/decks</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://kikkua26.github.io/deck/方剂学牌组</loc>
+    <loc>https://kikkua.online/deck/方剂学牌组</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://kikkua26.github.io/deck/中药学</loc>
+    <loc>https://kikkua.online/deck/中药学</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
