@@ -23,7 +23,7 @@ export function setPageMeta(title, desc) {
         '@type': 'WebSite',
         name: 'kikkua',
         url: 'https://kikkua.online/',
-        description: '基于间隔重复的在线卡片学习工具',
+        description: '精选 Anki 牌组预览选购平台 — 先看后买，高效备考',
         inLanguage: 'zh-CN',
         potentialAction: {
             '@type': 'SearchAction',

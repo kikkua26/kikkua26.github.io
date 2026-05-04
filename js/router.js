@@ -13,7 +13,7 @@ async function handleRoute() {
     if (path.endsWith('/')) path = path.slice(0, -1);
 
     if (!path) {
-        setPageMeta('知识卡片', '基于间隔重复的在线卡片学习工具，支持自定义牌组与 Anki 模板。');
+        setPageMeta('知识卡片', '精选 Anki 牌组预览选购平台 — 先看后买，高效备考。');
         renderHome();
     } else if (path === 'decks') {
         const tag = query.startsWith('tag=') ? decodeURIComponent(query.slice(4)) : '';
