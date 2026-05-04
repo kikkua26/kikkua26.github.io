@@ -3,9 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>kikkua · 管理后台</title>
+<title>kikkua · 管理</title>
 <style>
 :root {
+    --sidebar: 240px;
     --bg: #f6f1ea; --surface: #fcf9f5; --border: #e4dbcf;
     --text: #1a1512; --text2: #6b5e52; --text3: #95877a;
     --accent: #c5532c; --accent-hover: #a84628; --accent-bg: rgba(197,83,44,.08);
@@ -15,31 +16,67 @@
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif;
     background: var(--bg); color: var(--text); line-height: 1.6;
-    padding-bottom: 80px;
+    display: flex; min-height: 100vh;
 }
-.container { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+/* ── Sidebar ── */
+.sidebar {
+    width: var(--sidebar); flex-shrink: 0;
+    background: var(--surface); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; z-index: 100;
+    transition: transform .3s var(--ease-out, ease);
+}
+.sidebar-header { padding: 20px; border-bottom: 1px solid var(--border); }
+.sidebar-header h1 { font-size: 18px; font-weight: 600; }
+.sidebar-header h1 span { color: var(--accent); }
+.sidebar-header p { font-size: 12px; color: var(--text3); margin-top: 2px; }
+.sidebar-nav { flex: 1; padding: 12px 0; }
+.nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 20px; font-size: 14px; color: var(--text2); cursor: pointer;
+    transition: .15s; border-left: 3px solid transparent;
+}
+.nav-item:hover { background: var(--bg); color: var(--text); }
+.nav-item.active { color: var(--accent); background: var(--accent-bg); border-left-color: var(--accent); font-weight: 500; }
+.sidebar-footer {
+    padding: 16px 20px; border-top: 1px solid var(--border);
+    display: flex; flex-direction: column; gap: 8px;
+}
+.sidebar-footer .stat { font-size: 12px; color: var(--text3); }
+.sidebar-footer .token-row { display: flex; gap: 6px; }
+.sidebar-footer input {
+    flex: 1; padding: 5px 8px; border: 1px solid var(--border); border-radius: 4px;
+    font-size: 12px; background: var(--bg); min-width: 0;
+}
+.sidebar-footer .status { font-size: 12px; color: var(--text3); }
+.sidebar-footer .status.ok { color: var(--green); }
+.sidebar-footer .status.err { color: var(--accent); }
 
-/* ── Header ── */
+/* ── Main ── */
+.main { flex: 1; margin-left: var(--sidebar); padding: 0; min-width: 0; }
 .page-header {
-    background: var(--surface); border-bottom: 1px solid var(--border);
-    padding: 16px 0; position: sticky; top: 0; z-index: 100;
+    padding: 20px 28px; border-bottom: 1px solid var(--border);
+    background: var(--surface); display: flex; align-items: center; gap: 12px;
+    position: sticky; top: 0; z-index: 50;
 }
-.page-header .container { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
-.page-header h1 { font-size: 20px; font-weight: 600; }
-.page-header h1 span { color: var(--accent); }
-.page-header .btn { flex-shrink: 0; }
+.page-header h2 { font-size: 18px; font-weight: 600; flex: 1; }
+.hamburger { display: none; font-size: 22px; cursor: pointer; background: none; border: none; padding: 4px; }
+.page-content { padding: 24px 28px; }
+.page-section { display: none; }
+.page-section.active { display: block; }
 
-.token-input {
-    flex: 1; min-width: 150px; max-width: 340px;
-    padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px;
-    font-size: 13px; background: var(--bg);
+/* ── Dashboard ── */
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 28px; }
+.stat-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 20px; text-align: center;
 }
-.token-input:focus { outline: none; border-color: var(--accent); }
+.stat-card .num { font-size: 28px; font-weight: 600; color: var(--accent); }
+.stat-card .label { font-size: 13px; color: var(--text3); margin-top: 4px; }
 
 /* ── Buttons ── */
 .btn {
-    display: inline-flex; align-items: center; gap: 4px;
-    padding: 7px 16px; border-radius: 6px; border: none; font-size: 13px; font-weight: 500;
+    display: inline-flex; align-items: center; gap: 4px; padding: 7px 14px;
+    border-radius: 6px; border: none; font-size: 13px; font-weight: 500;
     cursor: pointer; transition: .2s;
 }
 .btn:disabled { opacity: .5; cursor: not-allowed; }
@@ -48,49 +85,32 @@ body {
 .btn-secondary { background: var(--border); color: var(--text); }
 .btn-secondary:hover:not(:disabled) { background: #d5cabc; }
 .btn-danger { background: #c0392b; color: #fff; }
-.btn-danger:hover:not(:disabled) { background: #a93226; }
-.btn-sm { padding: 5px 12px; font-size: 12px; }
-.btn-xs { padding: 3px 10px; font-size: 11px; }
+.btn-sm { padding: 4px 10px; font-size: 12px; }
+.btn-xs { padding: 2px 8px; font-size: 11px; }
 
-/* ── Tabs ── */
-.tabs { display: flex; gap: 0; border-bottom: 2px solid var(--border); margin: 20px 0; }
-.tab {
-    padding: 10px 24px; font-size: 14px; font-weight: 500; color: var(--text3);
-    cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px;
-    transition: .2s; user-select: none;
-}
-.tab:hover { color: var(--text); }
-.tab.active { color: var(--accent); border-color: var(--accent); }
-.tab-content { display: none; }
-.tab-content.active { display: block; }
-
-/* ── Deck Tab ── */
-.deck-layout { display: grid; grid-template-columns: 320px 1fr; gap: 20px; min-height: 400px; }
+/* ── Decks ── */
+.deck-layout { display: grid; grid-template-columns: 280px 1fr; gap: 20px; min-height: 400px; }
 .deck-list-panel {
     background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
     overflow-y: auto; max-height: 600px;
 }
 .deck-list-item {
-    padding: 14px 16px; border-bottom: 1px solid var(--border); cursor: pointer;
-    transition: background .15s; position: relative;
+    padding: 12px 16px; border-bottom: 1px solid var(--border); cursor: pointer;
+    transition: background .15s; border-left: 3px solid transparent;
 }
 .deck-list-item:hover { background: var(--bg); }
-.deck-list-item.active {
-    background: var(--accent-bg); border-left: 3px solid var(--accent);
-}
+.deck-list-item.active { background: var(--accent-bg); border-left-color: var(--accent); }
 .deck-list-item .name { font-weight: 600; font-size: 14px; }
-.deck-list-item .meta { font-size: 12px; color: var(--text3); margin-top: 2px; display: flex; gap: 12px; }
-.deck-list-item .badge {
-    font-size: 11px; background: var(--bg); padding: 1px 6px; border-radius: 8px; color: var(--text2);
-}
-
+.deck-list-item .meta { font-size: 12px; color: var(--text3); margin-top: 2px; display: flex; gap: 10px; }
 .deck-edit-panel {
     background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
     padding: 24px; max-height: 600px; overflow-y: auto;
 }
-.deck-edit-panel.empty { display: flex; align-items: center; justify-content: center; color: var(--text3); font-size: 14px; }
+.deck-edit-panel.empty { display: flex; align-items: center; justify-content: center; color: var(--text3); }
+
+/* ── Fields ── */
 .field { margin-bottom: 12px; }
-.field label { display: block; font-size: 12px; font-weight: 600; color: var(--text2); margin-bottom: 3px; }
+.field label { display: block; font-size: 11px; font-weight: 600; color: var(--text2); margin-bottom: 3px; text-transform: uppercase; letter-spacing: .03em; }
 .field input, .field textarea, .field select {
     width: 100%; padding: 7px 10px; border: 1px solid var(--border);
     border-radius: 6px; font-size: 14px; font-family: inherit; background: var(--bg);
@@ -100,65 +120,50 @@ body {
 .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .edit-actions { display: flex; gap: 8px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
 
-/* ── Template Tab ── */
+/* ── Templates ── */
 .tpl-grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px;
 }
 .tpl-card {
     background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-    padding: 18px; cursor: pointer; transition: .2s;
+    padding: 16px; cursor: pointer; transition: .2s;
 }
 .tpl-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,.06); transform: translateY(-2px); }
-.tpl-card .tpl-icon { font-size: 32px; margin-bottom: 8px; }
-.tpl-card .tpl-name { font-weight: 600; font-size: 14px; }
-.tpl-card .tpl-meta { font-size: 12px; color: var(--text3); margin-top: 2px; }
+.tpl-card .icon { font-size: 28px; margin-bottom: 6px; }
+.tpl-card .name { font-weight: 600; font-size: 14px; }
+.tpl-card .meta { font-size: 12px; color: var(--text3); margin-top: 2px; }
 .tpl-card.selected { border-color: var(--accent); background: var(--accent-bg); }
-.tpl-card.add-card {
+.tpl-card.add {
     border-style: dashed; display: flex; flex-direction: column;
-    align-items: center; justify-content: center; min-height: 120px;
-    color: var(--text3); cursor: pointer; transition: .2s;
+    align-items: center; justify-content: center; min-height: 100px; color: var(--text3); cursor: pointer;
 }
-.tpl-card.add-card:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-bg); }
-.tpl-card.add-card .big { font-size: 28px; margin-bottom: 4px; }
-
-.tpl-editor { margin-top: 20px; display: none; }
-.tpl-editor.show { display: block; }
-.tpl-editor .editor-header {
-    display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;
-}
-.tpl-editor .editor-header h3 { font-size: 15px; font-weight: 600; }
-.tpl-file-tabs { display: flex; gap: 0; margin-bottom: 10px; }
-.tpl-file-tab {
+.tpl-card.add:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-bg); }
+.tpl-card.add .big { font-size: 24px; }
+.tpl-editor { margin-top: 20px; max-width: 800px; }
+.tpl-editor .file-tabs { display: flex; gap: 0; margin-bottom: 10px; }
+.tpl-editor .file-tab {
     padding: 6px 16px; font-size: 13px; cursor: pointer; border: 1px solid var(--border);
     background: var(--bg); transition: .15s;
 }
-.tpl-file-tab:first-child { border-radius: 6px 0 0 6px; }
-.tpl-file-tab:last-child { border-radius: 0 6px 6px 0; }
-.tpl-file-tab.active { background: var(--surface); border-bottom-color: var(--surface); font-weight: 600; }
+.tpl-editor .file-tab:first-child { border-radius: 6px 0 0 6px; }
+.tpl-editor .file-tab:last-child { border-radius: 0 6px 6px 0; }
+.tpl-editor .file-tab.active { background: var(--surface); border-bottom-color: var(--surface); font-weight: 600; }
 .tpl-editor textarea {
-    width: 100%; min-height: 280px; padding: 14px; border: 1px solid var(--border);
+    width: 100%; min-height: 250px; padding: 14px; border: 1px solid var(--border);
     border-radius: var(--radius); font-family: 'Menlo','Consolas',monospace; font-size: 13px;
     background: var(--surface); resize: vertical;
 }
 
-/* ── CSV Tab ── */
-.csv-list { display: grid; gap: 10px; }
-.csv-item {
-    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-    padding: 14px 18px; display: flex; justify-content: space-between; align-items: center;
+/* ── Toast ── */
+.toast {
+    position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%);
+    padding: 10px 24px; border-radius: var(--radius); font-size: 14px; font-weight: 500;
+    z-index: 2000; opacity: 0; transition: opacity .3s; pointer-events: none;
+    box-shadow: 0 4px 20px rgba(0,0,0,.12);
 }
-.csv-item .name { font-weight: 500; font-size: 14px; }
-.csv-table-wrap { overflow-x: auto; margin-top: 14px; display: none; }
-.csv-table-wrap.show { display: block; }
-.csv-table-wrap table {
-    width: 100%; border-collapse: collapse; font-size: 12px; background: var(--surface);
-    border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;
-}
-.csv-table-wrap th, .csv-table-wrap td {
-    padding: 5px 10px; border: 1px solid var(--border); text-align: left;
-    max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-.csv-table-wrap th { background: var(--bg); font-weight: 600; }
+.toast.show { opacity: 1; }
+.toast.success { background: #ebf5ed; color: #2d6a4f; border: 1px solid #a3d9b1; }
+.toast.error { background: #fef0ef; color: var(--accent); border: 1px solid #f5c6cb; }
 
 /* ── Modal ── */
 .modal-overlay {
@@ -172,107 +177,131 @@ body {
 }
 .modal h3 { font-size: 18px; margin-bottom: 8px; }
 .modal p { color: var(--text2); font-size: 14px; margin-bottom: 20px; line-height: 1.5; }
-.modal .field { margin-bottom: 14px; }
 .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+.modal .field input { width: 100%; padding: 7px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; background: var(--bg); }
 
-/* ── Toast ── */
-.toast {
-    position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
-    padding: 12px 24px; border-radius: var(--radius); font-size: 14px; font-weight: 500;
-    z-index: 2000; opacity: 0; transition: opacity .3s; pointer-events: none;
-    box-shadow: 0 4px 20px rgba(0,0,0,.12); white-space: nowrap;
+/* ── CSV preview ── */
+.csv-table { font-size: 12px; width: 100%; border-collapse: collapse; margin-top: 12px; }
+.csv-table th, .csv-table td { padding: 4px 8px; border: 1px solid var(--border); text-align: left; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.csv-table th { background: var(--bg); font-weight: 600; }
+
+/* ── Overlay (mobile) ── */
+.sidebar-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,.3); z-index: 99;
 }
-.toast.show { opacity: 1; }
-.toast.success { background: #ebf5ed; color: #2d6a4f; border: 1px solid #a3d9b1; }
-.toast.error { background: #fef0ef; color: var(--accent); border: 1px solid #f5c6cb; }
 
-/* ── Bottom bar ── */
-.bottom-bar {
-    position: fixed; bottom: 0; left: 0; right: 0;
-    background: var(--surface); border-top: 1px solid var(--border);
-    padding: 10px 20px; display: none; gap: 10px; align-items: center; z-index: 500;
-}
-.bottom-bar .msg { flex: 1; font-size: 13px; }
-.bottom-bar .msg.success { color: var(--green); }
-.bottom-bar .msg.error { color: var(--accent); }
-
-/* ── Misc ── */
-.empty-state { text-align: center; padding: 50px 20px; color: var(--text3); }
-.empty-state p { font-size: 14px; margin-top: 4px; }
-.stat-badge {
-    display: inline-flex; align-items: center; gap: 4px;
-    font-size: 12px; color: var(--text2); background: var(--bg);
-    padding: 4px 10px; border-radius: 12px;
+/* ── Responsive ── */
+@media (max-width: 767px) {
+    .sidebar { transform: translateX(-100%); }
+    .sidebar.open { transform: translateX(0); }
+    .sidebar-overlay.show { display: block; }
+    .main { margin-left: 0; }
+    .page-header { padding: 14px 16px; }
+    .page-content { padding: 16px; }
+    .hamburger { display: inline-flex; align-items: center; }
+    .deck-layout { grid-template-columns: 1fr; }
+    .deck-list-panel { max-height: 250px; }
+    .stat-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .tpl-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
 }
 </style>
 </head>
 <body>
 
-<!-- Header -->
-<div class="page-header">
-    <div class="container">
+<!-- Sidebar overlay (mobile) -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
         <h1>kikkua<span>·</span> 管理</h1>
-        <input class="token-input" id="tokenInput" type="password" placeholder="GitHub Token（ghp_xxx）" autocomplete="off">
-        <button class="btn btn-primary btn-sm" id="connectBtn">连接</button>
-        <button class="btn btn-secondary btn-sm" id="disconnectBtn" style="display:none;">断开</button>
-        <span id="statusBadge" class="stat-badge">⚪ 未连接</span>
-        <a href="https://github.com/settings/tokens/new?description=kikkua+admin&scopes=repo" target="_blank" rel="noopener" style="font-size:12px;color:var(--accent);">生成 Token →</a>
+        <p>后台配置面板</p>
     </div>
-</div>
-
-<div class="container">
-
-    <!-- Tabs -->
-    <div class="tabs">
-        <div class="tab active" data-tab="decks">📋 牌组</div>
-        <div class="tab" data-tab="templates">🎨 模板</div>
+    <nav class="sidebar-nav">
+        <div class="nav-item active" data-section="dashboard">📊 仪表盘</div>
+        <div class="nav-item" data-section="decks">📋 牌组</div>
+        <div class="nav-item" data-section="templates">🎨 模板</div>
+    </nav>
+    <div class="sidebar-footer">
+        <div class="token-row">
+            <input type="password" id="tokenInput" placeholder="Token (ghp_xxx)">
+            <button class="btn btn-primary btn-sm" id="connectBtn">连接</button>
+            <button class="btn btn-secondary btn-sm" id="disconnectBtn" style="display:none;">✕</button>
+        </div>
+        <div class="status" id="statusBadge">⚪ 未连接</div>
+        <div class="stat" id="footerStats"></div>
     </div>
+</aside>
 
-    <!-- ──────── Tab: Decks ──────── -->
-    <div class="tab-content active" id="tabDecks">
-        <div class="deck-layout">
-            <div>
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                    <span style="font-size:13px;font-weight:600;color:var(--text2);">牌组列表</span>
-                    <button class="btn btn-secondary btn-xs" id="addDeckBtn">+ 新建</button>
+<!-- Main -->
+<div class="main">
+    <div class="page-header">
+        <button class="hamburger" id="menuBtn">☰</button>
+        <h2 id="pageTitle">📊 仪表盘</h2>
+        <div style="display:flex;gap:8px;">
+            <button class="btn btn-secondary btn-sm" id="saveBtn">💾 保存</button>
+        </div>
+    </div>
+    <div class="page-content">
+
+        <!-- Dashboard -->
+        <div class="page-section active" id="secDashboard">
+            <div class="stat-grid">
+                <div class="stat-card"><div class="num" id="statDecks">-</div><div class="label">牌组</div></div>
+                <div class="stat-card"><div class="num" id="statTemplates">-</div><div class="label">模板</div></div>
+                <div class="stat-card"><div class="num" id="statCards">-</div><div class="label">卡片总数</div></div>
+                <div class="stat-card"><div class="num" id="statData">-</div><div class="label">数据文件</div></div>
+            </div>
+            <div id="dashboardActions" style="display:flex;gap:10px;flex-wrap:wrap;">
+                <button class="btn btn-primary btn-sm" onclick="switchSection('decks')">📋 管理牌组</button>
+                <button class="btn btn-secondary btn-sm" onclick="switchSection('templates')">🎨 管理模板</button>
+            </div>
+        </div>
+
+        <!-- Decks -->
+        <div class="page-section" id="secDecks">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+                <span style="font-size:13px;font-weight:600;color:var(--text2);">牌组列表</span>
+                <button class="btn btn-secondary btn-sm" id="addDeckBtn">+ 新建</button>
+            </div>
+            <div class="deck-layout">
+                <div class="deck-list-panel" id="deckListPanel"><div class="deck-edit-panel empty">加载中…</div></div>
+                <div class="deck-edit-panel empty" id="deckEditPanel"><span>选择一个牌组开始编辑</span></div>
+            </div>
+        </div>
+
+        <!-- Templates -->
+        <div class="page-section" id="secTemplates">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+                <span style="font-size:13px;font-weight:600;color:var(--text2);">模板包</span>
+                <button class="btn btn-secondary btn-sm" id="newTplBtn">+ 新建</button>
+            </div>
+            <div class="tpl-grid" id="tplGrid"><div class="tpl-card add" style="grid-column:1/-1;">加载中…</div></div>
+            <div class="tpl-editor" id="tplEditor" style="display:none;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                    <h3 id="tplEditorTitle" style="font-size:15px;font-weight:600;"></h3>
+                    <button class="btn btn-primary btn-sm" id="tplSaveBtn">保存文件</button>
                 </div>
-                <div class="deck-list-panel" id="deckListPanel">
-                    <div class="empty-state" style="padding:30px;"><p>加载中…</p></div>
-                </div>
-            </div>
-            <div class="deck-edit-panel empty" id="deckEditPanel">
-                <span>选择一个牌组开始编辑</span>
+                <div class="file-tabs" id="tplFileTabs"></div>
+                <textarea id="tplEditorContent" spellcheck="false"></textarea>
             </div>
         </div>
+
     </div>
-
-    <!-- ──────── Tab: Templates ──────── -->
-    <div class="tab-content" id="tabTemplates">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-            <span style="font-size:13px;font-weight:600;color:var(--text2);">模板包</span>
-            <button class="btn btn-secondary btn-sm" id="newTplBtn">+ 新建模板</button>
-        </div>
-        <div class="tpl-grid" id="tplGrid"><div class="empty-state"><p>加载中…</p></div></div>
-        <div class="tpl-editor" id="tplEditor">
-            <div class="editor-header">
-                <h3 id="tplEditorTitle"></h3>
-                <button class="btn btn-primary btn-sm" id="tplSaveBtn">保存文件</button>
-            </div>
-            <div class="tpl-file-tabs" id="tplFileTabs"></div>
-            <textarea id="tplEditorContent" spellcheck="false"></textarea>
-            <div style="font-size:12px;color:var(--text3);margin-top:6px;" id="tplSaveStatus"></div>
-        </div>
-    </div>
-
-
 </div>
 
-<!-- Bottom Bar -->
-<div class="bottom-bar" id="bottomBar">
-    <div class="msg" id="bottomMsg"></div>
-    <button class="btn btn-secondary btn-sm" id="saveBtn">保存牌组</button>
-    <button class="btn btn-primary" id="saveBtn2">保存</button>
+<!-- CSV preview modal -->
+<div class="modal-overlay" id="csvPreviewOverlay">
+    <div class="modal" style="max-width:90vw;max-height:80vh;overflow-y:auto;padding:20px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+            <h3 id="csvPreviewTitle" style="font-size:16px;font-weight:600;"></h3>
+            <button class="btn btn-secondary btn-sm" onclick="$('#csvPreviewOverlay').classList.remove('show')">关闭</button>
+        </div>
+        <div style="overflow-x:auto;"><table class="csv-table" id="csvTable"><tbody></tbody></table></div>
+        <div style="margin-top:8px;font-size:12px;color:var(--text3);" id="csvPreviewInfo"></div>
+    </div>
 </div>
+<input type="file" id="csvFileInput" accept=".csv" style="display:none;">
 
 <!-- Modal -->
 <div class="modal-overlay" id="modalOverlay">
@@ -286,33 +315,16 @@ body {
     </div>
 </div>
 
-<!-- CSV file input & preview modal -->
-<input type="file" id="csvFileInput" accept=".csv" style="display:none;">
-<div class="modal-overlay" id="csvPreviewOverlay">
-    <div class="modal" style="max-width:90vw;max-height:80vh;overflow-y:auto;padding:20px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-            <h3 id="csvPreviewTitle" style="font-size:16px;font-weight:600;"></h3>
-            <button class="btn btn-secondary btn-sm" onclick="document.getElementById('csvPreviewOverlay').classList.remove('show')">关闭</button>
-        </div>
-        <div style="overflow-x:auto;font-size:12px;">
-            <table style="width:100%;border-collapse:collapse;"><thead id="csvPreviewHead"></thead><tbody id="csvPreviewBody"></tbody></table>
-        </div>
-        <div style="margin-top:8px;font-size:12px;color:var(--text3);" id="csvPreviewInfo"></div>
-    </div>
-</div>
-
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
 <script>
 const GH = 'https://api.github.com';
-const PRIV = 'kikkua26/kikkua26.github.io';
-const PUB = 'kikkua26/kikkua26.github.io';
+const REPO = 'kikkua26/kikkua26.github.io';
 
 let token = '', decks = [], dataSha = '', tplNames = [];
-let currentDeckIdx = -1;
-let tplFiles = {}; // { 'path': { sha, content } }
-let currentTpl = '', currentTplFile = '';
+let currentDeckIdx = -1, currentTpl = '', currentTplFile = '';
+let tplFiles = {};
 
 const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
@@ -326,20 +338,16 @@ async function gh(url, opts = {}) {
     if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error(e.message || `HTTP ${res.status}`); }
     return res.json();
 }
-
 function b64enc(s) { return btoa(unescape(encodeURIComponent(s))); }
-function b64dec(s) {
-    const r = atob(s.replace(/\s/g,'')); return new TextDecoder('utf-8').decode(Uint8Array.from(r,c=>c.charCodeAt(0)));
-}
-
-async function readRepo(repo, path) { const r = await gh(`/repos/${repo}/contents/${path}`); return { sha: r.sha, text: b64dec(r.content) }; }
-async function writeRepo(repo, path, content, sha, msg) {
-    return gh(`/repos/${repo}/contents/${path}`, {
+function b64dec(s) { const r = atob(s.replace(/\s/g,'')); return new TextDecoder().decode(Uint8Array.from(r,c=>c.charCodeAt(0))); }
+async function readRepo(path) { const r = await gh(`/repos/${REPO}/contents/${path}`); return { sha: r.sha, text: b64dec(r.content) }; }
+async function writeRepo(path, content, sha, msg) {
+    return gh(`/repos/${REPO}/contents/${path}`, {
         method: 'PUT', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: msg || 'Update from admin', content: b64enc(content), sha })
     });
 }
-async function listRepo(repo, path) { return gh(`/repos/${repo}/contents/${path}`); }
+async function listRepo(path) { return gh(`/repos/${REPO}/contents/${path}`); }
 
 // ─── Toast ───
 let tt;
@@ -347,8 +355,6 @@ function toast(text, type='success') {
     const el = $('#toast'); el.textContent = text; el.className = `toast ${type} show`;
     clearTimeout(tt); tt = setTimeout(() => el.classList.remove('show'), 3000);
 }
-
-// ─── Modal ───
 function confirmModal(title, text) {
     return new Promise(r => {
         $('#modalTitle').textContent = title; $('#modalText').textContent = text;
@@ -357,14 +363,13 @@ function confirmModal(title, text) {
         $('#modalCancel').onclick = () => { $('#modalOverlay').classList.remove('show'); r(false); };
     });
 }
-
 function inputModal(title, label, placeholder = '') {
     return new Promise(r => {
         $('#modalTitle').textContent = title;
-        $('#modalBody').querySelectorAll('.field').forEach(e => e.remove());
-        const div = document.createElement('div'); div.className = 'field';
-        div.innerHTML = `<label>${label}</label><input id="modalInput" placeholder="${placeholder}">`;
-        $('#modalText').after(div);
+        document.querySelectorAll('#modalBody .field').forEach(e => e.remove());
+        const f = document.createElement('div'); f.className = 'field';
+        f.innerHTML = `<input id="modalInput" placeholder="${placeholder}">`;
+        $('#modalText').after(f);
         $('#modalOverlay').classList.add('show');
         $('#modalConfirm').textContent = '确定';
         $('#modalConfirm').onclick = () => { const v = $('#modalInput').value.trim(); $('#modalOverlay').classList.remove('show'); r(v); };
@@ -373,56 +378,78 @@ function inputModal(title, label, placeholder = '') {
     });
 }
 
-function setBadge(text, cls = '') {
-    const el = $('#statusBadge'); el.textContent = text; el.className = 'stat-badge' + (cls ? ' ' + cls : '');
+function setStatus(text, cls = '') {
+    $('#statusBadge').textContent = text;
+    $('#statusBadge').className = 'status' + (cls ? ' ' + cls : '');
 }
-function setBottom(msg, cls = '') {
-    const el = $('#bottomMsg'); el.textContent = msg; el.className = 'msg' + (cls ? ' ' + cls : '');
+function updateDashboard() {
+    const total = decks.reduce((s, d) => s + (d.totalCards || 0), 0);
+    $('#statDecks').textContent = decks.length || '-';
+    $('#statTemplates').textContent = tplNames.length || '-';
+    $('#statCards').textContent = total || '-';
+    $('#statData').textContent = decks.filter(d => d.totalCards > 0).length || '-';
 }
+function switchSection(name) {
+    $$('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.section === name));
+    $$('.page-section').forEach(s => s.classList.toggle('active', s.id === 'sec' + name.charAt(0).toUpperCase() + name.slice(1)));
+    const titles = { dashboard: '📊 仪表盘', decks: '📋 牌组', templates: '🎨 模板' };
+    $('#pageTitle').textContent = titles[name] || name;
+    if (window.innerWidth <= 767) closeSidebar();
+    if (name === 'decks') renderDeckList();
+    if (name === 'templates') renderTplGrid();
+}
+$$('.nav-item').forEach(n => n.addEventListener('click', () => switchSection(n.dataset.section)));
 
-async function loadData() {
-    setBadge('⏳ 加载数据…');
+// ─── Sidebar ───
+function openSidebar() { $('#sidebar').classList.add('open'); $('#sidebarOverlay').classList.add('show'); }
+function closeSidebar() { $('#sidebar').classList.remove('open'); $('#sidebarOverlay').classList.remove('show'); }
+$('#menuBtn').addEventListener('click', openSidebar);
+$('#sidebarOverlay').addEventListener('click', closeSidebar);
+
+// ─── CONNECT ───
+async function connect() {
+    token = $('#tokenInput').value.trim();
+    if (!token) { setStatus('⚠️ 请输入 Token', 'err'); return; }
+    sessionStorage.setItem('admin_token', token);
+    setStatus('⏳ 连接中…');
     try {
         const user = await gh('/user');
-        if (!user.login) throw new Error('Token 无效');
-        await Promise.all([loadDecks(), loadTemplates()]);
-        setBadge(`✅ ${user.login} · 📋 ${decks.length} 牌组 · 🎨 ${tplNames.length} 模板`, 'success');
-        $('#connectBtn').textContent = '✅ 已连接';
+        await loadDecks();
+        await loadTemplates();
+        setStatus(`✅ ${user.login}`, 'ok');
+        $('#connectBtn').textContent = '已连';
         $('#connectBtn').disabled = true;
         $('#disconnectBtn').style.display = 'inline-flex';
         $('#tokenInput').disabled = true;
-        setBottom('就绪');
-    } catch (e) {
-        setBadge('❌ ' + e.message, 'error');
-    }
+        updateDashboard();
+        $('#footerStats').textContent = `📋 ${decks.length} 牌组 · 🎨 ${tplNames.length} 模板`;
+    } catch (e) { setStatus('❌ ' + e.message, 'err'); }
+}
+function disconnect() {
+    sessionStorage.removeItem('admin_token'); token = '';
+    decks = []; tplNames = [];
+    $('#tokenInput').value = ''; $('#tokenInput').disabled = false;
+    $('#connectBtn').textContent = '连接'; $('#connectBtn').disabled = false;
+    $('#disconnectBtn').style.display = 'none';
+    setStatus('⚪ 已断开');
+    $('#footerStats').textContent = '';
+    updateDashboard();
 }
 
-// ═══════════════════════════════════════
-//  DECKS
-// ═══════════════════════════════════════
-
+// ─── DECKS ───
 async function loadDecks() {
-    try {
-        const r = await readRepo(PRIV, 'data/index.json');
-        dataSha = r.sha; decks = JSON.parse(r.text);
-        renderDeckList();
-        setBadge(`📋 ${decks.length} 牌组 · 🎨 ${tplNames.length} 模板`);
-        $('#bottomBar').style.display = 'flex';
-        setBottom('就绪');
-    } catch (e) { setBadge('❌ ' + e.message, 'error'); }
+    const r = await readRepo('data/index.json');
+    dataSha = r.sha; decks = JSON.parse(r.text);
+    renderDeckList();
 }
 
 function renderDeckList() {
     const el = $('#deckListPanel');
-    if (!decks.length) { el.innerHTML = '<div class="empty-state" style="padding:30px"><p>暂无牌组</p></div>'; return; }
+    if (!decks.length) { el.innerHTML = '<div class="deck-edit-panel empty"><span>暂无牌组</span></div>'; return; }
     el.innerHTML = decks.map((d, i) => `
-        <div class="deck-list-item${i === currentDeckIdx ? ' active' : ''}" onclick="selectDeck(${i})">
+        <div class="deck-list-item${i===currentDeckIdx?' active':''}" onclick="selectDeck(${i})">
             <div class="name">${esc(d.name)}</div>
-            <div class="meta">
-                <span>📄 ${d.totalCards||0}</span>
-                <span class="badge">${esc(d.template||'?')}</span>
-                ${(d.tags||[])[0] ? `<span class="badge">${esc(d.tags[0].split('::').pop())}</span>` : ''}
-            </div>
+            <div class="meta"><span>📄 ${d.totalCards||0}</span><span class="badge">${esc(d.template||'?')}</span></div>
         </div>
     `).join('');
 }
@@ -430,7 +457,7 @@ function renderDeckList() {
 function selectDeck(i) {
     currentDeckIdx = i; renderDeckList();
     const d = decks[i];
-    const tplOptions = tplNames.map(n => `<option value="${esc(n)}"${n===d.template?' selected':''}>${esc(n)}</option>`).join('');
+    const tplOpts = tplNames.map(n => `<option value="${esc(n)}"${n===d.template?' selected':''}>${esc(n)}</option>`).join('');
     const tagStr = (d.tags||[]).join(', ');
 
     $('#deckEditPanel').className = 'deck-edit-panel';
@@ -439,16 +466,16 @@ function selectDeck(i) {
             <h3 style="font-size:16px;font-weight:600;">${esc(d.name)}</h3>
         </div>
         <div class="field-row">
-            <div class="field"><label>显示名称</label><input value="${esc(d.name)}" onchange="upd(${i},'name',this.value);renderDeckList();" id="f_name"></div>
-            <div class="field"><label>模板 ID</label><select onchange="upd(${i},'template',this.value)">${tplOptions}</select></div>
+            <div class="field"><label>名称</label><input value="${esc(d.name)}" onchange="upd(${i},'name',this.value);renderDeckList();"></div>
+            <div class="field"><label>模板</label><select onchange="upd(${i},'template',this.value)">${tplOpts}</select></div>
         </div>
         <div class="field-row">
-            <div class="field"><label>卡片数量</label><input type="number" value="${d.totalCards||0}" onchange="upd(${i},'totalCards',parseInt(this.value)||0)"></div>
-            <div class="field"><label>章节字段名</label><input value="${esc(d.chapterField||'章节')}" onchange="upd(${i},'chapterField',this.value)"></div>
+            <div class="field"><label>卡片数</label><input type="number" value="${d.totalCards||0}" onchange="upd(${i},'totalCards',parseInt(this.value)||0)"></div>
+            <div class="field"><label>章节字段</label><input value="${esc(d.chapterField||'章节')}" onchange="upd(${i},'chapterField',this.value)"></div>
         </div>
-        <div class="field"><label>标签（逗号分隔，:: 表示层级）</label><input value="${esc(tagStr)}" onchange="upd(${i},'tags',this.value.split(/,\s*/).filter(Boolean))"></div>
+        <div class="field"><label>标签 (逗号分隔)</label><input value="${esc(tagStr)}" onchange="upd(${i},'tags',this.value.split(/,\s*/).filter(Boolean))"></div>
         <div class="field"><label>购买链接</label><input value="${esc(d.purchaseUrl||'')}" onchange="upd(${i},'purchaseUrl',this.value)"></div>
-        <div class="field"><label>牌组介绍（Markdown）</label><textarea rows="4" onchange="upd(${i},'detail',this.value)">${esc(d.detail||'')}</textarea></div>
+        <div class="field"><label>介绍 (Markdown)</label><textarea rows="3" onchange="upd(${i},'detail',this.value)">${esc(d.detail||'')}</textarea></div>
 
         <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:14px;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
@@ -456,144 +483,40 @@ function selectDeck(i) {
                 <div style="display:flex;gap:6px;">
                     <button class="btn btn-secondary btn-xs" onclick="previewCsv('${esc(d.name)}')">查看</button>
                     <button class="btn btn-secondary btn-xs" onclick="downloadCsv('${esc(d.name)}')">下载</button>
-                    <button class="btn btn-secondary btn-xs" onclick="uploadCsv('${esc(d.name)}')">上传替换</button>
+                    <button class="btn btn-secondary btn-xs" onclick="uploadCsv('${esc(d.name)}')">上传</button>
                 </div>
             </div>
-            <div id="csvPreviewDeck" style="font-size:12px;color:var(--text3);">${d.totalCards > 0 ? `${d.totalCards} 条记录` : '暂无数据，点击上传添加 CSV'}</div>
+            <div style="font-size:12px;color:var(--text3);">${d.totalCards > 0 ? `${d.totalCards} 条记录` : '暂无数据'}</div>
         </div>
 
         <div class="edit-actions">
-            <button class="btn btn-primary btn-sm" onclick="saveDecks()">保存</button>
-            <button class="btn btn-danger btn-sm" onclick="delDeck(${i})">删除此牌组</button>
+            <button class="btn btn-primary btn-sm" onclick="saveDecks()">💾 保存</button>
+            <button class="btn btn-danger btn-sm" onclick="delDeck(${i})">删除</button>
         </div>
     `;
-    $('#bottomBar').style.display = 'flex'; setBottom('编辑中');
 }
-
-function upd(i, k, v) { decks[i][k] = v; setBottom('有未保存的修改'); }
-
+function upd(i, k, v) { decks[i][k] = v; }
 async function saveDecks() {
-    setBottom('保存中…');
     try {
         const json = JSON.stringify(decks, null, 2);
-        await writeRepo(PRIV, 'data/index.json', json, dataSha, 'Update decks from admin');
-        const r = await readRepo(PRIV, 'data/index.json'); dataSha = r.sha;
-        setBottom('✅ 已保存', 'success'); toast('牌组已保存');
-    } catch (e) { setBottom('❌ ' + e.message, 'error'); toast(e.message, 'error'); }
+        await writeRepo('data/index.json', json, dataSha, 'Update decks from admin');
+        const r = await readRepo('data/index.json'); dataSha = r.sha;
+        updateDashboard();
+        toast('已保存');
+    } catch (e) { toast(e.message, 'error'); }
 }
-
 async function delDeck(i) {
-    const ok = await confirmModal('删除牌组', `确认删除"${decks[i].name}"？所有关联数据不会被删除。`);
+    const ok = await confirmModal('删除', `确认删除"${decks[i].name}"？`);
     if (!ok) return;
-    const name = decks[i].name; decks.splice(i, 1);
-    currentDeckIdx = -1; await saveDecks();
+    decks.splice(i, 1); currentDeckIdx = -1;
+    await saveDecks();
     renderDeckList();
     $('#deckEditPanel').className = 'deck-edit-panel empty';
     $('#deckEditPanel').innerHTML = '<span>选择一个牌组开始编辑</span>';
-    toast(`已删除"${name}"`);
 }
 
-// ═══════════════════════════════════════
-//  TEMPLATES
-// ═══════════════════════════════════════
-
-async function loadTemplates() {
-    try {
-        const items = await listRepo(PUB, 'templates');
-        tplNames = items.filter(i => i.type === 'dir').map(i => i.name);
-        renderTplGrid();
-    } catch (e) {
-        $('#tplGrid').innerHTML = `<div class="empty-state"><p>加载失败：${e.message}</p></div>`;
-    }
-}
-
-function renderTplGrid() {
-    const el = $('#tplGrid');
-    el.innerHTML = tplNames.map(n => `
-        <div class="tpl-card${n===currentTpl?' selected':''}" onclick="selectTpl('${esc(n)}')">
-            <div class="tpl-icon">📁</div>
-            <div class="tpl-name">${esc(n)}</div>
-            <div class="tpl-meta">正面模板.html · 背面模板.html · 样式.css</div>
-        </div>
-    `).join('') + `
-        <div class="tpl-card add-card" onclick="createTpl()">
-            <div class="big">+</div>
-            <span>新建模板</span>
-        </div>
-    `;
-}
-
-async function selectTpl(name) {
-    currentTpl = name; renderTplGrid();
-    const editor = $('#tplEditor'); editor.classList.add('show');
-    $('#tplEditorTitle').textContent = name;
-    $('.editor-header .btn').textContent = '保存文件';
-    // Render file tabs
-    const files = ['正面模板.html', '背面模板.html', '样式.css'];
-    $('#tplFileTabs').innerHTML = files.map((f, i) =>
-        `<span class="tpl-file-tab${i===0?' active':''}" onclick="switchTplFile('${esc(name)}','${esc(f)}',this)">${f}</span>`
-    ).join('');
-    // Load first file
-    switchTplFile(name, files[0], $('#tplFileTabs').firstChild);
-}
-window.selectTpl = selectTpl;
-
-async function switchTplFile(tpl, file, tab) {
-    currentTplFile = `templates/${tpl}/${file}`;
-    $$('.tpl-file-tab').forEach(t => t.classList.remove('active'));
-    if (tab) tab.classList.add('active');
-    $('#tplEditorContent').value = '加载中…';
-    $('#tplSaveStatus').textContent = '';
-    try {
-        const r = await readRepo(PUB, currentTplFile);
-        tplFiles[currentTplFile] = { sha: r.sha };
-        $('#tplEditorContent').value = r.text;
-    } catch (e) {
-        if (e.message.includes('Not Found')) {
-            $('#tplEditorContent').value = `/* 文件不存在，创建后保存 */\n`;
-            tplFiles[currentTplFile] = { sha: null };
-        } else {
-            $('#tplEditorContent').value = `/* 加载失败：${e.message} */`;
-        }
-    }
-}
-window.switchTplFile = switchTplFile;
-
-$('#tplSaveBtn').addEventListener('click', async () => {
-    const content = $('#tplEditorContent').value;
-    const info = tplFiles[currentTplFile] || { sha: null };
-    try {
-        await writeRepo(PUB, currentTplFile, content, info.sha, 'Update ' + currentTplFile);
-        const r = await readRepo(PUB, currentTplFile);
-        tplFiles[currentTplFile] = { sha: r.sha };
-        $('#tplSaveStatus').textContent = '✅ 已保存';
-        toast('模板文件已保存');
-    } catch (e) { $('#tplSaveStatus').textContent = '❌ ' + e.message; toast(e.message, 'error'); }
-});
-
-async function createTpl() {
-    const name = await inputModal('新建模板', '模板名称（将作为目录名和模板 ID）', '例如: my-template');
-    if (!name) return;
-    if (tplNames.includes(name)) { toast('模板已存在', 'error'); return; }
-    // Create 3 files
-    try {
-        await writeRepo(PUB, `templates/${name}/正面模板.html`, '{{Front}}', null, 'Create template');
-        await writeRepo(PUB, `templates/${name}/背面模板.html`, '{{FrontSide}}\n\n<hr>\n\n{{Back}}', null, 'Create template');
-        await writeRepo(PUB, `templates/${name}/样式.css`, '.card { font-family: arial; font-size: 20px; }', null, 'Create template');
-        tplNames.push(name);
-        renderTplGrid();
-        selectTpl(name);
-        toast(`模板"${name}"已创建`);
-    } catch (e) { toast('创建失败：' + e.message, 'error'); }
-}
-window.createTpl = createTpl;
-
-// ═══════════════════════════════════════
-//  CSV
-// ═══════════════════════════════════════
-
+// ─── CSV ───
 let csvMeta = {};
-
 function parseCsvRow(l) {
     const r = []; let c = '', q = false;
     for (let i = 0; i < l.length; i++) {
@@ -604,43 +527,27 @@ function parseCsvRow(l) {
     }
     r.push(c); return r;
 }
-
 async function previewCsv(deck) {
     try {
-        const r = await readRepo(PRIV, 'data/' + deck + '/data.csv');
+        const r = await readRepo('data/' + deck + '/data.csv');
         csvMeta[deck] = { sha: r.sha, text: r.text };
         const lines = r.text.trim().split('\n');
         const rows = lines.map(parseCsvRow);
         $('#csvPreviewTitle').textContent = deck + '/data.csv';
         $('#csvPreviewInfo').textContent = `共 ${rows.length-1} 条记录`;
-        $('#csvPreviewHead').innerHTML = `<tr>${rows[0].map(h=>`<th style="padding:4px 10px;border:1px solid var(--border);background:var(--bg);white-space:nowrap;">${esc(h)}</th>`).join('')}</tr>`;
-        $('#csvPreviewBody').innerHTML = rows.slice(1, 101).map(r => `<tr>${r.map(c=>`<td style="padding:3px 8px;border:1px solid var(--border);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(c.slice(0,80))}</td>`).join('')}</tr>`).join('');
-        if (rows.length > 101) {
-            $('#csvPreviewBody').innerHTML += `<tr><td colspan="${rows[0].length}" style="text-align:center;padding:8px;color:var(--text3);">… 仅显示前 100 行</td></tr>`;
-        }
+        $('#csvTable').innerHTML = `<tr>${rows[0].map(h=>`<th>${esc(h)}</th>`).join('')}</tr>` +
+            rows.slice(1, 101).map(r => `<tr>${r.map(c=>`<td>${esc(c.slice(0,80))}</td>`).join('')}</tr>`).join('');
         $('#csvPreviewOverlay').classList.add('show');
-        // Update deck edit panel
-        const info = $('#csvPreviewDeck');
-        if (info) info.textContent = `${rows.length - 1} 条记录`;
-    } catch (e) {
-        toast('加载失败：' + e.message, 'error');
-    }
+    } catch (e) { toast('加载失败', 'error'); }
 }
-window.previewCsv = previewCsv;
-
 async function downloadCsv(deck) {
     try {
-        const r = csvMeta[deck] || await readRepo(PRIV, 'data/' + deck + '/data.csv');
+        const r = csvMeta[deck] || await readRepo('data/' + deck + '/data.csv');
         csvMeta[deck] = { sha: r.sha, text: r.text };
         const blob = new Blob([r.text], { type: 'text/csv;charset=utf-8' });
-        const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-        a.download = deck + '_data.csv'; a.click();
-    } catch (e) {
-        toast('下载失败：' + e.message, 'error');
-    }
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = deck + '_data.csv'; a.click();
+    } catch (e) { toast('下载失败', 'error'); }
 }
-window.downloadCsv = downloadCsv;
-
 async function uploadCsv(deck) {
     const input = $('#csvFileInput');
     input.onchange = async (e) => {
@@ -650,89 +557,98 @@ async function uploadCsv(deck) {
         if (!ok) { input.value = ''; return; }
         try {
             const sha = csvMeta[deck] ? csvMeta[deck].sha : null;
-            const r = await writeRepo(PRIV, 'data/' + deck + '/data.csv', text, sha, 'Update ' + deck + '/data.csv');
+            const r = await writeRepo('data/' + deck + '/data.csv', text, sha, 'Update ' + deck);
             csvMeta[deck] = { sha: r.content.sha, text };
-            previewCsv(deck);
             toast('CSV 已更新');
-        } catch (err) { toast('保存失败：' + err.message, 'error'); }
+        } catch (err) { toast(err.message, 'error'); }
+        input.value = '';
     };
     input.click();
 }
-window.uploadCsv = uploadCsv;
 
-// ═══════════════════════════════════════
-//  CONNECT
-// ═══════════════════════════════════════
-
-async function connect() {
-    token = $('#tokenInput').value.trim();
-    if (!token) { setBadge('⚠️ 请输入 Token', 'error'); return; }
-    sessionStorage.setItem('admin_token', token);
-    setBadge('⏳ 连接中…');
+// ─── TEMPLATES ───
+async function loadTemplates() {
     try {
-        await gh('/user');
-        setBadge('⏳ 加载数据…');
-        await Promise.all([loadDecks(), loadTemplates()]);
-        setBadge(`✅ 已连接 · 📋 ${decks.length} 牌组 · 🎨 ${tplNames.length} 模板`, 'success');
-        $('#connectBtn').textContent = '✅ 已连接';
-        $('#connectBtn').disabled = true;
-        $('#disconnectBtn').style.display = 'inline-flex';
-        $('#tokenInput').disabled = true;
-        setBottom('就绪');
+        const items = await listRepo('templates');
+        tplNames = items.filter(i => i.type === 'dir').map(i => i.name);
+        renderTplGrid();
+    } catch (e) { $('#tplGrid').innerHTML = `<div class="tpl-card add" style="grid-column:1/-1;">加载失败</div>`; }
+}
+function renderTplGrid() {
+    const el = $('#tplGrid');
+    el.innerHTML = tplNames.map(n => `
+        <div class="tpl-card${n===currentTpl?' selected':''}" onclick="selectTpl('${esc(n)}')">
+            <div class="icon">📁</div><div class="name">${esc(n)}</div>
+            <div class="meta">模板包</div>
+        </div>
+    `).join('') + '<div class="tpl-card add" onclick="createTpl()"><div class="big">+</div><span>新建</span></div>';
+}
+async function selectTpl(name) {
+    currentTpl = name; renderTplGrid();
+    const editor = $('#tplEditor'); editor.style.display = 'block';
+    $('#tplEditorTitle').textContent = name;
+    const files = ['正面模板.html', '背面模板.html', '样式.css'];
+    $('#tplFileTabs').innerHTML = files.map((f, i) =>
+        `<span class="file-tab${i===0?' active':''}" onclick="switchTplFile('${esc(name)}','${esc(f)}',this)">${f}</span>`
+    ).join('');
+    switchTplFile(name, files[0], $('#tplFileTabs').firstChild);
+}
+async function switchTplFile(tpl, file, tab) {
+    currentTplFile = `templates/${tpl}/${file}`;
+    $$('.file-tab').forEach(t => t.classList.remove('active'));
+    if (tab) tab.classList.add('active');
+    $('#tplEditorContent').value = '加载中…';
+    try {
+        const r = await readRepo(currentTplFile);
+        tplFiles[currentTplFile] = { sha: r.sha };
+        $('#tplEditorContent').value = r.text;
     } catch (e) {
-        setBadge('❌ 连接失败: ' + e.message, 'error');
+        if (e.message.includes('Not Found')) {
+            $('#tplEditorContent').value = `/* 新文件 */\n`;
+            tplFiles[currentTplFile] = { sha: null };
+        } else {
+            $('#tplEditorContent').value = `/* 加载失败 */`;
+        }
     }
 }
-
-// ─── Init ───
-function disconnect() {
-    sessionStorage.removeItem('admin_token');
-    token = '';
-    decks = [];
-    tplNames = [];
-    $('#tokenInput').value = '';
-    $('#tokenInput').disabled = false;
-    $('#connectBtn').textContent = '连接';
-    $('#connectBtn').disabled = false;
-    $('#disconnectBtn').style.display = 'none';
-    $('#bottomBar').style.display = 'none';
-    $('#deckList').innerHTML = '';
-    $('#tplGrid').innerHTML = '<div class="empty-state"><p>加载中…</p></div>';
-    setBadge('⚪ 已断开');
-    setBottom('');
+$('#tplSaveBtn').addEventListener('click', async () => {
+    const info = tplFiles[currentTplFile] || { sha: null };
+    try {
+        await writeRepo(currentTplFile, $('#tplEditorContent').value, info.sha, 'Update ' + currentTplFile);
+        const r = await readRepo(currentTplFile);
+        tplFiles[currentTplFile] = { sha: r.sha };
+        toast('已保存');
+    } catch (e) { toast(e.message, 'error'); }
+});
+async function createTpl() {
+    const name = await inputModal('新建模板', '模板名称', 'my-template');
+    if (!name) return;
+    if (tplNames.includes(name)) { toast('已存在', 'error'); return; }
+    try {
+        await writeRepo(`templates/${name}/正面模板.html`, '{{Front}}', null, 'Create');
+        await writeRepo(`templates/${name}/背面模板.html`, '{{FrontSide}}\n\n<hr>\n\n{{Back}}', null, 'Create');
+        await writeRepo(`templates/${name}/样式.css`, '.card { font-family: arial; font-size: 20px; }', null, 'Create');
+        tplNames.push(name); renderTplGrid(); selectTpl(name);
+        toast(`"${name}" 已创建`);
+    } catch (e) { toast(e.message, 'error'); }
 }
 
+// ─── INIT ───
 $('#connectBtn').addEventListener('click', connect);
 $('#disconnectBtn').addEventListener('click', disconnect);
 $('#tokenInput').addEventListener('keydown', e => { if (e.key === 'Enter') connect(); });
-
-const savedToken = sessionStorage.getItem('admin_token');
-if (savedToken) { $('#tokenInput').value = savedToken; connect(); }
-
-// Tab switching
-$$('.tab').forEach(t => {
-    t.addEventListener('click', () => {
-        $$('.tab').forEach(x => x.classList.remove('active'));
-        $$('.tab-content').forEach(x => x.classList.remove('active'));
-        t.classList.add('active');
-        const id = 'tab' + t.dataset.tab.charAt(0).toUpperCase() + t.dataset.tab.slice(1);
-        $(`#${id}`).classList.add('active');
-    });
-});
-
-$('#addDeckBtn').addEventListener('click', async () => {
-    const name = await inputModal('新建牌组', '牌组名称', '例如: 新牌组');
-    if (!name) return;
-    if (decks.find(d => d.name === name)) { toast('牌组已存在', 'error'); return; }
-    decks.push({ name, totalCards: 0, tags: [], template: tplNames[0] || 'kikkua高级模板', chapterField: '章节', detail: '', purchaseUrl: '' });
-    renderDeckList();
-    selectDeck(decks.length - 1);
-    toast('已添加"' + name + '"，点击保存提交');
-});
-
-// Save & Deploy
 $('#saveBtn').addEventListener('click', saveDecks);
-$('#saveBtn2').addEventListener('click', saveDecks);
+$('#addDeckBtn').addEventListener('click', async () => {
+    const name = await inputModal('新建牌组', '牌组名称', '新牌组');
+    if (!name) return;
+    if (decks.find(d => d.name === name)) { toast('已存在', 'error'); return; }
+    decks.push({ name, totalCards: 0, tags: [], template: tplNames[0]||'', chapterField:'章节', detail:'', purchaseUrl:'' });
+    renderDeckList(); selectDeck(decks.length-1);
+    toast('已添加，点击保存提交');
+});
+
+const saved = sessionStorage.getItem('admin_token');
+if (saved) { $('#tokenInput').value = saved; connect(); }
 </script>
 </body>
 </html>
