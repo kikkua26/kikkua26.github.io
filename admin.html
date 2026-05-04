@@ -611,14 +611,19 @@ async function uploadCsv(deck) {
     input.onchange = async (e) => {
         const file = e.target.files[0]; if (!file) return;
         const text = await file.text();
-        const ok = await confirmModal('替换 CSV', `确认替换 ${deck}/data.csv？`);
+        const ok = await confirmModal('上传 CSV', `确认上传 ${deck}/data.csv？`);
         if (!ok) { input.value = ''; return; }
         try {
-            if (!csvMeta[deck]) { const r = await readRepo('data/' + deck + '/data.csv'); csvMeta[deck] = { sha: r.sha, text: r.text }; }
-            const sha = csvMeta[deck].sha;
+            let sha = null;
+            if (csvMeta[deck]) {
+                sha = csvMeta[deck].sha;
+            } else {
+                try { const r = await readRepo('data/' + deck + '/data.csv'); sha = r.sha; csvMeta[deck] = { sha: r.sha, text: r.text }; }
+                catch (e) { /* 新牌组，文件尚不存在，sha=null */ }
+            }
             const r = await writeRepo('data/' + deck + '/data.csv', text, sha, 'Update ' + deck);
             csvMeta[deck] = { sha: r.content.sha, text };
-            toast('CSV 已更新');
+            toast('CSV 已上传');
         } catch (err) { toast(err.message, 'error'); }
         input.value = '';
     };
