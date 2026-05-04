@@ -50,9 +50,9 @@ export class DataLoader {
     async loadTemplate(templateName) {
         try {
             const [frontResp, backResp, cssResp] = await Promise.all([
-                fetch(DATA_PATHS.templateFront(templateName)).catch(() => null),
-                fetch(DATA_PATHS.templateBack(templateName)).catch(() => null),
-                fetch(DATA_PATHS.templateCss(templateName)).catch(() => null)
+                fetch(DATA_PATHS.templateFront(templateName), { cache: 'no-cache' }).catch(() => null),
+                fetch(DATA_PATHS.templateBack(templateName), { cache: 'no-cache' }).catch(() => null),
+                fetch(DATA_PATHS.templateCss(templateName), { cache: 'no-cache' }).catch(() => null)
             ]);
             const css = cssResp?.ok ? await cssResp.text() : '';
             const front = frontResp?.ok ? await frontResp.text() : DEFAULTS.templateFront;
