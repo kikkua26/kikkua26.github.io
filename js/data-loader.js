@@ -83,21 +83,11 @@ export class DataLoader {
             }
         }
         row.push(field); rows.push(row);
-        // 合并列数不足的行
         if (rows.length < 2) return { fields: [], records: [] };
-        const cols = rows[0].length;
-        const merged = [rows[0]];
-        for (let i = 1; i < rows.length; i++) {
-            if (rows[i].length < cols && i + 1 < rows.length) {
-                rows[i + 1][0] = rows[i][0] + '\n' + rows[i + 1][0];
-                continue;
-            }
-            merged.push(rows[i]);
-        }
-        const header = merged[0].map(f => f.trim());
+        const header = rows[0].map(f => f.trim());
         const records = [];
-        for (let i = 1; i < merged.length; i++) {
-            const r = merged[i];
+        for (let i = 1; i < rows.length; i++) {
+            const r = rows[i];
             if (r.length === 1 && !r[0]) continue;
             const record = {};
             header.forEach((f, idx) => { record[f] = r[idx] !== undefined ? r[idx] : ''; });
