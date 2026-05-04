@@ -263,19 +263,21 @@ body {
 
         <!-- Decks -->
         <div class="page-section" id="secDecks">
-            <div class="deck-list-view" id="deckListView">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-                    <span style="font-size:13px;font-weight:600;color:var(--text2);">牌组列表</span>
-                    <button class="btn btn-secondary btn-sm" id="addDeckBtn">+ 新建</button>
+            <div class="deck-layout">
+                <div class="deck-list-view" id="deckListView">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+                        <span style="font-size:13px;font-weight:600;color:var(--text2);">牌组列表</span>
+                        <button class="btn btn-secondary btn-sm" id="addDeckBtn">+ 新建</button>
+                    </div>
+                    <div class="deck-list-panel" id="deckListPanel"><div class="deck-edit-panel empty">加载中…</div></div>
                 </div>
-                <div class="deck-list-panel" id="deckListPanel"><div class="deck-edit-panel empty">加载中…</div></div>
-            </div>
-            <div class="deck-detail-view" id="deckDetailView" style="display:none;">
+                <div class="deck-detail-view" id="deckDetailView">
                 <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
                     <button class="btn btn-secondary btn-sm" onclick="showDeckList()">← 返回</button>
                     <span style="font-size:13px;font-weight:600;color:var(--text2);">编辑牌组</span>
                 </div>
                 <div class="deck-edit-panel" id="deckEditPanel"></div>
+            </div>
             </div>
         </div>
 
