@@ -50,8 +50,8 @@
     --transition-normal: 400ms var(--ease-out);
 
     /* ── 字体 ── */
-    --font-display: 'Newsreader', 'Noto Serif SC', serif;
-    --font-body: 'DM Sans', 'PingFang SC', sans-serif;
+    --font-display: 'Georgia', 'Songti SC', 'Noto Serif CJK SC', serif;
+    --font-body: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
 
     /* ── 向后兼容（旧变量 → 新变量映射） ── */
     --ink-dark: var(--text-primary);
