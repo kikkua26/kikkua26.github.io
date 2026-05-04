@@ -52,7 +52,7 @@ body {
 .sidebar-footer .status.err { color: var(--accent); }
 
 /* ── Main ── */
-.main { flex: 1; margin-left: var(--sidebar); display: flex; flex-direction: column; height: 100vh; min-width: 0; }
+.main { flex: 1; margin-left: var(--sidebar); display: flex; flex-direction: column; height: 100vh; height: 100dvh; min-width: 0; }
 .page-header {
     padding: 20px 28px; border-bottom: 1px solid var(--border);
     background: var(--surface); display: flex; align-items: center; gap: 12px;
@@ -256,6 +256,7 @@ body {
                 <button class="btn btn-primary btn-sm" onclick="switchSection('decks')">📋 管理牌组</button>
                 <button class="btn btn-secondary btn-sm" onclick="switchSection('templates')">🎨 管理模板</button>
             </div>
+                <a href="https://kikkua.goatcounter.com" target="_blank" rel="noopener" class="btn btn-secondary btn-sm">📈 访问统计</a>
         </div>
 
         <!-- Decks -->
