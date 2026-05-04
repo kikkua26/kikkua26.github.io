@@ -4,12 +4,9 @@ import { DATA_PATHS, DEFAULTS } from './config.js';
 
 export class DataLoader {
     async loadDeck(deckName, { template: templateName = '', chapterField = DEFAULTS.chapterField } = {}) {
-        const cached = sessionCache.get('deck_' + deckName);
-        if (cached) return cached;
-
         const basePath = DATA_PATHS.deckData(deckName);
         try {
-            const csvResp = await fetch(basePath, { cache: 'no-cache' }).catch(() => null);
+            const csvResp = await fetch(basePath).catch(() => null);
             let template = { front: DEFAULTS.templateFront, back: DEFAULTS.templateBack };
             if (templateName) template = await this.loadTemplate(templateName);
 
@@ -20,9 +17,7 @@ export class DataLoader {
                 csvFields = parsed.fields;
                 records = parsed.records;
             }
-            const result = { template, records, fields: csvFields, chapterField };
-            sessionCache.set('deck_' + deckName, result, 300000);
-            return result;
+            return { template, records, fields: csvFields, chapterField };
         } catch (e) {
             console.error('Failed to load deck:', e);
             return { template: { front: DEFAULTS.templateFront, back: DEFAULTS.templateBack }, records: [], fields: [], chapterField };
@@ -83,7 +78,7 @@ export class DataLoader {
 
     async discoverDecks() {
         try {
-            const response = await fetch(DATA_PATHS.index, { cache: 'no-cache' });
+            const response = await fetch(DATA_PATHS.index);
             if (!response.ok) return [];
             const entries = await response.json();
             const decks = [];
