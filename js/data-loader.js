@@ -66,23 +66,37 @@ export class DataLoader {
     parseCSV(csvText) {
         const text = csvText.replace(/^﻿/, '').trim();
         if (!text) return { fields: [], records: [] };
+        // 按换行分割，引号平衡合并跨行字段
+        const rawLines = text.replace(/\r/g, '').split('\n');
+        const merged = [];
+        let buf = '';
+        for (const line of rawLines) {
+            buf = buf ? buf + '\n' + line : line;
+            let q = false;
+            for (let i = 0; i < buf.length; i++) {
+                if (buf[i] === '"') { if (i + 1 < buf.length && buf[i + 1] === '"') i++; else q = !q; }
+            }
+            if (!q) { merged.push(buf.split('\n')); buf = ''; }
+        }
+        if (buf) merged.push([buf]);
+        // 解析
         const sep = text.includes('\t') && !text.includes(',') ? '\t' : ',';
         const rows = [];
-        let row = [], field = '', q = false;
-        for (let i = 0; i < text.length; i++) {
-            const ch = text[i], next = text[i + 1];
-            if (q) {
-                if (ch === '"') { if (next === '"') { field += '"'; i++; } else q = false; }
-                else field += ch;
-            } else {
-                if (ch === '"') q = true;
-                else if (ch === sep) { row.push(field); field = ''; }
-                else if (ch === '\r') { /* skip */ }
-                else if (ch === '\n') { row.push(field); field = ''; rows.push(row); row = []; }
-                else field += ch;
+        for (const lines of merged) {
+            let field = ''; let q = false;
+            const row = [];
+            for (let li = 0; li < lines.length; li++) {
+                const line = lines[li];
+                for (let i = 0; i < line.length; i++) {
+                    const ch = line[i], next = line[i + 1];
+                    if (q) { if (ch === '"') { if (next === '"') { field += '"'; i++; } else q = false; } else field += ch; }
+                    else { if (ch === '"') q = true; else if (ch === sep) { row.push(field); field = ''; } else field += ch; }
+                }
+                if (q && li < lines.length - 1) field += '\n';
             }
+            row.push(field);
+            rows.push(row);
         }
-        row.push(field); rows.push(row);
         if (rows.length === 0) return { fields: [], records: [] };
         const header = rows[0].map(f => f.trim());
         const records = [];

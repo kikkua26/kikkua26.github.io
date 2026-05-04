@@ -577,21 +577,42 @@ async function delDeck(i) {
 let csvMeta = {};
 function parseCsvFull(text) {
     const sep = text.indexOf('\t') >= 0 && text.indexOf(',') < 0 ? '\t' : ',';
-    const rows = []; let row = [], field = '', q = false;
-    for (let i = 0; i < text.length; i++) {
-        const ch = text[i], next = text[i + 1];
-        if (q) {
-            if (ch === '"') { if (next === '"') { field += '"'; i++; } else q = false; }
-            else field += ch;
-        } else {
-            if (ch === '"') q = true;
-            else if (ch === '\r') continue;
-            else if (ch === '\n') { row.push(field); field = ''; rows.push(row); row = []; }
-            else if (ch === sep) { row.push(field); field = ''; }
-            else field += ch;
+    // 先按换行分割，再根据引号平衡合并跨行字段
+    const rawLines = text.replace(/\r/g, '').split('\n');
+    const merged = [];
+    let buf = '';
+    for (const line of rawLines) {
+        buf = buf ? buf + '\n' + line : line;
+        let q = false;
+        for (let i = 0; i < buf.length; i++) {
+            if (buf[i] === '"') { if (i + 1 < buf.length && buf[i + 1] === '"') i++; else q = !q; }
         }
+        if (!q) { merged.push(buf.split('\n')); buf = ''; }
     }
-    row.push(field); rows.push(row);
+    if (buf) merged.push([buf]);
+    // 解析每行
+    const rows = [];
+    for (const lines of merged) {
+        let field = ''; let q = false;
+        const row = [];
+        for (let li = 0; li < lines.length; li++) {
+            const line = lines[li];
+            for (let i = 0; i < line.length; i++) {
+                const ch = line[i], next = line[i + 1];
+                if (q) {
+                    if (ch === '"') { if (next === '"') { field += '"'; i++; } else q = false; }
+                    else field += ch;
+                } else {
+                    if (ch === '"') q = true;
+                    else if (ch === sep) { row.push(field); field = ''; }
+                    else field += ch;
+                }
+            }
+            if (q && li < lines.length - 1) field += '\n';
+        }
+        row.push(field);
+        rows.push(row);
+    }
     return rows;
 }
 async function previewCsv(deck) {
