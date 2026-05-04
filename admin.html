@@ -500,7 +500,7 @@ async function selectDeck(i) {
             csvFields = rows[0].map(f => f.trim());
             csvCount = rows.length - 1;
         }
-    } catch (e) { /* 数据文件还不存在 */ }
+    } catch (e) { console.warn("CSV load:", e.message); }
 
     // 自动从实际数据更新卡片数
     if (csvCount > 0 && d.totalCards !== csvCount) {
