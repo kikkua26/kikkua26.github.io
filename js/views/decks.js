@@ -91,24 +91,26 @@ export async function renderDeckList(filterPath) {
                         }).join('');
                         return `
                         <div class="deck-card" data-deck="${deck.name}">
-                            <div class="deck-card-header">
+                            <div class="deck-card-inner">
                                 <div class="deck-icon">📜</div>
-                                <span class="deck-badge">${deck.totalCards}${UI.decks.cardUnit}</span>
-                            </div>
-                            <h3 class="deck-title">${deck.name}</h3>
-                            <div class="deck-meta">
-                                <span class="deck-meta-item">${ICONS.calendar} ${lastStudyText}</span>
-                            </div>
-                            ${tagsHtml ? `<div class="deck-tags">${tagsHtml}</div>` : ''}
-                            <div class="deck-actions">
-                                <a href="/${ROUTES.deckDetail}${encodeURIComponent(deck.name)}" class="deck-btn deck-btn-secondary">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                                    ${UI.decks.preview}
-                                </a>
-                                ${deck.purchaseUrl ? `<a href="${deck.purchaseUrl}" target="_blank" rel="noopener" class="deck-btn deck-btn-primary">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
-                                    ${UI.decks.purchase}
-                                </a>` : ''}
+                                <div class="deck-card-content">
+                                    <h3 class="deck-title">${deck.name}</h3>
+                                    <div class="deck-meta">
+                                        <span class="deck-badge">${deck.totalCards}${UI.decks.cardUnit}</span>
+                                        <span class="deck-meta-item">${ICONS.calendar} ${lastStudyText}</span>
+                                    </div>
+                                    ${tagsHtml ? `<div class="deck-tags">${tagsHtml}</div>` : ''}
+                                    <div class="deck-actions">
+                                        <a href="/${ROUTES.deckDetail}${encodeURIComponent(deck.name)}" class="deck-btn deck-btn-secondary">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                            ${UI.decks.preview}
+                                        </a>
+                                        ${deck.purchaseUrl ? `<a href="${deck.purchaseUrl}" target="_blank" rel="noopener" class="deck-btn deck-btn-primary">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+                                            ${UI.decks.purchase}
+                                        </a>` : ''}
+                                    </div>
+                                </div>
                             </div>
                         </div>`;
                     }).join('')}
