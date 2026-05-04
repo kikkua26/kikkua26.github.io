@@ -214,6 +214,7 @@ body {
         <h1>kikkua<span>·</span> 管理</h1>
         <input class="token-input" id="tokenInput" type="password" placeholder="GitHub Token（ghp_xxx）" autocomplete="off">
         <button class="btn btn-primary btn-sm" id="connectBtn">连接</button>
+        <button class="btn btn-secondary btn-sm" id="disconnectBtn" style="display:none;">断开</button>
         <span id="statusBadge" class="stat-badge">⚪ 未连接</span>
         <a href="https://github.com/settings/tokens/new?description=kikkua+admin&scopes=repo" target="_blank" rel="noopener" style="font-size:12px;color:var(--accent);">生成 Token →</a>
     </div>
@@ -270,7 +271,7 @@ body {
 <div class="bottom-bar" id="bottomBar">
     <div class="msg" id="bottomMsg"></div>
     <button class="btn btn-secondary btn-sm" id="saveBtn">保存牌组</button>
-    <button class="btn btn-primary" id="deployBtn">保存并部署</button>
+    <button class="btn btn-primary" id="saveBtn2">保存</button>
 </div>
 
 <!-- Modal -->
@@ -305,7 +306,7 @@ body {
 
 <script>
 const GH = 'https://api.github.com';
-const PRIV = 'kikkua26/anki-decks';
+const PRIV = 'kikkua26/kikkua26.github.io';
 const PUB = 'kikkua26/kikkua26.github.io';
 
 let token = '', decks = [], dataSha = '', tplNames = [];
@@ -388,6 +389,7 @@ async function loadData() {
         setBadge(`✅ ${user.login} · 📋 ${decks.length} 牌组 · 🎨 ${tplNames.length} 模板`, 'success');
         $('#connectBtn').textContent = '✅ 已连接';
         $('#connectBtn').disabled = true;
+        $('#disconnectBtn').style.display = 'inline-flex';
         $('#tokenInput').disabled = true;
         setBottom('就绪');
     } catch (e) {
@@ -682,7 +684,25 @@ async function connect() {
 }
 
 // ─── Init ───
+function disconnect() {
+    sessionStorage.removeItem('admin_token');
+    token = '';
+    decks = [];
+    tplNames = [];
+    $('#tokenInput').value = '';
+    $('#tokenInput').disabled = false;
+    $('#connectBtn').textContent = '连接';
+    $('#connectBtn').disabled = false;
+    $('#disconnectBtn').style.display = 'none';
+    $('#bottomBar').style.display = 'none';
+    $('#deckList').innerHTML = '';
+    $('#tplGrid').innerHTML = '<div class="empty-state"><p>加载中…</p></div>';
+    setBadge('⚪ 已断开');
+    setBottom('');
+}
+
 $('#connectBtn').addEventListener('click', connect);
+$('#disconnectBtn').addEventListener('click', disconnect);
 $('#tokenInput').addEventListener('keydown', e => { if (e.key === 'Enter') connect(); });
 
 const savedToken = sessionStorage.getItem('admin_token');
@@ -711,20 +731,7 @@ $('#addDeckBtn').addEventListener('click', async () => {
 
 // Save & Deploy
 $('#saveBtn').addEventListener('click', saveDecks);
-$('#deployBtn').addEventListener('click', async () => {
-    const ok = await confirmModal('保存并部署', '将保存牌组配置到 GitHub，并触发网站重新部署。\n部署约 1 分钟后生效。');
-    if (!ok) return;
-    await saveDecks();
-    setBottom('触发部署中…');
-    try {
-        await gh(`/repos/${PUB}/dispatches`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ event_type: 'deploy' })
-        });
-        setBottom('✅ 已保存并部署，约 1 分钟后生效', 'success');
-        toast('保存并部署成功');
-    } catch (e) { setBottom('❌ 部署失败：' + e.message, 'error'); toast(e.message, 'error'); }
-});
+$('#saveBtn2').addEventListener('click', saveDecks);
 </script>
 </body>
 </html>
