@@ -87,26 +87,30 @@ export async function renderDeckList(filterPath) {
                         const lastStudyText = deck.lastStudy ? formatTimeAgo(deck.lastStudy) : UI.decks.notStudied;
                         const tagsHtml = (deck.tags || []).map(t => {
                             const { label } = getRootAndLeaf(t);
-                            return `<span class="deck-tag">${label}</span>`;
+                            return `<span class="tag">${label}</span>`;
                         }).join('');
+                        const themes = ['blue', 'purple', 'green', 'orange', 'pink'];
+                        const theme = themes[deck.name.length % themes.length];
+                        const deckIcons = ['📜', '🐍', '🎨', '📚', '📐'];
+                        const icon = deckIcons[deck.name.length % deckIcons.length];
                         return `
-                        <div class="deck-card" data-deck="${deck.name}">
-                            <div class="deck-card-inner">
-                                <div class="deck-icon">📜</div>
-                                <div class="deck-card-body">
-                                    <div class="deck-card-actions">
-                                        <span class="deck-badge">${deck.totalCards}${UI.decks.cardUnit}</span>
-                                        <div class="deck-actions">
-                                            <a href="/${ROUTES.deckDetail}${encodeURIComponent(deck.name)}" class="deck-btn deck-btn-secondary">${UI.decks.preview}</a>
-                                            ${deck.purchaseUrl ? `<a href="${deck.purchaseUrl}" target="_blank" rel="noopener" class="deck-btn deck-btn-primary">${UI.decks.purchase}</a>` : ''}
-                                        </div>
-                                    </div>
-                                    <h3 class="deck-title">${deck.name}</h3>
-                                    ${deck.summary ? `<p class="deck-summary">${esc(deck.summary)}</p>` : ''}
-                                    <div class="deck-card-footer">
-                                        ${tagsHtml ? `<div class="deck-tags">${tagsHtml}</div>` : ''}
-                                        <span class="deck-meta-item">${ICONS.calendar} ${lastStudyText}</span>
-                                    </div>
+                        <div class="deck-card theme-${theme}" data-deck="${deck.name}">
+                            <div class="card-header">
+                                <div class="card-icon">${icon}</div>
+                                <div class="card-info">
+                                    <h3 class="card-title">${deck.name}</h3>
+                                    <span class="card-count">${deck.totalCards}${UI.decks.cardUnit}</span>
+                                </div>
+                            </div>
+                            <div class="card-content">
+                                ${deck.summary ? `<p class="card-summary">${esc(deck.summary)}</p>` : ''}
+                                ${tagsHtml ? `<div class="card-tags">${tagsHtml}</div>` : ''}
+                            </div>
+                            <div class="card-footer">
+                                <span class="card-meta">${ICONS.calendar} ${lastStudyText}</span>
+                                <div class="deck-actions">
+                                    <a href="/${ROUTES.deckDetail}${encodeURIComponent(deck.name)}" class="preview-btn">${UI.decks.preview}</a>
+                                    ${deck.purchaseUrl ? `<a href="${deck.purchaseUrl}" target="_blank" rel="noopener" class="deck-btn deck-btn-primary">${UI.decks.purchase}</a>` : ''}
                                 </div>
                             </div>
                         </div>`;
