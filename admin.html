@@ -403,7 +403,7 @@ async function loadData() {
 
 async function loadDecks() {
     try {
-        const r = await readRepo(PRIV, 'index.json');
+        const r = await readRepo(PRIV, 'data/index.json');
         dataSha = r.sha; decks = JSON.parse(r.text);
         renderDeckList();
         setBadge(`📋 ${decks.length} 牌组 · 🎨 ${tplNames.length} 模板`);
@@ -476,8 +476,8 @@ async function saveDecks() {
     setBottom('保存中…');
     try {
         const json = JSON.stringify(decks, null, 2);
-        await writeRepo(PRIV, 'index.json', json, dataSha, 'Update decks from admin');
-        const r = await readRepo(PRIV, 'index.json'); dataSha = r.sha;
+        await writeRepo(PRIV, 'data/index.json', json, dataSha, 'Update decks from admin');
+        const r = await readRepo(PRIV, 'data/index.json'); dataSha = r.sha;
         setBottom('✅ 已保存', 'success'); toast('牌组已保存');
     } catch (e) { setBottom('❌ ' + e.message, 'error'); toast(e.message, 'error'); }
 }
@@ -607,7 +607,7 @@ function parseCsvRow(l) {
 
 async function previewCsv(deck) {
     try {
-        const r = await readRepo(PRIV, deck + '/data.csv');
+        const r = await readRepo(PRIV, 'data/' + deck + '/data.csv');
         csvMeta[deck] = { sha: r.sha, text: r.text };
         const lines = r.text.trim().split('\n');
         const rows = lines.map(parseCsvRow);
@@ -630,7 +630,7 @@ window.previewCsv = previewCsv;
 
 async function downloadCsv(deck) {
     try {
-        const r = csvMeta[deck] || await readRepo(PRIV, deck + '/data.csv');
+        const r = csvMeta[deck] || await readRepo(PRIV, 'data/' + deck + '/data.csv');
         csvMeta[deck] = { sha: r.sha, text: r.text };
         const blob = new Blob([r.text], { type: 'text/csv;charset=utf-8' });
         const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
@@ -650,7 +650,7 @@ async function uploadCsv(deck) {
         if (!ok) { input.value = ''; return; }
         try {
             const sha = csvMeta[deck] ? csvMeta[deck].sha : null;
-            const r = await writeRepo(PRIV, deck + '/data.csv', text, sha, 'Update ' + deck + '/data.csv');
+            const r = await writeRepo(PRIV, 'data/' + deck + '/data.csv', text, sha, 'Update ' + deck + '/data.csv');
             csvMeta[deck] = { sha: r.content.sha, text };
             previewCsv(deck);
             toast('CSV 已更新');
