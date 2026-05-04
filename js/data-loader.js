@@ -4,9 +4,10 @@ import { DATA_PATHS, DEFAULTS } from './config.js';
 
 const _preloaded = new Map();
 
-export function preloadDeck(deckName) {
+export function preloadDeck(deckName, templateName, chapterField) {
     if (_preloaded.has(deckName)) return _preloaded.get(deckName);
-    const promise = dataLoader._loadDeck(deckName).then(data => { _preloaded.set(deckName, data); return data; });
+    const promise = dataLoader._loadDeck(deckName, { template: templateName, chapterField })
+        .then(data => { _preloaded.set(deckName, data); return data; });
     _preloaded.set(deckName, promise);
     return promise;
 }
@@ -16,8 +17,11 @@ export class DataLoader {
         if (_preloaded.has(deckName)) {
             const data = _preloaded.get(deckName);
             _preloaded.delete(deckName);
-            if (data.then) return data; // was a promise, wait for it
-            return data;
+            const ready = data.then ? await data : data;
+            if (templateName && (!ready.template || (!ready.template.front && !ready.template.back))) {
+                ready.template = await this.loadTemplate(templateName);
+            }
+            return ready;
         }
         return this._loadDeck(deckName, { template: templateName, chapterField });
     }

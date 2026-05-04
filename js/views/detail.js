@@ -62,7 +62,7 @@ export async function renderDeckDetail(deckName) {
         studyBtn.disabled = true;
         studyBtn.innerHTML = `<span style="opacity:0.7;">⏳ 加载数据…</span>`;
         try {
-            await preloadDeck(deck.name);
+            await preloadDeck(deck.name, deck.template, deck.chapterField);
             navigate(`/${ROUTES.study}${encodeURIComponent(deck.name)}`);
         } catch {
             studyBtn.disabled = false;
