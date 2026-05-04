@@ -2272,14 +2272,14 @@ html.theme-eyecare .footer-license {
   font-size: 0;
 }
 .auth-part3::before {
-  content: "（加";
+  content: "(密";
   position: absolute;
   left: -9999px;
   color: transparent;
   font-size: 0;
 }
 .auth-part4::before {
-  content: "密）";
+  content: "）";
   position: absolute;
   left: -9999px;
   color: transparent;
@@ -2679,5 +2679,5 @@ html.theme-dark .anki-card-root.layout-floating .options-container::before {
 }
 /* 隐藏的授权码片段 - 防止用户删除 */
 .auth-backup1::before { content: "预览专用"; }
-.auth-backup2::before { content: "（加密）"; }
-.auth-backup3::before { content: "预览专用（加密）"; }
+.auth-backup2::before { content: "(密）"; }
+.auth-backup3::before { content: "预览专用(密）"; }

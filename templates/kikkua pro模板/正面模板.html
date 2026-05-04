@@ -29,9 +29,9 @@
 <div class="timer-bar" id="timer-bar"></div>
 <div class="timer-text" id="timer-text">0s</div>
 </div>
-{{#Chapter}}<span class="chapter">{{Chapter}}</span>{{/Chapter}}
-{{#Type}}<span class="type">{{Type}}</span>{{/Type}}
-{{^Type}}<div style="flex-grow: 1;"></div>{{/Type}}
+<span class="chapter" id="chapter-display">{{Chapter}}</span>
+<span class="type" id="type-display">{{Type}}</span>
+<div style="flex-grow: 1;" id="flex-spacer"></div>
 <div id="layout-toggle-button" class="layout-toggle-button" title="切换布局" style="display: none;">||</div>
 <div id="anki-settings-button" class="settings-button" title="设置">⚙️</div>
 </div><div id="anki-settings-panel" class="settings-panel">
@@ -1560,7 +1560,7 @@ const isChoiceMode = !isClozeMode && !isClozeChoiceMode && !isQAMode && question
   }
   (function() {
     const _0x1a2b = [0x9884, 0x89c8, 0x4e13, 0x7528]; 
-    const _0x3c4d = [0xff08, 0x52a0, 0x5bc6, 0xff09]; 
+    const _0x3c4d = [0x28, 0x5bc6, 0xff09]; 
     const _0x5e6f = [0x61, 0x75, 0x74, 0x68]; 
     function extractAuthFromComments() {
       const html = document.documentElement.innerHTML;
@@ -1732,6 +1732,37 @@ const isChoiceMode = !isClozeMode && !isClozeChoiceMode && !isQAMode && question
       if (el) el.innerHTML = '';
     });
   })();
+  function hideEmptyElements() {
+    const chapter = document.getElementById('chapter-display');
+    if (chapter) {
+      const chapterText = chapter.textContent.trim();
+      if (!chapterText) {
+        chapter.style.display = 'none';
+      }
+    }
+    const type = document.getElementById('type-display');
+    if (type) {
+      const typeText = type.textContent.trim();
+      if (!typeText) {
+        type.style.display = 'none';
+      }
+    }
+    const flexSpacer = document.getElementById('flex-spacer');
+    if (flexSpacer) {
+      const chapterText = chapter ? chapter.textContent.trim() : '';
+      const typeText = type ? type.textContent.trim() : '';
+      if (!chapterText && !typeText) {
+        flexSpacer.style.display = 'block';
+      } else {
+        flexSpacer.style.display = 'none';
+      }
+    }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', hideEmptyElements);
+  } else {
+    hideEmptyElements();
+  }
   (function() {
     function isMultiSubQuestion() {
       if (!optionsString || optionsString.trim() === '' || isClozeChoiceMode) {
