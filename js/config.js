@@ -59,6 +59,8 @@ export const UI = {
         notStudied: '尚未学习',
         cardUnit: ' 张卡片',
         deckUnit: ' 个牌组',
+        preview: '预览',
+        purchase: '购买完整版',
     },
     detail: {
         notFound: '牌组不存在',

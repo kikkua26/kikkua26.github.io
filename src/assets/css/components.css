@@ -66,6 +66,23 @@
     display: flex;
     align-items: center;
     justify-content: flex-end;
+    gap: 8px;
+}
+
+.header-purchase {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--accent);
+    white-space: nowrap;
+    transition: color var(--transition-fast);
+    text-decoration: none;
+}
+
+.header-purchase:hover {
+    color: var(--accent-dark);
 }
 
 /* ═══════════════════════════════════════
@@ -275,6 +292,59 @@
     width: 14px;
     height: 14px;
     opacity: 0.45;
+}
+
+/* ── Deck card action buttons ── */
+
+.deck-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--bg-tertiary);
+    position: relative;
+    z-index: 1;
+}
+
+.deck-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 7px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 500;
+    transition: all var(--transition-fast);
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.deck-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+.deck-btn-secondary {
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-light);
+}
+
+.deck-btn-secondary:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+.deck-btn-primary {
+    background: var(--accent);
+    color: white;
+    box-shadow: 0 1px 6px rgba(13, 148, 136, 0.2);
+}
+
+.deck-btn-primary:hover {
+    background: var(--accent-dark);
+    box-shadow: 0 2px 10px rgba(13, 148, 136, 0.3);
+    transform: translateY(-1px);
 }
 
 /* ═══════════════════════════════════════
@@ -607,6 +677,7 @@
 
     .header-title { font-size: 15px; }
     .progress-text { font-size: 12px; padding: 5px 10px; }
+    .header-purchase { font-size: 12px; }
 
     .logo { font-size: 28px; }
     .logo-subtitle { font-size: 11px; letter-spacing: 0.15em; }

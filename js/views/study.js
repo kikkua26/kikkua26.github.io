@@ -233,7 +233,10 @@ export async function renderStudy(deckName) {
                             <a href="/${ROUTES.deckDetail}${encodeURIComponent(deckName)}" class="back-btn">${ICONS.back}</a>
                         </div>
                         <h1 class="header-title">${deckName}</h1>
-                        <div class="header-right"><span class="progress-text" id="progress-text">${UI.study.loading}</span></div>
+                        <div class="header-right">
+                            ${deckInfo.purchaseUrl ? `<a href="${deckInfo.purchaseUrl}" target="_blank" rel="noopener" class="header-purchase">${UI.study.purchase}</a>` : ''}
+                            <span class="progress-text" id="progress-text">${UI.study.loading}</span>
+                        </div>
                     </div>
                 </div>
             </header>
