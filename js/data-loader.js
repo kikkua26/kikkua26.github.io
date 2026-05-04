@@ -1,4 +1,4 @@
-import { storage, sessionCache } from './storage.js';
+import { storage } from './storage.js';
 import { wrapWithCSS } from './card.js';
 import { DATA_PATHS, DEFAULTS } from './config.js';
 
@@ -48,9 +48,6 @@ export class DataLoader {
     }
 
     async loadTemplate(templateName) {
-        const cached = sessionCache.get('tpl_' + templateName);
-        if (cached) return cached;
-
         try {
             const [frontResp, backResp, cssResp] = await Promise.all([
                 fetch(DATA_PATHS.templateFront(templateName)).catch(() => null),
@@ -60,9 +57,7 @@ export class DataLoader {
             const css = cssResp?.ok ? await cssResp.text() : '';
             const front = frontResp?.ok ? await frontResp.text() : DEFAULTS.templateFront;
             const back = backResp?.ok ? await backResp.text() : DEFAULTS.templateBack;
-            const result = { front: wrapWithCSS(front, css), back: wrapWithCSS(back, css) };
-            sessionCache.set('tpl_' + templateName, result);
-            return result;
+            return { front: wrapWithCSS(front, css), back: wrapWithCSS(back, css) };
         } catch {
             return { front: wrapWithCSS(DEFAULTS.templateFront, ''), back: wrapWithCSS(DEFAULTS.templateBack, '') };
         }
