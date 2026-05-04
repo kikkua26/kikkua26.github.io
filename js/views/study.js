@@ -143,9 +143,9 @@ function closeSidebar() {
 function buildCardHTML(state) {
     const record = state.records[state.currentIndex];
     state.frontHTML = replaceFields(state.template.front, record);
-    state.backHTML = replaceFields(state.template.back, record);
-    // 将 {{FrontSide}} 替换为正面渲染内容
-    state.backHTML = state.backHTML.replace(/\{\{FrontSide\}\}/g, state.frontHTML);
+    // 在替换其他字段前，先把背面模板中的 {{FrontSide}} 换成正面渲染内容
+    const backWithFront = state.template.back.replace(/\{\{FrontSide\}\}/g, state.frontHTML);
+    state.backHTML = replaceFields(backWithFront, record);
 }
 
 function updateProgress(state, skipHighlight = false) {
