@@ -499,17 +499,17 @@ function selectDeck(i) {
             <h3 style="font-size:16px;font-weight:600;">${esc(d.name)}</h3>
         </div>
         <div class="field-row">
-            <div class="field"><label>名称</label><input value="${esc(d.name)}" onchange="upd(${i},'name',this.value);renderDeckList();"></div>
+            <div class="field"><label>名称</label><input value="${esc(d.name)}" oninput="upd(${i},'name',this.value);renderDeckList();"></div>
             <div class="field"><label>模板</label><select onchange="upd(${i},'template',this.value)">${tplOpts}</select></div>
         </div>
         <div class="field-row">
-            <div class="field"><label>卡片数</label><input type="number" value="${d.totalCards||0}" onchange="upd(${i},'totalCards',parseInt(this.value)||0)"></div>
-            <div class="field"><label>章节字段</label><input value="${esc(d.chapterField||'章节')}" onchange="upd(${i},'chapterField',this.value)"></div>
+            <div class="field"><label>卡片数</label><input type="number" value="${d.totalCards||0}" oninput="upd(${i},'totalCards',parseInt(this.value)||0)"></div>
+            <div class="field"><label>章节字段</label><input value="${esc(d.chapterField||'章节')}" oninput="upd(${i},'chapterField',this.value)"></div>
         </div>
-        <div class="field"><label>标签 (逗号分隔)</label><input value="${esc(tagStr)}" onchange="upd(${i},'tags',this.value.split(/,\s*/).filter(Boolean))"></div>
-        <div class="field"><label>简述</label><input value="${esc(d.summary||'')}" onchange="upd(${i},'summary',this.value)" placeholder="卡片列表中显示的简短介绍"></div>
-        <div class="field"><label>购买链接</label><input value="${esc(d.purchaseUrl||'')}" onchange="upd(${i},'purchaseUrl',this.value)"></div>
-        <div class="field"><label>介绍 (Markdown)</label><textarea rows="3" onchange="upd(${i},'detail',this.value)">${esc(d.detail||'')}</textarea></div>
+        <div class="field"><label>标签 (逗号分隔)</label><input value="${esc(tagStr)}" oninput="upd(${i},'tags',this.value.split(/,\s*/).filter(Boolean))"></div>
+        <div class="field"><label>简述</label><input value="${esc(d.summary||'')}" oninput="upd(${i},'summary',this.value)" placeholder="卡片列表中显示的简短介绍"></div>
+        <div class="field"><label>购买链接</label><input value="${esc(d.purchaseUrl||'')}" oninput="upd(${i},'purchaseUrl',this.value)"></div>
+        <div class="field"><label>介绍 (Markdown)</label><textarea rows="3" oninput="upd(${i},'detail',this.value)">${esc(d.detail||'')}</textarea></div>
 
         <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:14px;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
@@ -531,13 +531,16 @@ function selectDeck(i) {
 }
 function upd(i, k, v) { decks[i][k] = v; }
 async function saveDecks() {
+    const btn = $('#saveBtn');
     try {
+        btn.textContent = '⏳ 保存中…'; btn.disabled = true;
         const json = JSON.stringify(decks, null, 2);
         await writeRepo('data/index.json', json, dataSha, 'Update decks from admin');
         const r = await readRepo('data/index.json'); dataSha = r.sha;
         updateDashboard();
-        toast('已保存');
-    } catch (e) { toast(e.message, 'error'); }
+        toast('✅ 已保存到 GitHub');
+    } catch (e) { toast('❌ ' + e.message, 'error'); }
+    finally { btn.textContent = '💾 保存'; btn.disabled = false; }
 }
 async function delDeck(i) {
     const ok = await confirmModal('删除', `确认删除"${decks[i].name}"？`);
