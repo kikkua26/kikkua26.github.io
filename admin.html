@@ -623,6 +623,13 @@ async function uploadCsv(deck) {
             }
             const r = await writeRepo('data/' + deck + '/data.csv', text, sha, 'Update ' + deck);
             csvMeta[deck] = { sha: r.content.sha, text };
+            // 更新记录数并刷新显示
+            if (currentDeckIdx >= 0 && decks[currentDeckIdx]?.name === deck) {
+                const count = text.trim().split('\n').length - 1;
+                decks[currentDeckIdx].totalCards = count > 0 ? count : 0;
+                renderDeckList();
+                await selectDeck(currentDeckIdx);
+            }
             toast('CSV 已上传');
         } catch (err) { toast(err.message, 'error'); }
         input.value = '';
