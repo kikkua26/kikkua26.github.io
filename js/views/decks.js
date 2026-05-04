@@ -93,13 +93,16 @@ export async function renderDeckList(filterPath) {
                         <div class="deck-card" data-deck="${deck.name}">
                             <div class="deck-card-inner">
                                 <div class="deck-icon">📜</div>
-                                <div class="deck-card-content">
+                                <div class="deck-card-body">
                                     <h3 class="deck-title">${deck.name}</h3>
-                                    <div class="deck-meta">
-                                        <span class="deck-badge">${deck.totalCards}${UI.decks.cardUnit}</span>
+                                    ${deck.summary ? `<p class="deck-summary">${esc(deck.summary)}</p>` : ''}
+                                    <div class="deck-card-footer">
+                                        ${tagsHtml ? `<div class="deck-tags">${tagsHtml}</div>` : ''}
                                         <span class="deck-meta-item">${ICONS.calendar} ${lastStudyText}</span>
                                     </div>
-                                    ${tagsHtml ? `<div class="deck-tags">${tagsHtml}</div>` : ''}
+                                </div>
+                                <div class="deck-card-side">
+                                    <span class="deck-badge">${deck.totalCards}${UI.decks.cardUnit}</span>
                                     <div class="deck-actions">
                                         <a href="/${ROUTES.deckDetail}${encodeURIComponent(deck.name)}" class="deck-btn deck-btn-secondary">
                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>

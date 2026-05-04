@@ -89,6 +89,7 @@ export class DataLoader {
                 const progress = storage.getDeckProgress(entry.name);
                 decks.push({
                     name: entry.name,
+                    summary: entry.summary || '',
                     lastStudy: progress.lastStudy,
                     totalCards: entry.totalCards || 0,
                     tags: entry.tags || [],
