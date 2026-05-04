@@ -94,18 +94,18 @@ export async function renderDeckList(filterPath) {
                             <div class="deck-card-inner">
                                 <div class="deck-icon">📜</div>
                                 <div class="deck-card-body">
+                                    <div class="deck-card-actions">
+                                        <span class="deck-badge">${deck.totalCards}${UI.decks.cardUnit}</span>
+                                        <div class="deck-actions">
+                                            <a href="/${ROUTES.deckDetail}${encodeURIComponent(deck.name)}" class="deck-btn deck-btn-secondary">${UI.decks.preview}</a>
+                                            ${deck.purchaseUrl ? `<a href="${deck.purchaseUrl}" target="_blank" rel="noopener" class="deck-btn deck-btn-primary">${UI.decks.purchase}</a>` : ''}
+                                        </div>
+                                    </div>
                                     <h3 class="deck-title">${deck.name}</h3>
                                     ${deck.summary ? `<p class="deck-summary">${esc(deck.summary)}</p>` : ''}
                                     <div class="deck-card-footer">
-                                        <span class="deck-badge">${deck.totalCards}${UI.decks.cardUnit}</span>
                                         ${tagsHtml ? `<div class="deck-tags">${tagsHtml}</div>` : ''}
                                         <span class="deck-meta-item">${ICONS.calendar} ${lastStudyText}</span>
-                                    </div>
-                                </div>
-                                <div class="deck-card-side">
-                                    <div class="deck-actions">
-                                        <a href="/${ROUTES.deckDetail}${encodeURIComponent(deck.name)}" class="deck-btn deck-btn-secondary">${UI.decks.preview}</a>
-                                        ${deck.purchaseUrl ? `<a href="${deck.purchaseUrl}" target="_blank" rel="noopener" class="deck-btn deck-btn-primary">${UI.decks.purchase}</a>` : ''}
                                     </div>
                                 </div>
                             </div>
