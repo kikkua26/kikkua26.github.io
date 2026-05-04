@@ -1,5 +1,924 @@
-{{FrontSide}}
-
-<hr>
-
-{{Back}}
+{{FrontSide}}<script id="backCardScript">
+(function() {
+  if (!window.ankiStorage) {
+    window.ankiStorage = (function() {
+      const prefix = 'anki_sel_';
+      const configPrefix = 'anki_cfg_';
+      return {
+        set: function(key, data) {
+          const safeKey = prefix + btoa(encodeURIComponent(key)).slice(0, 50);
+          try {
+            localStorage.setItem(safeKey, JSON.stringify(data));
+          } catch(e) {
+            window[safeKey] = data;
+          }
+        },
+        get: function(key) {
+          const safeKey = prefix + btoa(encodeURIComponent(key)).slice(0, 50);
+          try {
+            const data = localStorage.getItem(safeKey);
+            return data ? JSON.parse(data) : null;
+          } catch(e) {
+            return window[safeKey] || null;
+          }
+        },
+        clear: function(key) {
+          const safeKey = prefix + btoa(encodeURIComponent(key)).slice(0, 50);
+          try {
+            localStorage.removeItem(safeKey);
+          } catch(e) {
+            delete window[safeKey];
+          }
+        },
+        setConfig: function(configKey, value) {
+          try {
+            localStorage.setItem(configPrefix + configKey, JSON.stringify(value));
+          } catch (e) {
+          }
+        },
+        getConfig: function(configKey) {
+          try {
+            const value = localStorage.getItem(configPrefix + configKey);
+            return value !== null ? JSON.parse(value) : undefined;
+          } catch (e) {
+            return undefined;
+          }
+        }
+      };
+    })();
+  }
+  const flipHintOnFront = document.querySelector('.flip-to-show-answer-hint');
+  if (flipHintOnFront) flipHintOnFront.style.display = 'none';
+  const timerContainerOnBack = document.getElementById('timer-bar-container');
+  if (timerContainerOnBack) timerContainerOnBack.style.display = 'none';
+  const clozeTextContent = `{{ClozeText}}`.trim();
+  const questionContent = `{{Question}}`.trim();
+  const optionsStringOnFront = `{{Options}}`.trim(); 
+  const choiceAnswerString = `{{Answer}}`.trim();
+  const answerTextContent = `{{AnswerText}}`.trim();
+  const analysisContent = `{{Analysis}}`.trim();
+  const refrenceContent = `{{Refrence}}`.trim(); 
+  const mainDisplayArea = document.getElementById('main-content-area');
+  const optionsContainer = document.getElementById('options-container'); 
+  const cardElement = document.querySelector('.anki-card-root');
+  if (!mainDisplayArea || !cardElement) {
+    console.error("Back.html: Critical elements (.anki-card-root or #main-content-area) not found!");
+    return;
+  }
+  function getConfigLocal(name, defaultValue) {
+    if (window.ankiStorage && typeof window.ankiStorage.getConfig === 'function') {
+      const storedValue = window.ankiStorage.getConfig(name);
+      if (storedValue !== undefined) {
+        if (typeof defaultValue === 'boolean') {
+          if (storedValue === 'true') return true;
+          if (storedValue === 'false') return false;
+          if (typeof storedValue === 'boolean') return storedValue;
+        }
+        if (typeof defaultValue === 'number' && !isNaN(parseFloat(storedValue))) {
+          return parseFloat(storedValue);
+        }
+        if (typeof storedValue === 'number') return storedValue;
+        return storedValue;
+      }
+    } else {
+    }
+    const regex = new RegExp(`<!-- config:${name}=([\\w.-]+) -->`); 
+    const configSource = document.documentElement.innerHTML || '';
+    const match = configSource.match(regex);
+    if (match) {
+      const value = match[1];
+      if (value === 'true') return true;
+      if (value === 'false') return false;
+      if (typeof defaultValue === 'number' && !isNaN(parseFloat(value))) {
+        return parseFloat(value);
+      }
+      return value;
+    }
+    return defaultValue;
+  }
+  const optionsOnFrontExist = optionsContainer !== null && optionsStringOnFront.length > 0;
+  const choiceAnswerDefined = choiceAnswerString.length > 0;
+  const isClozeMode = clozeTextContent.length > 0;
+  const isClozeChoiceMode = (() => {
+    const trimmedQuestion = questionContent.trim();
+    const startsWithDoubleOrTripleDollar = trimmedQuestion.startsWith('$$') || trimmedQuestion.startsWith('$$$');
+    if (!startsWithDoubleOrTripleDollar) return false;
+    if (!optionsStringOnFront.trim() || !choiceAnswerString.trim()) return false;
+    if (!trimmedQuestion.includes('##')) return false;
+    return true;
+  })();
+  const isQAMode = !isClozeMode && !isClozeChoiceMode && questionContent.length > 0 && answerTextContent.length > 0 && (!optionsOnFrontExist || !choiceAnswerDefined);
+  const isChoiceMode = !isClozeMode && !isClozeChoiceMode && !isQAMode && questionContent.length > 0 && optionsOnFrontExist && choiceAnswerDefined;
+  window.isChoiceMode = isChoiceMode;
+  const isImageClozeMode = (() => {
+    try {
+      const masks = JSON.parse(questionContent);
+      if (Array.isArray(masks) && masks.length > 0) {
+        const firstMask = masks[0];
+        return firstMask.hasOwnProperty('x') && firstMask.hasOwnProperty('y') && 
+               firstMask.hasOwnProperty('w') && firstMask.hasOwnProperty('h');
+      }
+    } catch(e) {
+    }
+    return false;
+  })();
+  function escapeHTMLTextSegmentForBack(str) {
+    if (typeof str !== 'string') return '';
+    return str.replace(/&/g, '&amp;');
+  }
+  function escapeHTMLTextSegment(str) {
+    if (typeof str !== 'string') return '';
+    return str.replace(/&/g, '&amp;');
+  }
+  function generateInitialClozeHTML(text) {
+    let output = "";
+    let i = 0;
+    while (i < text.length) {
+      let openBracket = text.indexOf('[[', i);
+      if (openBracket === -1) {
+        output += escapeHTMLTextSegment(text.substring(i));
+        break;
+      }
+      output += escapeHTMLTextSegment(text.substring(i, openBracket));
+      let balance = 0;
+      let startContent = openBracket + 2;
+      let endContent = -1;
+      let k = startContent;
+      for (; k < text.length; k++) {
+        if (text.substring(k, k + 2) === '[[') {
+          balance++;
+          k++;
+        } else if (text.substring(k, k + 2) === ']]') {
+          if (balance === 0) {
+            endContent = k;
+            break;
+          }
+          balance--;
+          k++;
+        }
+      }
+      if (endContent === -1) {
+        output += escapeHTMLTextSegment(text.substring(openBracket));
+        break;
+      }
+      const clozeContentForAttr = text.substring(startContent, endContent);
+      const escapedClozeContentForAttr = clozeContentForAttr
+          .replace(/&/g, '&amp;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
+      let dynamicPlaceholderText = '';
+      const hiddenContentLength = clozeContentForAttr.trim().length;
+      const minPlaceholderRepetitions = 3;
+      const maxPlaceholderRepetitions = 12;
+      const charsPerRepetitionUnit = 4;
+      let repetitions = Math.floor(hiddenContentLength / charsPerRepetitionUnit);
+      repetitions = Math.max(minPlaceholderRepetitions, repetitions);
+      repetitions = Math.min(maxPlaceholderRepetitions, repetitions);
+      const placeholderChar = '·';
+      dynamicPlaceholderText = placeholderChar.repeat(repetitions);
+      output += `<span class="cloze-block" data-original-content="${escapedClozeContentForAttr}" data-placeholder-text="${dynamicPlaceholderText}">${dynamicPlaceholderText}</span>`;
+      i = endContent + 2;
+    }
+    return output;
+  }
+  function revealThisCloze(event) {
+    event.stopPropagation();
+    const block = this;
+    let tempElem = document.createElement('textarea');
+    tempElem.innerHTML = block.getAttribute('data-original-content');
+    const rawOriginalContent = tempElem.value;
+    block.innerHTML = generateInitialClozeHTML(rawOriginalContent); 
+    setupClozeInteractions(block); 
+    block.classList.remove('cloze-block');
+    block.classList.add('revealed');    
+    block.style.cursor = 'pointer'; 
+    block.onclick = hideThisCloze; 
+  }
+  function hideThisCloze(event) {
+    event.stopPropagation();
+    const block = this;
+    const placeholderText = block.getAttribute('data-placeholder-text');
+    block.innerHTML = placeholderText;
+    block.classList.remove('revealed');
+    block.classList.add('cloze-block');
+    block.style.cursor = 'pointer'; 
+    block.onclick = revealThisCloze; 
+  }
+  function setupClozeInteractions(container) {
+    const newClozeBlocks = container.querySelectorAll('.cloze-block:not(.cloze-handler-attached)');
+    newClozeBlocks.forEach(block => {
+      block.classList.add('cloze-handler-attached'); 
+      block.onclick = revealThisCloze;
+    });
+  }
+  function generateRevealedClozeHTML(text) {
+    let output = "";
+    let i = 0;
+    while (i < text.length) {
+      let openBracket = text.indexOf('[[', i);
+      if (openBracket === -1) {
+        output += escapeHTMLTextSegmentForBack(text.substring(i));
+        break;
+      }
+      output += escapeHTMLTextSegmentForBack(text.substring(i, openBracket));
+      let balance = 0;
+      let startContent = openBracket + 2;
+      let endContent = -1;
+      let k = startContent;
+      for (; k < text.length; k++) {
+        if (text.substring(k, k + 2) === '[[') {
+          balance++;
+          k++;
+        } else if (text.substring(k, k + 2) === ']]') {
+          if (balance === 0) {
+            endContent = k;
+            break;
+          }
+          balance--;
+          k++;
+        }
+      }
+      if (endContent === -1) {
+        output += escapeHTMLTextSegmentForBack(text.substring(openBracket));
+        break;
+      }
+      const clozeContent = text.substring(startContent, endContent);
+      const revealedInnerContent = generateRevealedClozeHTML(clozeContent); 
+      output += `<span class="cloze-revealed-highlight">${revealedInnerContent}</span>`;
+      i = endContent + 2;
+    }
+    return output;
+  }
+  const SessionStatsModule = (function() {
+    const SESSION_STATS_KEY = 'ankiUserSessionStats';
+    function getStats() {
+      try {
+        const statsStr = sessionStorage.getItem(SESSION_STATS_KEY);
+        return statsStr ? JSON.parse(statsStr) : { total: 0, correct: 0, incorrect: 0 };
+      } catch (e) {
+        return { total: 0, correct: 0, incorrect: 0 };
+      }
+    }
+    function saveStats(stats) {
+      try {
+        sessionStorage.setItem(SESSION_STATS_KEY, JSON.stringify(stats));
+      } catch (e) {
+      }
+    }
+    return {
+      updateAndDisplay: function(cardOutcomeString) { 
+        const showSessionStatsConfig = getConfigLocal('showSessionStats', true);
+        const answerComparisonEl = cardElement.querySelector('.answer-comparison');
+        const existingStatsContainer = answerComparisonEl ? answerComparisonEl.querySelector('.comparison-stats-container') : null;
+        if (existingStatsContainer) existingStatsContainer.remove();
+        if (!showSessionStatsConfig || !isChoiceMode || !answerComparisonEl) {
+          return;
+        }
+        let stats = getStats();
+        if (cardOutcomeString) { 
+          stats.total = (stats.total || 0) + 1;
+          if (cardOutcomeString === 'result-correct') stats.correct = (stats.correct || 0) + 1;
+          else if (cardOutcomeString === 'result-partial') stats.correct = (stats.correct || 0) + 0.5;
+          else if (cardOutcomeString === 'result-wrong' || cardOutcomeString === 'result-unanswered') {
+            stats.incorrect = (stats.incorrect || 0) + 1;
+          }
+          saveStats(stats);
+        }
+        let accuracy = 0;
+        let accuracyText = "0.0%";
+        if (stats.total > 0) {
+          accuracy = (stats.correct / stats.total) * 100;
+          accuracyText = accuracy.toFixed(1) + '%';
+        }
+        const statsContainer = document.createElement('div');
+        statsContainer.className = 'comparison-stats-container';
+        statsContainer.innerHTML = `
+          <div class="comparison-stats-details">
+            <span class="comparison-stat-item" title="本次已答题数 (选择题)">Σ: <strong class="total">${stats.total}</strong></span>
+            <span class="comparison-stat-item" title="正确题数">✓: <strong class="correct">${parseFloat(stats.correct.toFixed(1))}</strong></span>
+            <span class="comparison-stat-item" title="错误题数">✗: <strong class="incorrect">${stats.incorrect}</strong></span>
+          </div>
+          <div class="comparison-stat-accuracy">
+            <span class="label" title="正确率">🎯:</span>
+            <div class="bar-bg">
+              <div class="bar-fg" style="width: ${accuracy.toFixed(1)}%;"></div>
+            </div>
+            <span class="value">${accuracyText}</span>
+          </div>
+        `;
+        answerComparisonEl.appendChild(statsContainer);
+      }
+    };
+  })();
+  const CardTypeHandlersBack = {
+    cloze: {
+      back: {
+        display: function() {
+          if (optionsContainer) optionsContainer.style.display = 'none';
+          const answerComparisonCloze = cardElement.querySelector('.answer-comparison');
+          if (answerComparisonCloze) answerComparisonCloze.style.display = 'none';
+          mainDisplayArea.innerHTML = '';
+          mainDisplayArea.classList.remove('cloze-active-area', 'qa-active-area', 'qa-revealed-area');
+          mainDisplayArea.classList.add('cloze-revealed-area');
+          mainDisplayArea.classList.remove('contains-table');
+          if (cardElement) cardElement.classList.remove('anki-card-root-contains-table');
+          let tempElemForDecodingBack = document.createElement('textarea');
+          tempElemForDecodingBack.innerHTML = clozeTextContent; 
+          let rawHtmlClozeTextBack = tempElemForDecodingBack.value;
+          rawHtmlClozeTextBack = rawHtmlClozeTextBack.replace(/\r\n?/g, '\n');
+          rawHtmlClozeTextBack = rawHtmlClozeTextBack
+            .replace(/<p(?:\s[^>]*)?>([\s\S]*?)<\/p>/gi, function(match, content) {
+              if (/^(\s|&nbsp;|<br\s*\/?>)*$/.test(content)) return '';
+              return content + '<br>';
+            })
+            .replace(/<div(?:\s[^>]*)?>([\s\S]*?)<\/div>/gi, function(match, content) {
+              if (/^(\s|&nbsp;|<br\s*\/?>)*$/.test(content)) return '';
+              return content + '<br>';
+            });
+          rawHtmlClozeTextBack = rawHtmlClozeTextBack.replace(/(?:<br\s*\/?>\s*){2,}/gi, '<br>');
+          rawHtmlClozeTextBack = rawHtmlClozeTextBack.replace(/>\s*<br\s*\/?>\s*</gi, '><');
+          rawHtmlClozeTextBack = rawHtmlClozeTextBack.replace(/>\s+</gi, '><');
+          rawHtmlClozeTextBack = rawHtmlClozeTextBack.trim();
+          rawHtmlClozeTextBack = rawHtmlClozeTextBack.replace(/(\n\s*){2,}/g, '\n');
+          rawHtmlClozeTextBack = rawHtmlClozeTextBack.replace(/(<\/h3\b[^>]*>)(?:\s*<br\s*\/?>\s*|\s+)*?(<table\b[^>]*>)/gi, '$1$2');
+          rawHtmlClozeTextBack = rawHtmlClozeTextBack.trim();
+          if (rawHtmlClozeTextBack.toLowerCase().includes('<table')) {
+            mainDisplayArea.classList.add('contains-table');
+            if (cardElement) {
+              cardElement.classList.add('anki-card-root-contains-table');
+            }
+          } else {
+          }
+          const revealedText = generateRevealedClozeHTML(rawHtmlClozeTextBack);
+          mainDisplayArea.innerHTML = revealedText;
+        }
+      }
+    },
+    qa: {
+      back: {
+        display: function() {
+          if (optionsContainer) optionsContainer.style.display = 'none';
+          const answerComparisonQA = cardElement.querySelector('.answer-comparison');
+          if (answerComparisonQA) answerComparisonQA.style.display = 'none';
+          mainDisplayArea.innerHTML = '';
+          mainDisplayArea.classList.remove('cloze-active-area', 'cloze-revealed-area', 'qa-active-area');
+          mainDisplayArea.classList.add('qa-revealed-area');
+          const questionContextDiv = document.createElement('div');
+          questionContextDiv.className = 'qa-question-context';
+          questionContextDiv.innerHTML = questionContent.replace(/\n/g, '<br>');
+          mainDisplayArea.appendChild(questionContextDiv);
+          const answerDisplayDiv = document.createElement('div');
+          answerDisplayDiv.className = 'qa-answer-content';
+          let processedAnswerContent = answerTextContent || '<span class="empty-hint">暂无答案</span>';
+          if (answerTextContent) {
+            processedAnswerContent = processedAnswerContent.replace(/\n/g, '<br>');
+            let tempElemForDecoding = document.createElement('textarea');
+            tempElemForDecoding.innerHTML = processedAnswerContent;
+            let rawHtmlAnswerText = tempElemForDecoding.value;
+            processedAnswerContent = generateInitialClozeHTML(rawHtmlAnswerText);
+          }
+          answerDisplayDiv.innerHTML = processedAnswerContent;
+          mainDisplayArea.appendChild(answerDisplayDiv);
+          setupClozeInteractions(answerDisplayDiv);
+        }
+      }
+    },
+    imageCloze: {
+      back: {
+        display: function() {
+          if (optionsContainer) optionsContainer.style.display = 'none';
+          const answerComparisonImageCloze = cardElement.querySelector('.answer-comparison');
+          if (answerComparisonImageCloze) answerComparisonImageCloze.style.display = 'none';
+          mainDisplayArea.classList.remove('cloze-active-area', 'cloze-revealed-area', 'qa-active-area', 'qa-revealed-area');
+          mainDisplayArea.classList.add('image-cloze-revealed-area');
+          const imgClozeViewport = mainDisplayArea.querySelector('.img-cloze-viewport');
+          if (imgClozeViewport) {
+            const masks = imgClozeViewport.querySelectorAll('.img-cloze-mask');
+            masks.forEach(mask => {
+              mask.classList.add('img-cloze-revealed');
+              mask.style.pointerEvents = 'none'; 
+            });
+          } else {
+            mainDisplayArea.innerHTML = '';
+            const newImgClozeViewport = document.createElement('div');
+            newImgClozeViewport.className = 'img-cloze-viewport';
+            newImgClozeViewport.id = 'imgClozeViewport';
+            const imageClozeContent = `{{ImageCloze}}`.trim();
+            if (imageClozeContent) {
+              newImgClozeViewport.innerHTML = imageClozeContent;
+            } else {
+              const tempDiv = document.createElement('div');
+              tempDiv.innerHTML = questionContent;
+              const img = tempDiv.querySelector('img');
+              if (img) {
+                newImgClozeViewport.appendChild(img.cloneNode(true));
+              }
+            }
+            mainDisplayArea.appendChild(newImgClozeViewport);
+            (function() {
+              let masks = [];
+              try { 
+                masks = JSON.parse(questionContent); 
+              } catch(e) {
+              }
+              const viewport = document.getElementById('imgClozeViewport');
+              const img = viewport.querySelector('img');
+              if (!img) {
+                return;
+              }
+              img.classList.add('img-cloze-img');
+              function handleImageLoad() {
+                const styleProperties = {
+                  'width': '100%',
+                  'height': 'auto',
+                  'max-width': '100%',
+                  'object-fit': 'contain',
+                  'margin': '0',
+                  'padding': '0',
+                  'display': 'block',
+                  'vertical-align': 'top',
+                  'min-width': '0',
+                  'opacity': '1',
+                  'visibility': 'visible',
+                  'max-height': 'none',
+                  'box-sizing': 'border-box',
+                  'font-size': '0',
+                  'line-height': '0'
+                };
+                Object.entries(styleProperties).forEach(([property, value]) => {
+                  img.style.setProperty(property, value, 'important');
+                  img.style[property] = value;
+                });
+                if (viewport) {
+                  const viewportStyles = {
+                    'width': '100%',
+                    'max-width': '100%',
+                    'height': 'auto',
+                    'display': 'block',
+                    'min-height': '0',
+                    'position': 'relative',
+                    'overflow': 'hidden'
+                  };
+                  Object.entries(viewportStyles).forEach(([property, value]) => {
+                    viewport.style.setProperty(property, value, 'important');
+                    viewport.style[property] = value;
+                  });
+                }
+                img.removeAttribute('width');
+                img.removeAttribute('height');
+                img.removeAttribute('style');
+                setTimeout(() => {
+                  Object.entries(styleProperties).forEach(([property, value]) => {
+                    img.style.setProperty(property, value, 'important');
+                  });
+                }, 10);
+                renderRevealedMasks();
+              }
+              function renderRevealedMasks() {
+                viewport.querySelectorAll('.img-cloze-mask').forEach(e => e.remove());
+                masks.forEach((mask, idx) => {
+                  const div = document.createElement('div');
+                  div.className = 'img-cloze-mask img-cloze-revealed';
+                  div.style.left = (mask.x * 100) + '%';
+                  div.style.top = (mask.y * 100) + '%';
+                  div.style.width = (mask.w * 100) + '%';
+                  div.style.height = (mask.h * 100) + '%';
+                  div.style.background = mask.c || '#000'; 
+                  div.style.borderRadius = '12px';
+                  div.style.pointerEvents = 'none'; 
+                  div.style.opacity = '0.4'; 
+                  div.style.webkitTapHighlightColor = 'transparent';
+                  div.style.webkitTouchCallout = 'none';
+                  div.style.webkitUserSelect = 'none';
+                  div.style.mozUserSelect = 'none';
+                  div.style.msUserSelect = 'none';
+                  div.style.userSelect = 'none';
+                  div.style.outline = 'none';
+                  viewport.appendChild(div);
+                });
+              }
+              if (img.complete && img.naturalWidth > 0) {
+                handleImageLoad();
+              } else {
+                img.onload = handleImageLoad;
+                img.onerror = function() {
+                  handleImageLoad();
+                };
+              }
+            })();
+          }
+        }
+      }
+    },
+    clozeChoice: {
+      back: {
+        display: function() {
+          if (optionsContainer) optionsContainer.style.display = 'none';
+          const answerComparisonClozeChoice = cardElement.querySelector('.answer-comparison');
+          if (answerComparisonClozeChoice) answerComparisonClozeChoice.style.display = 'none';
+          mainDisplayArea.classList.remove('cloze-active-area', 'cloze-revealed-area', 'qa-active-area', 'qa-revealed-area', 'image-cloze-active-area');
+          mainDisplayArea.classList.add('cloze-choice-revealed-area');
+          const trimmedQuestion = questionContent.trim();
+          let clozeQuestionText;
+          if (trimmedQuestion.startsWith('$$$')) {
+            clozeQuestionText = trimmedQuestion.substring(3); 
+          } else if (trimmedQuestion.startsWith('$$')) {
+            clozeQuestionText = trimmedQuestion.substring(2); 
+          } else {
+            clozeQuestionText = trimmedQuestion; 
+          }
+          const questionParts = clozeQuestionText.split('##');
+          const optionsGroups = optionsStringOnFront.split('##').map(g => g.split('||').map(opt => opt.trim()).filter(opt => opt));
+          const answers = choiceAnswerString.split('##').map(ans => ans.trim().toUpperCase());
+          const isWordChoiceMode = optionsGroups.length === 1;
+          const blankCount = questionParts.length - 1;
+          if (blankCount !== answers.length) {
+            mainDisplayArea.innerHTML = '<div class="error-message">数据格式错误：空位数量与答案数量不匹配</div>';
+            return;
+          }
+          if (!isWordChoiceMode && optionsGroups.length !== blankCount) {
+            mainDisplayArea.innerHTML = '<div class="error-message">数据格式错误：选项组数量与空位数量不匹配</div>';
+            return;
+          }
+          let htmlContent = '';
+          let totalCorrect = 0;
+          let totalBlanks = blankCount;
+          questionParts.forEach((part, index) => {
+            if (index === 0) {
+              htmlContent += escapeHTMLTextSegmentForBack(part);
+            } else {
+              const blankIndex = index - 1;
+              const blankKey = `cloze_choice_${blankIndex}`;
+              const userAnswers = window.ankiStorage ? window.ankiStorage.get(blankKey) || [] : [];
+              let currentOptions;
+              if (isWordChoiceMode) {
+                currentOptions = optionsGroups[0];
+              } else {
+                currentOptions = optionsGroups[blankIndex];
+              }
+              const currentAnswer = answers[blankIndex];
+              const correctAnswerIndices = currentAnswer.split('').map(letter => {
+                const charCode = letter.charCodeAt(0) - 65; 
+                return charCode >= 0 && charCode < currentOptions.length ? charCode : -1;
+              }).filter(index => index >= 0);
+              const correctAnswerTexts = correctAnswerIndices.map(index => currentOptions[index]).join(', ');
+              let resultClass = '';
+              let resultIcon = '';
+              let isCorrect = false;
+              let userAnswerTexts = '';
+              if (userAnswers.length === 0) {
+                resultClass = 'result-unanswered';
+                resultIcon = '❓';
+                userAnswerTexts = '未选择';
+              } else {
+                const userAnswerIndices = userAnswers.map(str => parseInt(str));
+                userAnswerTexts = userAnswerIndices.map(index => currentOptions[index]).join(', ');
+                if (userAnswerIndices.length === correctAnswerIndices.length && 
+                    userAnswerIndices.every((ans, i) => ans === correctAnswerIndices[i])) {
+                  resultClass = 'result-correct';
+                  resultIcon = '✓';
+                  isCorrect = true;
+                  totalCorrect++;
+                } else if (userAnswerIndices.some(ans => !correctAnswerIndices.includes(ans))) {
+                  resultClass = 'result-wrong';
+                  resultIcon = '✗';
+                } else {
+                  resultClass = 'result-partial';
+                  resultIcon = '❗';
+                }
+              }
+              htmlContent += `<span class="cloze-blank-result ${resultClass}" title="用户答案: ${userAnswerTexts} | 正确答案: ${correctAnswerTexts}">`;
+              htmlContent += `[${userAnswerTexts}] ${resultIcon} (正确答案: ${correctAnswerTexts})`;
+              htmlContent += '</span>';
+              htmlContent += escapeHTMLTextSegmentForBack(part);
+            }
+          });
+          mainDisplayArea.innerHTML = htmlContent;
+          const answerDisplay = document.createElement('div');
+          answerDisplay.className = 'answer-comparison';
+          const accuracy = totalBlanks > 0 ? (totalCorrect / totalBlanks * 100).toFixed(1) : 0;
+          let resultClass, resultIcon, resultText;
+          if (totalCorrect === totalBlanks) {
+            resultClass = 'result-correct';
+            resultIcon = '✓';
+            resultText = '全部正确';
+          } else if (totalCorrect === 0) {
+            resultClass = 'result-wrong';
+            resultIcon = '✗';
+            resultText = '全部错误';
+          } else {
+            resultClass = 'result-partial';
+            resultIcon = '❗';
+            resultText = '部分正确';
+          }
+          answerDisplay.innerHTML = `
+            <div class="answer-result">
+              <div class="answer-parts">
+                <div class="user-answer">正确: ${totalCorrect}/${totalBlanks}</div>
+                <span class="answer-separator">|</span>
+                <div class="correct-answer">正确率: ${accuracy}%</div>
+              </div>
+              <div class="result-container ${resultClass}">
+                <span class="result-icon">${resultIcon}</span>
+                <span class="result-text">${resultText}</span>
+              </div>
+            </div>`;
+          mainDisplayArea.parentNode.insertBefore(answerDisplay, mainDisplayArea.nextSibling);
+          for (let i = 0; i < blankCount; i++) {
+            const blankKey = `cloze_choice_${i}`;
+            if (window.ankiStorage) {
+              setTimeout(() => {
+                window.ankiStorage.clear(blankKey);
+              }, 500);
+            }
+          }
+          SessionStatsModule.updateAndDisplay(resultClass);
+        }
+      }
+    },
+    choice: {
+      back: {
+        display: function() {
+          mainDisplayArea.classList.remove('cloze-active-area', 'cloze-revealed-area', 'qa-active-area', 'qa-revealed-area');
+          const questionParts = questionContent.split('##');
+          const mainStem = questionParts[0];
+          const subQuestions = questionParts.slice(1);
+          const optionsGroups = optionsStringOnFront.split('##').map(g => g.split('||'));
+          const answers = choiceAnswerString.split('##');
+          const isMultiSub = subQuestions.length > 0 && optionsGroups.length === subQuestions.length && answers.length === subQuestions.length;
+          if (!isMultiSub) {
+            mainDisplayArea.innerHTML = questionContent.replace(/\n/g, '<br>');
+            if (!mainDisplayArea.classList.contains('question')) {
+              mainDisplayArea.classList.add('question');
+            }
+            optionsContainer.innerHTML = '';
+            const opts = optionsGroups[0] || [];
+            const originalKeys = opts.map((_, i) => String.fromCharCode(65 + i));
+            const correctAnswersArr = choiceAnswerString.toUpperCase().split('');
+            const questionHash = questionContent.slice(0, 100);
+            const userAnswers = window.ankiStorage ? window.ankiStorage.get(questionHash) || [] : [];
+            const isMulti = correctAnswersArr.length > 1;
+            opts.forEach((opt, i) => {
+              const key = originalKeys[i];
+              const optDiv = document.createElement('div');
+              optDiv.className = 'option';
+              optDiv.setAttribute('data-key', key);
+              optDiv.setAttribute('data-original', key);
+              optDiv.setAttribute('data-index', i);
+              optDiv.setAttribute('data-content', opt);
+              optDiv.innerHTML = opt;
+              optDiv.style.pointerEvents = 'none';
+              optDiv.classList.add('disabled');
+              if (userAnswers.includes(key)) optDiv.classList.add('selected');
+              if (correctAnswersArr.includes(key)) {
+                if (userAnswers.includes(key)) optDiv.classList.add('correct');
+                else optDiv.classList.add('missed');
+              } else if (userAnswers.includes(key)) {
+                optDiv.classList.add('wrong');
+              }
+              optionsContainer.appendChild(optDiv);
+            });
+            const answerDisplay = document.createElement('div');
+            answerDisplay.className = 'answer-comparison';
+            const userAnswersSorted = userAnswers.length > 0 ? [...userAnswers].sort() : [];
+            const correctAnswersSorted = [...correctAnswersArr].sort();
+            let resultIcon, resultClass, resultText;
+            if (userAnswers.length === 0) {
+              resultIcon = '❓'; resultClass = 'result-unanswered'; resultText = '未作答';
+            } else if (userAnswersSorted.length === correctAnswersSorted.length && userAnswersSorted.every((ans, i) => ans === correctAnswersSorted[i])) {
+              resultIcon = '✓'; resultClass = 'result-correct'; resultText = '答对';
+            } else if (userAnswers.some(ans => !correctAnswersArr.includes(ans))) {
+              resultIcon = '✗'; resultClass = 'result-wrong'; resultText = '答错';
+            } else {
+              resultIcon = '❗'; resultClass = 'result-partial'; resultText = '没全选';
+            }
+            function buildColoredAnswers(answers, isUserDisplay) {
+              let html = '';
+              answers.forEach(letter => {
+                let colorClass;
+                if (isUserDisplay) {
+                  colorClass = correctAnswersArr.includes(letter) ? 'letter-correct' : 'letter-wrong';
+                } else {
+                  colorClass = userAnswers.includes(letter) ? 'letter-correct' : 'letter-missed';
+                }
+                html += `<span class="${colorClass}">${letter}</span>`;
+              });
+              return html || '<span class="letter-none">-</span>';
+            }
+            const userAnswerHtml = buildColoredAnswers(userAnswersSorted, true);
+            const correctAnswerHtml = buildColoredAnswers(correctAnswersArr, false);
+            answerDisplay.innerHTML = `
+              <div class="answer-result">
+                <div class="answer-parts">
+                  <div class="user-answer">${userAnswerHtml}</div>
+                  <span class="answer-separator">/</span>
+                  <div class="correct-answer">${correctAnswerHtml}</div>
+                </div>
+                <div class="result-container ${resultClass}">
+                  <span class="result-icon">${resultIcon}</span>
+                  <span class="result-text">${resultText}</span>
+                </div>
+              </div>`;
+            optionsContainer.parentNode.insertBefore(answerDisplay, optionsContainer.nextSibling);
+            if (window.ankiStorage) {
+              setTimeout(() => { window.ankiStorage.clear(questionHash); }, 500);
+            }
+            SessionStatsModule.updateAndDisplay(resultClass);
+            return;
+          }
+          mainDisplayArea.innerHTML = `<div class="main-stem">${mainStem}</div>`;
+          optionsContainer.innerHTML = '';
+          let total = subQuestions.length;
+          let correct = 0;
+          let incorrect = 0;
+          let answerDisplay = document.createElement('div');
+          answerDisplay.className = 'answer-comparison';
+          if (optionsContainer.parentNode) {
+            optionsContainer.parentNode.insertBefore(answerDisplay, optionsContainer.nextSibling);
+          } else {
+            mainDisplayArea.parentNode.insertBefore(answerDisplay, mainDisplayArea.nextSibling);
+          }
+          subQuestions.forEach((q, idx) => {
+            const subDiv = document.createElement('div');
+            subDiv.className = 'sub-question';
+            const ans = answers[idx] || '';
+            const isMulti = ans.length > 1;
+            const tag = document.createElement('span');
+            tag.className = isMulti ? 'question-type-tag multi' : 'question-type-tag single';
+            tag.textContent = isMulti ? '多选' : '单选';
+            const subTitle = document.createElement('div');
+            subTitle.className = 'sub-q-title';
+            subTitle.appendChild(tag);
+            const textSpan = document.createElement('span');
+            textSpan.innerHTML = `(${idx+1}) ${q}`;
+            subTitle.appendChild(textSpan);
+            subDiv.appendChild(subTitle);
+            let opts = optionsGroups[idx] || [];
+            const ansArr = ans.toUpperCase().split('');
+            const originalKeys = opts.map((_, i) => String.fromCharCode(65 + i));
+            const subOptionsDiv = document.createElement('div');
+            subOptionsDiv.className = 'sub-options';
+            const uniqueStr = q + '_' + idx;
+            let hash = 0;
+            for (let i = 0; i < uniqueStr.length; i++) {
+              hash = ((hash << 5) - hash) + uniqueStr.charCodeAt(i);
+              hash = hash & hash;
+            }
+            const subQuestionHash = 'subq_' + idx + '_' + Math.abs(hash).toString(36);
+            const userAnswers = window.ankiStorage ? window.ankiStorage.get(subQuestionHash) || [] : [];
+            const correctAnswersArr = ansArr;
+            const userAnswersSorted = userAnswers.length > 0 ? [...userAnswers].sort() : [];
+            const correctAnswersSorted = [...correctAnswersArr].sort();
+            let resultIcon, resultClass, resultText;
+            let isRight = false;
+            if (userAnswers.length === 0) {
+              resultIcon = '❓'; resultClass = 'result-unanswered'; resultText = '未作答';
+              incorrect += 1;
+            } else if (userAnswersSorted.length === correctAnswersSorted.length && userAnswersSorted.every((ans, i) => ans === correctAnswersSorted[i])) {
+              resultIcon = '✓'; resultClass = 'result-correct'; resultText = '答对';
+              correct += 1;
+            } else if (userAnswers.some(ans => !correctAnswersArr.includes(ans))) {
+              resultIcon = '✗'; resultClass = 'result-wrong'; resultText = '答错';
+              incorrect += 1;
+            } else {
+              resultIcon = '❗'; resultClass = 'result-partial'; resultText = '没全选';
+              incorrect += 1;
+            }
+            if (typeof SessionStatsModule !== 'undefined' && SessionStatsModule.updateAndDisplay) {
+              window.isChoiceMode = true;
+              SessionStatsModule.updateAndDisplay(resultClass);
+            }
+            const titleDiv = subDiv.querySelector('.sub-q-title');
+            if (titleDiv) {
+              const feedbackSpan = document.createElement('span');
+              feedbackSpan.className = `sub-feedback ${resultClass}`;
+              feedbackSpan.innerHTML = `（${resultIcon}${resultText}）`;
+              titleDiv.appendChild(feedbackSpan);
+            }
+            for (let i = 0; i < opts.length; i++) {
+              const key = originalKeys[i];
+              const optDiv = document.createElement('div');
+              optDiv.className = 'option';
+              optDiv.setAttribute('data-sub-index', idx);
+              optDiv.setAttribute('data-option-index', i);
+              optDiv.setAttribute('data-key', key);
+              optDiv.innerHTML = opts[i];
+              optDiv.style.pointerEvents = 'none';
+              optDiv.classList.add('disabled');
+              const isCorrect = correctAnswersArr.includes(key);
+              const isSelected = userAnswers.includes(key);
+              if(isCorrect) {
+                if(isSelected) optDiv.classList.add('correct');
+                else optDiv.classList.add('missed');
+              } else if(isSelected) {
+                optDiv.classList.add('wrong');
+              }
+              subOptionsDiv.appendChild(optDiv);
+            }
+            subDiv.appendChild(subOptionsDiv);
+            optionsContainer.appendChild(subDiv);
+            if (window.ankiStorage) {
+              setTimeout(() => { window.ankiStorage.clear(subQuestionHash); }, 500);
+            }
+          });
+        }
+      }
+    },
+    fallback: {
+      back: {
+        display: function() {
+          if (optionsContainer) optionsContainer.style.display = 'none';
+          const answerComparisonFallback = cardElement.querySelector('.answer-comparison');
+          if (answerComparisonFallback) answerComparisonFallback.style.display = 'none';
+          mainDisplayArea.classList.remove('cloze-active-area', 'cloze-revealed-area', 'qa-active-area', 'qa-revealed-area');
+          let fallbackMessage = questionContent.replace(/\n/g, '<br>') || '';
+          const baseStyle = `display:block; margin-top:15px; padding:10px; border-radius:8px; background-color: var(--bg-warning); color: var(--text-type); font-size: 14px; line-height:1.5;`;
+          if (questionContent.length > 0 && !answerTextContent.length && !optionsOnFrontExist && !clozeTextContent.length && !choiceAnswerDefined) {
+            fallbackMessage += `<br><span class="empty-hint" style="${baseStyle}">⚠️ 卡片似乎是问答题，但缺少答案。<br>请填写 <code>{{AnswerText}}</code> 字段。</span>`;
+          } else if (!questionContent.length && !clozeTextContent.length) {
+             fallbackMessage = `<span class="empty-hint" style="${baseStyle}">⚠️ 卡片缺少问题内容。<br>请检查正面卡片的 <code>{{Question}}</code> 或 <code>{{ClozeText}}</code> 字段。</span>`;
+          } else if (isChoiceMode && !optionsOnFrontExist) {
+             fallbackMessage += `<br><span class="empty-hint" style="${baseStyle}">⚠️ 选择题缺少选项。<br>请检查正面卡片的 <code>{{Options}}</code> 字段。</span>`;
+          } else if (isChoiceMode && !choiceAnswerDefined) {
+             fallbackMessage += `<br><span class="empty-hint" style="${baseStyle}">⚠️ 选择题缺少正确答案。<br>请检查正面卡片的 <code>{{Answer}}</code> 字段。</span>`;
+          } else if (isClozeMode && !clozeTextContent.includes('[[')) {
+              fallbackMessage += `<br><span class="empty-hint" style="${baseStyle}">⚠️ 填空题内容似乎缺少挖空标记 <code>[[...]]</code>。<br>请检查 <code>{{ClozeText}}</code> 字段。</span>`;
+          } else if (fallbackMessage === '') {
+            fallbackMessage = `<span class="empty-hint" style="${baseStyle}">⚠️ 卡片内容不完整或类型无法识别。<br>请检查所有相关字段。</span>`;
+          }
+          mainDisplayArea.innerHTML = fallbackMessage;
+        }
+      }
+    }
+  };
+  const ContentSectionsModule = (function() {
+    return {
+      display: function() {
+        if (!cardElement) return;
+        let analysisKnowledgeContainer = document.getElementById('kikkua-analysis-knowledge');
+        if (!analysisKnowledgeContainer) {
+          analysisKnowledgeContainer = document.createElement('section');
+          analysisKnowledgeContainer.className = 'kikkua-analysis-knowledge-area';
+          analysisKnowledgeContainer.id = 'kikkua-analysis-knowledge';
+          cardElement.appendChild(analysisKnowledgeContainer);
+        }
+        let contentSection = cardElement.querySelector('.kikkua-content-section-back');
+        if (contentSection) contentSection.remove();
+        if (analysisContent || refrenceContent) {
+          contentSection = document.createElement('div');
+          contentSection.className = 'kikkua-content-section content-section-back'; 
+          if (analysisContent) {
+            const analysisDiv = document.createElement('div');
+            analysisDiv.className = 'kikkua-analysis-box';
+            let processedAnalysisContent = analysisContent;
+            let tempElemForDecoding = document.createElement('textarea');
+            tempElemForDecoding.innerHTML = analysisContent;
+            let rawHtmlAnalysisText = tempElemForDecoding.value;
+            processedAnalysisContent = generateInitialClozeHTML(rawHtmlAnalysisText);
+            analysisDiv.innerHTML = `
+                <div class="content-title">解析</div>
+              <div class="content-body">${processedAnalysisContent}</div>`;
+            contentSection.appendChild(analysisDiv);
+            setupClozeInteractions(analysisDiv);
+          }
+          if (refrenceContent) {
+            const refrenceDiv = document.createElement('div');
+            refrenceDiv.className = 'kikkua-refrence-box';
+            let processedRefrenceContent = refrenceContent;
+            let tempElemForDecoding = document.createElement('textarea');
+            tempElemForDecoding.innerHTML = refrenceContent;
+            let rawHtmlRefrenceText = tempElemForDecoding.value;
+            processedRefrenceContent = generateInitialClozeHTML(rawHtmlRefrenceText);
+            refrenceDiv.innerHTML = `
+                <div class="content-title">知识点</div>
+              <div class="content-body">${processedRefrenceContent}</div>`;
+            contentSection.appendChild(refrenceDiv);
+            setupClozeInteractions(refrenceDiv);
+          }
+          if (contentSection.hasChildNodes()) {
+            analysisKnowledgeContainer.appendChild(contentSection);
+          }
+        }
+      }
+    };
+  })();
+  let choiceOutcomeForStats = null;
+  if (isClozeMode && CardTypeHandlersBack.cloze && CardTypeHandlersBack.cloze.back) {
+    CardTypeHandlersBack.cloze.back.display();
+  } else if (isClozeChoiceMode && CardTypeHandlersBack.clozeChoice && CardTypeHandlersBack.clozeChoice.back) {
+    choiceOutcomeForStats = CardTypeHandlersBack.clozeChoice.back.display(); 
+  } else if (isQAMode && CardTypeHandlersBack.qa && CardTypeHandlersBack.qa.back) {
+    CardTypeHandlersBack.qa.back.display();
+  } else if (isImageClozeMode && CardTypeHandlersBack.imageCloze && CardTypeHandlersBack.imageCloze.back) {
+    CardTypeHandlersBack.imageCloze.back.display();
+  } else if (isChoiceMode && CardTypeHandlersBack.choice && CardTypeHandlersBack.choice.back) {
+    choiceOutcomeForStats = CardTypeHandlersBack.choice.back.display(); 
+  } else if (CardTypeHandlersBack.fallback && CardTypeHandlersBack.fallback.back) {
+    CardTypeHandlersBack.fallback.back.display();
+  }
+  SessionStatsModule.updateAndDisplay(choiceOutcomeForStats);
+  ContentSectionsModule.display();
+})();
+</script>
