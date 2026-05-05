@@ -585,7 +585,7 @@ async function delDeck(i) {
 // ─── CSV ───
 let csvMeta = {};
 function parseCsvFull(text) {
-    const sep = text.indexOf('	') >= 0 && text.indexOf(',') < 0 ? '	' : ',';
+    const sep = text.indexOf(String.fromCharCode(9)) >= 0 && text.indexOf(',') < 0 ? String.fromCharCode(9) : ',';
     const rows = []; let row = [''], fi = 0, q = false;
     for (let i = 0; i < text.length; i++) {
         const c = text[i];
@@ -595,16 +595,16 @@ function parseCsvFull(text) {
             else row[fi] += c;
         } else {
             if (c === '"' && row[fi] === '') q = true;
-            else if (c === '') continue;
-            else if (c === '
-') { rows.push(row); row = ['']; fi = 0; }
+            else if (c === String.fromCharCode(13)) continue;
+            else if (c === String.fromCharCode(10)) { rows.push(row); row = ['']; fi = 0; }
             else if (c === sep) { row.push(''); fi++; }
             else row[fi] += c;
         }
     }
     if (row[fi] !== '' || fi > 0 || row.length > 1) rows.push(row);
     return rows;
-}async function previewCsv(deck) {
+}
+async function previewCsv(deck) {
     try {
         const r = await readRepo('data/' + deck + '/data.csv');
         csvMeta[deck] = { sha: r.sha, text: r.text };
