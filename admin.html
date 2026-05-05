@@ -777,6 +777,14 @@ async function saveTags() {
     } catch (e) { toast('❌ ' + e.message, 'error'); }
 }
 
+function findTagNode(nodes, path) {
+    for (let i = 0; i < nodes.length; i++) {
+        if (nodes[i].path === path) return { parent: nodes, idx: i, node: nodes[i] };
+        if (nodes[i].children) { const f = findTagNode(nodes[i].children, path); if (f) return f; }
+    }
+    return null;
+}
+
 function renderTagTree() {
     const el = document.querySelector('#tagTreeContainer');
     if (!el) return;
@@ -787,18 +795,31 @@ function renderTagTree() {
 function walkTagNodes(nodes, depth) {
     if (!nodes || !nodes.length) return '<div style="padding:20px;text-align:center;color:var(--text3);">暂无标签，点击上方按钮添加</div>';
     return '<div style="margin-left:' + (depth > 0 ? '24' : '0') + 'px">' + nodes.map((n, i) =>
-        '<div style="display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:4px;margin:2px 0;" onmouseover="this.style.background=\'var(--bg)\'" onmouseout="this.style.background=\'\'">' +
+        '<div style="display:flex;align-items:center;gap:6px;padding:4px 8px;border-radius:4px;margin:2px 0;" onmouseover="this.style.background=\'var(--bg)\'" onmouseout="this.style.background=\'\'">' +
         '<span style="flex:1;font-size:14px;font-weight:' + (depth === 0 ? '600' : '400') + ';">' + esc(n.path.split('::').pop()) + '</span>' +
-        '<input style="width:120px;padding:2px 6px;border:1px solid var(--border);border-radius:4px;font-size:11px;" placeholder="描述" value="' + esc(n.desc || '') + '" oninput="tagTree' + getTagPath(depth, i) + '.desc=this.value">' +
-        '<button class="btn btn-secondary btn-xs" onclick="addSubTag(' + depth + ',' + i + ')">+ 子</button>' +
-        '<button class="btn btn-danger btn-xs" onclick="delTagNode(' + depth + ',' + i + ')">✕</button>' +
+        '<input style="width:80px;padding:2px 6px;border:1px solid var(--border);border-radius:4px;font-size:11px;" placeholder="描述" value="' + esc(n.desc || '') + '" onchange="renameTagDesc(\'' + n.path + '\',this.value)">' +
+        '<button class="btn btn-secondary btn-xs" onclick="renameTag(\'' + n.path + '\')">✏️</button>' +
+        '<button class="btn btn-secondary btn-xs" onclick="addSubTag(\'' + n.path + '\')">+ 子</button>' +
+        '<button class="btn btn-danger btn-xs" onclick="delTagNode(\'' + n.path + '\')">✕</button>' +
         '</div>' + (n.children ? walkTagNodes(n.children, depth + 1) : '')
     ).join('') + '</div>';
 }
 
-function getTagPath(depth, idx) {
-    const parts = ['[' + idx + ']'];
-    return parts.join('').replace(/\[(\d+)\]/g, '[$1]');
+function renameTagDesc(path, val) {
+    const f = findTagNode(tagTree, path);
+    if (f) f.node.desc = val;
+}
+
+function renameTag(path) {
+    const f = findTagNode(tagTree, path);
+    if (!f) return;
+    const newName = prompt('新名称：', f.node.path.split('::').pop());
+    if (!newName || newName === f.node.path.split('::').pop()) return;
+    const parentPath = path.includes('::') ? path.split('::').slice(0, -1).join('::') : '';
+    f.node.path = parentPath ? parentPath + '::' + newName : newName;
+    // Update all children paths
+    (function upd(nodes) { for (const n of nodes) { if (n.children) upd(n.children); } })(f.node.children || []);
+    renderTagTree();
 }
 
 function addRootTag() {
@@ -808,18 +829,20 @@ function addRootTag() {
     renderTagTree();
 }
 
-function addSubTag(depth, idx) {
+function addSubTag(path) {
+    const f = findTagNode(tagTree, path);
+    if (!f) return;
     const name = prompt('子标签名称：');
     if (!name) return;
-    let node = tagTree[idx];
-    const parentPath = node.path;
-    node.children.push({ path: parentPath + '::' + name, desc: '', children: [] });
+    f.node.children.push({ path: f.node.path + '::' + name, desc: '', children: [] });
     renderTagTree();
 }
 
-function delTagNode(depth, idx) {
-    if (!confirm('删除 "' + tagTree[idx].path.split('::').pop() + '" ？')) return;
-    tagTree.splice(idx, 1);
+function delTagNode(path) {
+    const f = findTagNode(tagTree, path);
+    if (!f) return;
+    if (!confirm('删除 "' + f.node.path.split('::').pop() + '" 及其子标签？')) return;
+    f.parent.splice(f.idx, 1);
     renderTagTree();
 }
 
@@ -875,7 +898,6 @@ function toggleTagSel(path, checked) {
     if (checked) { if (!_tagSelSel.includes(path)) _tagSelSel.push(path); }
     else { _tagSelSel = _tagSelSel.filter(t => t !== path && !t.startsWith(path + '::')); }
     updateTagPreview();
-    renderTagSelectorTree();
 }
 
 function updateTagPreview() {
