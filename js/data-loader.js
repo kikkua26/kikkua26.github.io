@@ -67,28 +67,27 @@ export class DataLoader {
         const text = csvText.replace(/^﻿/, '').trim();
         if (!text) return { fields: [], records: [] };
         const sep = text.includes('\t') && !text.includes(',') ? '\t' : ',';
-        // 逐字符解析
-        const rows = []; let row = [], field = '', q = false;
+        const rows = []; let row = [''], fi = 0, q = false;
         for (let i = 0; i < text.length; i++) {
-            const ch = text[i], next = text[i + 1];
+            const c = text[i];
             if (q) {
-                if (ch === '"') { if (next === '"') { field += '"'; i++; } else q = false; }
-                else field += ch;
+                if (c === '"' && i + 1 < text.length && text[i + 1] === '"') { row[fi] += '"'; i++; }
+                else if (c === '"') q = false;
+                else row[fi] += c;
             } else {
-                if (ch === '"') q = true;
-                else if (ch === '\r') continue;
-                else if (ch === '\n') { row.push(field); field = ''; rows.push(row); row = []; }
-                else if (ch === sep) { row.push(field); field = ''; }
-                else field += ch;
+                if (c === '"' && row[fi] === '') q = true;
+                else if (c === '\r') continue;
+                else if (c === '\n') { rows.push(row); row = ['']; fi = 0; }
+                else if (c === sep) { row.push(''); fi++; }
+                else row[fi] += c;
             }
         }
-        row.push(field); rows.push(row);
+        if (row[fi] !== '' || fi > 0 || row.length > 1) rows.push(row);
         if (rows.length < 2) return { fields: [], records: [] };
         const header = rows[0].map(f => f.trim());
         const records = [];
         for (let i = 1; i < rows.length; i++) {
             const r = rows[i];
-            if (r.length === 1 && !r[0]) continue;
             const record = {};
             header.forEach((f, idx) => { record[f] = r[idx] !== undefined ? r[idx] : ''; });
             records.push(record);
