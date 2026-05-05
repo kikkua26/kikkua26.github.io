@@ -29,7 +29,7 @@ export class DataLoader {
     async _loadDeck(deckName, { template: templateName = '', chapterField = DEFAULTS.chapterField } = {}) {
         const basePath = DATA_PATHS.deckData(deckName);
         try {
-            const csvResp = await fetch(basePath).catch(() => null);
+            const csvResp = await fetch(basePath + '?v=' + Date.now()).catch(() => null);
             let template = { front: DEFAULTS.templateFront, back: DEFAULTS.templateBack };
             if (templateName) template = await this.loadTemplate(templateName);
 
@@ -50,9 +50,9 @@ export class DataLoader {
     async loadTemplate(templateName) {
         try {
             const [frontResp, backResp, cssResp] = await Promise.all([
-                fetch(DATA_PATHS.templateFront(templateName), { cache: 'no-cache' }).catch(() => null),
-                fetch(DATA_PATHS.templateBack(templateName), { cache: 'no-cache' }).catch(() => null),
-                fetch(DATA_PATHS.templateCss(templateName), { cache: 'no-cache' }).catch(() => null)
+                fetch(DATA_PATHS.templateFront(templateName) + '?v=' + Date.now()).catch(() => null),
+                fetch(DATA_PATHS.templateBack(templateName) + '?v=' + Date.now()).catch(() => null),
+                fetch(DATA_PATHS.templateCss(templateName) + '?v=' + Date.now()).catch(() => null)
             ]);
             const css = cssResp?.ok ? await cssResp.text() : '';
             const front = frontResp?.ok ? await frontResp.text() : DEFAULTS.templateFront;
@@ -97,7 +97,7 @@ export class DataLoader {
 
     async discoverDecks() {
         try {
-            const response = await fetch(DATA_PATHS.index);
+            const response = await fetch(DATA_PATHS.index + '?v=' + Date.now());
             if (!response.ok) return [];
             const entries = await response.json();
             const decks = [];
