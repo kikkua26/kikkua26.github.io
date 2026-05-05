@@ -226,6 +226,7 @@ body {
         <div class="nav-item active" data-section="dashboard">📊 仪表盘</div>
         <div class="nav-item" data-section="decks">📋 牌组</div>
         <div class="nav-item" data-section="templates">🎨 模板</div>
+        <div class="nav-item" data-section="tags">🏷 标签</div>
     </nav>
     <div class="sidebar-footer">
         <div class="token-row">
@@ -246,6 +247,7 @@ body {
         <h2 id="pageTitle">📊 仪表盘</h2>
         <div style="display:flex;gap:8px;">
             <button class="btn btn-secondary btn-sm" id="saveBtn">💾 保存</button>
+            <button class="btn btn-secondary btn-sm" id="saveTagsBtn" style="display:none;">💾 保存标签</button>
         </div>
     </div>
     <div class="page-content">
@@ -285,7 +287,16 @@ body {
             </div>
         </div>
 
-        <!-- Templates -->
+                <!-- Tags -->
+        <div class="page-section" id="secTags">
+            <div style="margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;">
+                <span style="font-size:13px;font-weight:600;color:var(--text2);">标签注册表</span>
+                <button class="btn btn-secondary btn-sm" onclick="addRootTag()">+ 新建根标签</button>
+            </div>
+            <div id="tagTreeContainer"></div>
+        </div>
+
+<!-- Templates -->
         <div class="page-section" id="secTemplates">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
                 <span style="font-size:13px;font-weight:600;color:var(--text2);">模板包</span>
@@ -317,6 +328,19 @@ body {
     </div>
 </div>
 <input type="file" id="csvFileInput" accept=".csv" style="display:none;">
+
+<!-- Tag Selector Modal -->
+<div class="modal-overlay" id="tagSelectorOverlay">
+    <div class="modal" style="max-width:500px;">
+        <h3 style="font-size:16px;font-weight:600;margin-bottom:12px;">选择标签</h3>
+        <div id="tagSelectorTree" style="max-height:300px;overflow-y:auto;margin-bottom:12px;"></div>
+        <div style="font-size:12px;color:var(--text3);margin-bottom:12px;" id="tagSelectorPreview">尚未选择</div>
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="closeTagSelector()">取消</button>
+            <button class="btn btn-primary" onclick="confirmTagSelector()">确定</button>
+        </div>
+    </div>
+</div>
 
 <!-- Modal -->
 <div class="modal-overlay" id="modalOverlay">
@@ -413,11 +437,16 @@ function updateDashboard() {
 function switchSection(name) {
     $$('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.section === name));
     $$('.page-section').forEach(s => s.classList.toggle('active', s.id === 'sec' + name.charAt(0).toUpperCase() + name.slice(1)));
-    const titles = { dashboard: '📊 仪表盘', decks: '📋 牌组', templates: '🎨 模板' };
+    const titles = { dashboard: '📊 仪表盘', decks: '📋 牌组', templates: '🎨 模板', tags: '🏷 标签' };
     $('#pageTitle').textContent = titles[name] || name;
+    // Toggle save buttons
+    $('#saveBtn').style.display = (name === 'decks') ? 'inline-flex' : 'none';
+    $('#saveTagsBtn').style.display = (name === 'tags') ? 'inline-flex' : 'none';
     if (window.innerWidth <= 767) closeSidebar();
     if (name === 'decks') { renderDeckList(); if (window.innerWidth <= 767) { document.getElementById('deckListView').classList.add('mob-show'); document.getElementById('deckDetailView').classList.remove('mob-show'); } }
     if (name === 'templates') renderTplGrid();
+    if (name === 'tags') renderTagTree();
+    if (name === 'tags') renderTagTree();
 }
 $$('.nav-item').forEach(n => n.addEventListener('click', () => switchSection(n.dataset.section)));
 
@@ -437,6 +466,7 @@ async function connect() {
         const user = await gh('/user');
         await loadDecks();
         await loadTemplates();
+        await loadTags();
         setStatus(`✅ ${user.login}`, 'ok');
         $('#connectBtn').textContent = '已连';
         $('#connectBtn').disabled = true;
@@ -536,7 +566,11 @@ async function selectDeck(i) {
             <div class="field"><label>卡片数</label><span style="display:block;padding:7px 10px;background:var(--bg);border-radius:6px;font-size:14px;color:var(--text3);">${csvCount > 0 ? csvCount + ' 条（自动）' : d.totalCards || '暂无数据'}</span></div>
             <div class="field"><label>章节字段</label><select onchange="upd(${i},'chapterField',this.value)">${chapterOpts}</select></div>
         </div>
-        <div class="field"><label>标签 (逗号分隔)</label><input value="${esc(tagStr)}" oninput="upd(${i},'tags',this.value.split(/,\s*/).filter(Boolean))"></div>
+        <div class="field"><label>标签</label>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;padding:4px 0;" id="tagPills">${(d.tags||[]).map(t => '<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;background:var(--bg);border:1px solid var(--border);border-radius:4px;font-size:12px;">' + esc(t) + '<span style="cursor:pointer;color:var(--text3);" onclick="removeDeckTag(' + i + ',\'' + esc(t) + '\')">×</span></span>').join('')}
+                <span style="display:inline-flex;align-items:center;padding:2px 8px;border:1px dashed var(--border);border-radius:4px;font-size:12px;cursor:pointer;color:var(--accent);" onclick="openTagSelector(' + i + ')">+ 添加</span>
+            </div>
+        </div>
         <div class="field"><label>简述</label><input value="${esc(d.summary||'')}" oninput="upd(${i},'summary',this.value)" placeholder="卡片列表中显示的简短介绍"></div>
         <div class="field"><label>购买链接</label><input value="${esc(d.purchaseUrl||'')}" oninput="upd(${i},'purchaseUrl',this.value)"></div>
         <div class="field"><label>介绍 (Markdown)</label><textarea rows="3" oninput="upd(${i},'detail',this.value)">${esc(d.detail||'')}</textarea></div>
@@ -723,6 +757,136 @@ async function createTpl() {
         tplNames.push(name); renderTplGrid(); selectTpl(name);
         toast(`"${name}" 已创建`);
     } catch (e) { toast(e.message, 'error'); }
+}
+
+
+// ─── TAGS ───
+let tagTree = [];
+let _tagEditPath = [];
+
+async function loadTags() {
+    try { const r = await readRepo('data/tags.json'); tagTree = JSON.parse(r.text); }
+    catch { tagTree = []; }
+}
+
+async function saveTags() {
+    try {
+        const r = await readRepo('data/tags.json');
+        await writeRepo('data/tags.json', JSON.stringify(tagTree, null, 2), r.sha, 'Update tags');
+        toast('✅ 标签已保存');
+    } catch (e) { toast('❌ ' + e.message, 'error'); }
+}
+
+function renderTagTree() {
+    const el = document.querySelector('#tagTreeContainer');
+    if (!el) return;
+    el.innerHTML = '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;">' +
+        walkTagNodes(tagTree, 0) + '</div>';
+}
+
+function walkTagNodes(nodes, depth) {
+    if (!nodes || !nodes.length) return '<div style="padding:20px;text-align:center;color:var(--text3);">暂无标签，点击上方按钮添加</div>';
+    return '<div style="margin-left:' + (depth > 0 ? '24' : '0') + 'px">' + nodes.map((n, i) =>
+        '<div style="display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:4px;margin:2px 0;" onmouseover="this.style.background=\'var(--bg)\'" onmouseout="this.style.background=\'\'">' +
+        '<span style="flex:1;font-size:14px;font-weight:' + (depth === 0 ? '600' : '400') + ';">' + esc(n.path.split('::').pop()) + '</span>' +
+        '<input style="width:120px;padding:2px 6px;border:1px solid var(--border);border-radius:4px;font-size:11px;" placeholder="描述" value="' + esc(n.desc || '') + '" oninput="tagTree' + getTagPath(depth, i) + '.desc=this.value">' +
+        '<button class="btn btn-secondary btn-xs" onclick="addSubTag(' + depth + ',' + i + ')">+ 子</button>' +
+        '<button class="btn btn-danger btn-xs" onclick="delTagNode(' + depth + ',' + i + ')">✕</button>' +
+        '</div>' + (n.children ? walkTagNodes(n.children, depth + 1) : '')
+    ).join('') + '</div>';
+}
+
+function getTagPath(depth, idx) {
+    const parts = ['[' + idx + ']'];
+    return parts.join('').replace(/\[(\d+)\]/g, '[$1]');
+}
+
+function addRootTag() {
+    const name = prompt('根标签名称：');
+    if (!name) return;
+    tagTree.push({ path: name, desc: '', children: [] });
+    renderTagTree();
+}
+
+function addSubTag(depth, idx) {
+    const name = prompt('子标签名称：');
+    if (!name) return;
+    let node = tagTree[idx];
+    const parentPath = node.path;
+    node.children.push({ path: parentPath + '::' + name, desc: '', children: [] });
+    renderTagTree();
+}
+
+function delTagNode(depth, idx) {
+    if (!confirm('删除 "' + tagTree[idx].path.split('::').pop() + '" ？')) return;
+    tagTree.splice(idx, 1);
+    renderTagTree();
+}
+
+$('#saveTagsBtn').addEventListener('click', saveTags);
+
+// ─── TAG SELECTOR ───
+let _tagSelDeckIdx = -1;
+let _tagSelSel = [];
+
+function openTagSelector(i) {
+    _tagSelDeckIdx = i;
+    _tagSelSel = [...(decks[i]?.tags || [])];
+    renderTagSelectorTree();
+    document.querySelector('#tagSelectorOverlay').classList.add('show');
+}
+
+function closeTagSelector() {
+    document.querySelector('#tagSelectorOverlay').classList.remove('show');
+}
+
+function confirmTagSelector() {
+    if (_tagSelDeckIdx >= 0) {
+        decks[_tagSelDeckIdx].tags = _tagSelSel;
+        renderDeckList();
+        selectDeck(_tagSelDeckIdx);
+    }
+    closeTagSelector();
+}
+
+function renderTagSelectorTree() {
+    function walk(nodes, prefix) {
+        let html = '';
+        for (const n of nodes) {
+            const path = n.path;
+            const checked = _tagSelSel.includes(path);
+            html += '<div style="padding:2px 0;padding-left:20px;">' +
+                '<label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:13px;">' +
+                '<input type="checkbox" ' + (checked ? 'checked ' : '') + 'onchange="toggleTagSel(\'' + path + '\',this.checked)">' +
+                '<span>' + esc(n.path.split('::').pop()) + '</span>' +
+                (n.desc ? '<span style="font-size:11px;color:var(--text3);">(' + esc(n.desc) + ')</span>' : '') +
+                '</label>' +
+                (n.children ? walk(n.children, prefix) : '') +
+                '</div>';
+        }
+        return html;
+    }
+    const el = document.querySelector('#tagSelectorTree');
+    el.innerHTML = tagTree.length > 0 ? walk(tagTree, '') : '<div style="padding:20px;text-align:center;color:var(--text3);">请先在标签管理中注册标签</div>';
+    updateTagPreview();
+}
+
+function toggleTagSel(path, checked) {
+    if (checked) { if (!_tagSelSel.includes(path)) _tagSelSel.push(path); }
+    else { _tagSelSel = _tagSelSel.filter(t => t !== path && !t.startsWith(path + '::')); }
+    updateTagPreview();
+    renderTagSelectorTree();
+}
+
+function updateTagPreview() {
+    const el = document.querySelector('#tagSelectorPreview');
+    el.textContent = _tagSelSel.length ? '已选：' + _tagSelSel.join('、') : '尚未选择';
+}
+
+function removeDeckTag(i, path) {
+    decks[i].tags = (decks[i].tags || []).filter(t => t !== path);
+    renderDeckList();
+    selectDeck(i);
 }
 
 // ─── INIT ───
