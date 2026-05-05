@@ -800,7 +800,7 @@ function walkTagNodes(nodes, depth) {
         '<input style="width:80px;padding:2px 6px;border:1px solid var(--border);border-radius:4px;font-size:11px;" placeholder="描述" value="' + esc(n.desc || '') + '" onchange="renameTagDesc(\'' + n.path + '\',this.value)">' +
         '<div style="position:relative;display:inline-block;" onmouseleave="this.querySelector(\'.tagMenu\').style.display=\'none\'">' +
         '<button class="btn btn-secondary btn-xs" onmouseover="this.nextElementSibling.style.display=\'flex\'">···</button>' +
-        '<div class="tagMenu" style="display:none;position:absolute;right:0;top:100%;background:var(--surface);border:1px solid var(--border);border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.1);z-index:10;flex-direction:column;min-width:80px;padding:4px;">' +
+        '<div class="tagMenu" style="display:none;position:absolute;right:0;top:100%;background:var(--surface);border:1px solid var(--border);border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.1);z-index:10;flex-direction:column;white-space:nowrap;padding:4px;">' +
         '<span style="padding:4px 8px;font-size:12px;cursor:pointer;border-radius:4px;" onmouseover="this.style.background=\'var(--bg)\'" onmouseout="this.style.background=\'\'" onclick="renameTag(\'' + n.path + '\')">✏️ 重命名</span>' +
         '<span style="padding:4px 8px;font-size:12px;cursor:pointer;border-radius:4px;" onmouseover="this.style.background=\'var(--bg)\'" onmouseout="this.style.background=\'\'" onclick="addSubTag(\'' + n.path + '\')">+ 子标签</span>' +
         '<span style="padding:4px 8px;font-size:12px;cursor:pointer;border-radius:4px;color:var(--accent);" onmouseover="this.style.background=\'var(--bg)\'" onmouseout="this.style.background=\'\'" onclick="delTagNode(\'' + n.path + '\')">✕ 删除</span>' +
@@ -870,8 +870,14 @@ function closeTagSelector() {
 function confirmTagSelector() {
     if (_tagSelDeckIdx >= 0) {
         decks[_tagSelDeckIdx].tags = _tagSelSel;
+        // 直接更新标签区域，不重新加载整个表单
+        const el = document.querySelector('#tagPills');
+        if (el) {
+            const tags = _tagSelSel;
+            el.innerHTML = tags.map(t => '<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;background:var(--bg);border:1px solid var(--border);border-radius:4px;font-size:12px;">' + esc(t) + '<span style="cursor:pointer;color:var(--text3);margin-left:2px;" onclick="removeDeckTag(' + _tagSelDeckIdx + ',\'' + esc(t) + '\')">×</span></span>').join('') +
+                '<span style="display:inline-flex;align-items:center;padding:2px 8px;border:1px dashed var(--border);border-radius:4px;font-size:12px;cursor:pointer;color:var(--accent);" onclick="openTagSelector(' + _tagSelDeckIdx + ')">+ 添加</span>';
+        }
         renderDeckList();
-        selectDeck(_tagSelDeckIdx);
     }
     closeTagSelector();
 }
