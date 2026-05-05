@@ -867,17 +867,11 @@ function closeTagSelector() {
     document.querySelector('#tagSelectorOverlay').classList.remove('show');
 }
 
-function confirmTagSelector() {
+async function confirmTagSelector() {
     if (_tagSelDeckIdx >= 0) {
         decks[_tagSelDeckIdx].tags = _tagSelSel;
-        // 直接更新标签区域，不重新加载整个表单
-        const el = document.querySelector('#tagPills');
-        if (el) {
-            const tags = _tagSelSel;
-            el.innerHTML = tags.map(t => '<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;background:var(--bg);border:1px solid var(--border);border-radius:4px;font-size:12px;">' + esc(t) + '<span style="cursor:pointer;color:var(--text3);margin-left:2px;" onclick="removeDeckTag(' + _tagSelDeckIdx + ',\'' + esc(t) + '\')">×</span></span>').join('') +
-                '<span style="display:inline-flex;align-items:center;padding:2px 8px;border:1px dashed var(--border);border-radius:4px;font-size:12px;cursor:pointer;color:var(--accent);" onclick="openTagSelector(' + _tagSelDeckIdx + ')">+ 添加</span>';
-        }
         renderDeckList();
+        await selectDeck(_tagSelDeckIdx);
     }
     closeTagSelector();
 }
@@ -915,10 +909,10 @@ function updateTagPreview() {
     el.textContent = _tagSelSel.length ? '已选：' + _tagSelSel.join('、') : '尚未选择';
 }
 
-function removeDeckTag(i, path) {
+async function removeDeckTag(i, path) {
     decks[i].tags = (decks[i].tags || []).filter(t => t !== path);
     renderDeckList();
-    selectDeck(i);
+    await selectDeck(i);
 }
 
 // ─── INIT ───
