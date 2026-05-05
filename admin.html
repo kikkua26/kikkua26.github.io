@@ -798,9 +798,13 @@ function walkTagNodes(nodes, depth) {
         '<div style="display:flex;align-items:center;gap:6px;padding:4px 8px;border-radius:4px;margin:2px 0;" onmouseover="this.style.background=\'var(--bg)\'" onmouseout="this.style.background=\'\'">' +
         '<span style="flex:1;font-size:14px;font-weight:' + (depth === 0 ? '600' : '400') + ';">' + esc(n.path.split('::').pop()) + '</span>' +
         '<input style="width:80px;padding:2px 6px;border:1px solid var(--border);border-radius:4px;font-size:11px;" placeholder="描述" value="' + esc(n.desc || '') + '" onchange="renameTagDesc(\'' + n.path + '\',this.value)">' +
-        '<button class="btn btn-secondary btn-xs" onclick="renameTag(\'' + n.path + '\')">✏️</button>' +
-        '<button class="btn btn-secondary btn-xs" onclick="addSubTag(\'' + n.path + '\')">+ 子</button>' +
-        '<button class="btn btn-danger btn-xs" onclick="delTagNode(\'' + n.path + '\')">✕</button>' +
+        '<div style="position:relative;display:inline-block;" onmouseleave="this.querySelector(\'.tagMenu\').style.display=\'none\'">' +
+        '<button class="btn btn-secondary btn-xs" onmouseover="this.nextElementSibling.style.display=\'flex\'">···</button>' +
+        '<div class="tagMenu" style="display:none;position:absolute;right:0;top:100%;background:var(--surface);border:1px solid var(--border);border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.1);z-index:10;flex-direction:column;min-width:80px;padding:4px;">' +
+        '<span style="padding:4px 8px;font-size:12px;cursor:pointer;border-radius:4px;" onmouseover="this.style.background=\'var(--bg)\'" onmouseout="this.style.background=\'\'" onclick="renameTag(\'' + n.path + '\')">✏️ 重命名</span>' +
+        '<span style="padding:4px 8px;font-size:12px;cursor:pointer;border-radius:4px;" onmouseover="this.style.background=\'var(--bg)\'" onmouseout="this.style.background=\'\'" onclick="addSubTag(\'' + n.path + '\')">+ 子标签</span>' +
+        '<span style="padding:4px 8px;font-size:12px;cursor:pointer;border-radius:4px;color:var(--accent);" onmouseover="this.style.background=\'var(--bg)\'" onmouseout="this.style.background=\'\'" onclick="delTagNode(\'' + n.path + '\')">✕ 删除</span>' +
+        '</div></div>' +
         '</div>' + (n.children ? walkTagNodes(n.children, depth + 1) : '')
     ).join('') + '</div>';
 }
