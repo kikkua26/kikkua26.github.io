@@ -51,15 +51,16 @@ function buildDirectory(state) {
         group.get(ch).push(i);
     });
 
-    function inject(nodes, parts, indices) {
+    function inject(nodes, parts, indices, parentPath = '') {
         const [head, ...rest] = parts;
+        const fullPath = parentPath ? parentPath + '::' + head : head;
         let node = nodes.find(n => n.name === head);
         if (!node) {
-            node = { name: head, path: parts.join('::'), children: [], collapsed: true };
+            node = { name: head, path: fullPath, children: [], collapsed: true };
             nodes.push(node);
         }
         if (rest.length === 0) node.indices = indices;
-        else inject(node.children, rest, indices);
+        else inject(node.children, rest, indices, fullPath);
     }
 
     const tree = [];
@@ -70,7 +71,7 @@ function buildDirectory(state) {
 
     (function tally(nodes) {
         for (const n of nodes) {
-            if (n.children.length) { tally(n.children); n.totalCount = n.children.reduce((s, c) => s + (c.totalCount || c.indices.length), 0); }
+            if (n.children.length) { tally(n.children); n.totalCount = n.children.reduce((s, c) => s + (c.totalCount || (c.indices ? c.indices.length : 0)), 0); }
             else n.totalCount = n.indices ? n.indices.length : 0;
         }
     })(tree);
