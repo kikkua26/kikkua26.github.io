@@ -555,7 +555,7 @@ async function selectDeck(i) {
         </div>
         <div class="field"><label>标签</label>
             <div style="display:flex;flex-wrap:wrap;gap:6px;padding:4px 0;">${(d.tags||[]).map(t => '<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;background:var(--bg);border:1px solid var(--border);border-radius:4px;font-size:12px;">' + esc(t) + '<span style="cursor:pointer;color:var(--text3);margin-left:2px;" onclick="removeDeckTag(\'' + i + '\',\'' + esc(t) + '\')">×</span></span>').join('')}
-                <select style="padding:2px 6px;border:1px solid var(--border);border-radius:4px;font-size:12px;background:var(--bg);" onchange="addDeckTagFromSelect(this,' + i + ')">
+                <select style="padding:2px 6px;border:1px solid var(--border);border-radius:4px;font-size:12px;background:var(--bg);" onchange="addDeckTagFromSelect(this,${i})">
                     <option value="">+ 添加</option>
                     ${(()=>{let o='';function f(n){for(const x of n){o+='<option value="'+esc(x.path)+'">'+esc(x.path)+'</option>';if(x.children)f(x.children);}}f(tagTree);return o;})()}
                 </select>
