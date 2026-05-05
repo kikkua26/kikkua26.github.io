@@ -103,8 +103,8 @@ export async function renderDeckList(filterPath) {
                                 </div>
                             </div>
                             <div class="card-content">
-                                ${deck.summary ? `<p class="card-summary">${esc(deck.summary)}</p>` : ''}
-                                ${tagsHtml ? `<div class="card-tags">${tagsHtml}</div>` : ''}
+                                <p class="card-summary">${deck.summary ? esc(deck.summary) : ''}</p>
+                                <div class="card-tags">${tagsHtml}</div>
                             </div>
                             <div class="card-footer">
                                 <span class="card-meta">${ICONS.calendar} ${lastStudyText}</span>
