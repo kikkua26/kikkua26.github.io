@@ -861,6 +861,7 @@ function openTagSelector(i) {
     _tagSelSel = [...(decks[i]?.tags || [])];
     renderTagSelectorTree();
     document.querySelector('#tagSelectorOverlay').classList.add('show');
+    console.log('openTagSelector: deck tags=', decks[i]?.tags, '_tagSelSel=', _tagSelSel);
 }
 
 function closeTagSelector() {
@@ -869,9 +870,15 @@ function closeTagSelector() {
 
 async function confirmTagSelector() {
     if (_tagSelDeckIdx >= 0) {
+        console.log('confirm: before=', decks[_tagSelDeckIdx].tags, 'selected=', _tagSelSel);
         decks[_tagSelDeckIdx].tags = _tagSelSel;
         renderDeckList();
-        await selectDeck(_tagSelDeckIdx);
+        // 直接更新标签 DOM
+        const pills = document.querySelector('#tagPills');
+        if (pills) {
+            pills.innerHTML = _tagSelSel.map(t => '<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;background:var(--bg);border:1px solid var(--border);border-radius:4px;font-size:12px;">' + esc(t) + '<span style="cursor:pointer;color:var(--text3);" onclick="removeDeckTag(' + _tagSelDeckIdx + ',\'' + esc(t) + '\')">×</span></span>').join('') +
+                '<span style="display:inline-flex;align-items:center;padding:2px 8px;border:1px dashed var(--border);border-radius:4px;font-size:12px;cursor:pointer;color:var(--accent);" onclick="openTagSelector(' + _tagSelDeckIdx + ')">+ 添加</span>';
+        }
     }
     closeTagSelector();
 }
