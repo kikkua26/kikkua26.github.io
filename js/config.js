@@ -5,7 +5,7 @@ export const SITE = {
     brand: 'kikkua',
     title: 'kikkua · 知识卡片',
     tagline: '精选牌组 · 预览选购',
-    description: '精选 Anki 牌组预览选购平台 — 先看后买，高效备考。',
+    description: 'kikkua 出品的 Anki 牌组 — 先看后买，高效备考。',
     url: 'https://kikkua.online/',
     githubUrl: 'https://kikkua26.github.io/',
     locale: 'zh-CN',
@@ -44,7 +44,7 @@ export const STORAGE = {
 export const UI = {
     home: {
         features: [
-            { icon: 'book', label: '精选内容', desc: '专业编者梳理的知识体系，直击考点' },
+            { icon: 'book', label: '精选内容', desc: '精心梳理的知识体系，直击考点' },
             { icon: 'eye', label: '先看后买', desc: '每副牌组提供约 15% 的卡片免费预览' },
             { icon: 'edit', label: '专业模板', desc: '精心设计的 Anki 模板，兼具美感与效率' },
         ],
