@@ -329,6 +329,19 @@ body {
 </div>
 <input type="file" id="csvFileInput" accept=".csv" style="display:none;">
 
+<!-- Tag Selector Modal -->
+<div class="modal-overlay" id="tagSelectorOverlay">
+    <div class="modal" style="max-width:500px;">
+        <h3 style="font-size:16px;font-weight:600;margin-bottom:12px;">选择标签</h3>
+        <div id="tagSelectorTree" style="max-height:300px;overflow-y:auto;margin-bottom:12px;"></div>
+        <div style="font-size:12px;color:var(--text3);margin-bottom:12px;" id="tagSelectorPreview">尚未选择</div>
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="closeTagSelector()">取消</button>
+            <button class="btn btn-primary" onclick="confirmTagSelector()">确定</button>
+        </div>
+    </div>
+</div>
+
 <!-- Modal -->
 <div class="modal-overlay" id="modalOverlay">
     <div class="modal" id="modalBody">
@@ -554,11 +567,8 @@ async function selectDeck(i) {
             <div class="field"><label>章节字段</label><select onchange="upd(${i},'chapterField',this.value)">${chapterOpts}</select></div>
         </div>
         <div class="field"><label>标签</label>
-            <div style="display:flex;flex-wrap:wrap;gap:6px;padding:4px 0;">${(d.tags||[]).map(t => '<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;background:var(--bg);border:1px solid var(--border);border-radius:4px;font-size:12px;">' + esc(t) + '<span style="cursor:pointer;color:var(--text3);margin-left:2px;" onclick="removeDeckTag(\'' + i + '\',\'' + esc(t) + '\')">×</span></span>').join('')}
-                <select style="padding:2px 6px;border:1px solid var(--border);border-radius:4px;font-size:12px;background:var(--bg);" onchange="addDeckTagFromSelect(this,${i})">
-                    <option value="">+ 添加</option>
-                    ${(()=>{let o='';function f(n){for(const x of n){o+='<option value="'+esc(x.path)+'">'+esc(x.path)+'</option>';if(x.children)f(x.children);}}f(tagTree);return o;})()}
-                </select>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;padding:4px 0;">${(d.tags||[]).map(t => '<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;background:var(--bg);border:1px solid var(--border);border-radius:4px;font-size:12px;">' + esc(t) + '<span style="cursor:pointer;color:var(--text3);margin-left:2px;" onclick="removeDeckTag(' + i + ',\'' + esc(t) + '\')">×</span></span>').join('')}
+                <span style="display:inline-flex;align-items:center;padding:2px 8px;border:1px dashed var(--border);border-radius:4px;font-size:12px;cursor:pointer;color:var(--accent);" onclick="openTagSelector(${i})">+ 添加</span>
             </div>
         </div>
         <div class="field"><label>简述</label><input value="${esc(d.summary||'')}" oninput="upd(${i},'summary',this.value)" placeholder="卡片列表中显示的简短介绍"></div>
@@ -842,22 +852,59 @@ function delTagNode(path) {
 
 $('#saveTagsBtn').addEventListener('click', saveTags);
 
-// ─── TAG HELPERS ───
-function addDeckTagFromSelect(sel, i) {
-    const val = sel.value;
-    if (!val) return;
-    sel.value = '';
-    if (!decks[i]) { console.warn('addDeckTag: decks[' + i + '] is undefined, decks.length=' + decks.length); return; }
-    if (!decks[i].tags) decks[i].tags = [];
-    if (!decks[i].tags.includes(val)) {
-        decks[i].tags.push(val);
+// ─── TAG SELECTOR ───
+let _tagSelIdx = -1;
+let _tagSelTags = [];
+
+function openTagSelector(i) {
+    _tagSelIdx = i;
+    _tagSelTags = [...(decks[i]?.tags || [])];
+    renderTagTree();
+    document.querySelector('#tagSelectorOverlay').classList.add('show');
+}
+
+function closeTagSelector() {
+    document.querySelector('#tagSelectorOverlay').classList.remove('show');
+}
+
+function confirmTagSelector() {
+    const idx = _tagSelIdx;
+    closeTagSelector();
+    if (idx >= 0) {
+        decks[idx].tags = _tagSelTags;
         renderDeckList();
-        selectDeck(i);
+        selectDeck(idx);
     }
 }
 
+function renderTagTree() {
+    function walk(nodes) {
+        let h = '';
+        for (const n of nodes) {
+            const ck = _tagSelTags.includes(n.path);
+            h += '<div style="padding:2px 0;padding-left:20px;">' +
+                '<label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:13px;">' +
+                '<input type="checkbox" ' + (ck ? 'checked ' : '') + 'onchange="tagToggle(\'' + n.path + '\',this.checked)">' +
+                '<span>' + esc(n.path.split('::').pop()) + '</span>' +
+                (n.desc ? '<span style="font-size:11px;color:var(--text3);"> (' + esc(n.desc) + ')</span>' : '') +
+                '</label>' + (n.children ? walk(n.children) : '') + '</div>';
+        }
+        return h;
+    }
+    const el = document.querySelector('#tagSelectorTree');
+    if (!el) return;
+    el.innerHTML = tagTree.length ? walk(tagTree) : '<div style="padding:20px;text-align:center;color:var(--text3);">暂未注册标签</div>';
+    document.querySelector('#tagSelectorPreview').textContent = _tagSelTags.length ? '已选：' + _tagSelTags.join('、') : '尚未选择';
+}
+
+function tagToggle(path, checked) {
+    if (checked) { if (!_tagSelTags.includes(path)) _tagSelTags.push(path); }
+    else { _tagSelTags = _tagSelTags.filter(t => t !== path && !t.startsWith(path + '::')); }
+    document.querySelector('#tagSelectorPreview').textContent = _tagSelTags.length ? '已选：' + _tagSelTags.join('、') : '尚未选择';
+}
+
 async function removeDeckTag(i, path) {
-    if (!decks[i].tags) return;
+    if (!decks[i] || !decks[i].tags) return;
     decks[i].tags = decks[i].tags.filter(t => t !== path);
     renderDeckList();
     await selectDeck(i);
