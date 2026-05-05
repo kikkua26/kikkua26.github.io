@@ -847,6 +847,7 @@ function addDeckTagFromSelect(sel, i) {
     const val = sel.value;
     if (!val) return;
     sel.value = '';
+    if (!decks[i]) { console.warn('addDeckTag: decks[' + i + '] is undefined, decks.length=' + decks.length); return; }
     if (!decks[i].tags) decks[i].tags = [];
     if (!decks[i].tags.includes(val)) {
         decks[i].tags.push(val);
