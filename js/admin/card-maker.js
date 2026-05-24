@@ -416,6 +416,56 @@ function deleteBatch() {
     renderAll();
 }
 
+// ── Preview ──
+function updatePreview() {
+    const iframe = rootEl.querySelector('#cmPreviewFrame');
+    if (!iframe) return;
+    const fd = getFormData();
+
+    // Format subfields as HTML
+    const formatSubfields = (raw) => {
+        const fields = parseSubfields(raw);
+        if (!fields.length) return '';
+        return fields.map(f => {
+            const name = esc(f.name || '');
+            const content = esc(f.content || '');
+            return `<div class="kf-field"><span class="kf-label">${name}</span><span class="kf-value">${content}</span></div>`;
+        }).join('');
+    };
+
+    const knowledgeHtml = formatSubfields(fd.knowledgeAnalysis);
+    const extendedHtml = formatSubfields(fd.extendedAnalysis);
+
+    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
+        :root { --bg: #fcf9f5; --card-bg: #fffef9; --text: #1a1512; --text2: #5c5c66; --accent: #0d9488; --border: #e4dbcf; --radius: 10px; }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:var(--bg); padding:20px; font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; display:flex; justify-content:center; }
+        .card { background:var(--card-bg); border:1px solid var(--border); border-radius:var(--radius); padding:24px; max-width:560px; width:100%; box-shadow:0 2px 12px rgba(0,0,0,.06); }
+        .card-chapter { font-size:11px; color:var(--accent); text-transform:uppercase; letter-spacing:.06em; margin-bottom:8px; font-weight:500; }
+        .card-front { font-family:Georgia,'Songti SC',serif; font-size:22px; font-weight:600; color:var(--text); margin-bottom:16px; line-height:1.4; }
+        .card-section { margin-top:16px; padding-top:16px; border-top:1px solid var(--border); }
+        .card-section-title { font-size:12px; font-weight:600; color:var(--accent); text-transform:uppercase; letter-spacing:.06em; margin-bottom:8px; }
+        .kf-field { display:flex; gap:8px; padding:4px 0; font-size:14px; line-height:1.6; }
+        .kf-label { color:var(--accent); font-weight:600; white-space:nowrap; min-width:60px; }
+        .kf-label::after { content:'：'; }
+        .kf-value { color:var(--text2); }
+        .card-empty { color:#ccc; font-style:italic; font-size:13px; padding:20px 0; text-align:center; }
+    </style></head><body><div class="card">
+        ${fd.chapter ? `<div class="card-chapter">${esc(fd.chapter)}</div>` : ''}
+        <div class="card-front">${esc(fd.mainField || '(未填写知识名称)')}</div>
+        <div class="card-section">
+            <div class="card-section-title">🔍 知识解析</div>
+            ${knowledgeHtml || '<div class="card-empty">暂无知识解析内容</div>'}
+        </div>
+        <div class="card-section">
+            <div class="card-section-title">📖 拓展解析</div>
+            ${extendedHtml || '<div class="card-empty">暂无拓展解析内容</div>'}
+        </div>
+    </div></body></html>`;
+
+    iframe.srcdoc = html;
+}
+
 // ── Import/Export ──
 function importCSV(file) {
     const reader = new FileReader();
@@ -576,6 +626,32 @@ function setupEvents() {
     rootEl.addEventListener('keydown', e => {
         if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveNote(); }
         if ((e.ctrlKey || e.metaKey) && e.key === 'n') { e.preventDefault(); clearForm(false); rootEl.querySelector('#cmInputMain').focus(); }
+    });
+
+    // Preview
+    rootEl.querySelector('#cmBtnPreview').addEventListener('click', () => {
+        const previewCard = rootEl.querySelector('#cmPreviewCard');
+        if (previewCard) {
+            previewCard.style.display = 'block';
+            updatePreview();
+            rootEl.querySelector('#cmContentScroll').scrollTop = rootEl.querySelector('#cmContentScroll').scrollHeight;
+        }
+    });
+    rootEl.querySelector('#cmBtnClosePreview').addEventListener('click', () => {
+        const previewCard = rootEl.querySelector('#cmPreviewCard');
+        if (previewCard) previewCard.style.display = 'none';
+    });
+
+    // Debounced auto-update preview on form input
+    let previewTimer;
+    rootEl.addEventListener('input', e => {
+        if (e.target.closest('#cmInputChapter, #cmInputMain, .cm-sf-name, .cm-sf-content')) {
+            clearTimeout(previewTimer);
+            previewTimer = setTimeout(() => {
+                const previewCard = rootEl.querySelector('#cmPreviewCard');
+                if (previewCard && previewCard.style.display !== 'none') updatePreview();
+            }, 500);
+        }
     });
 
     // Batch toggle
