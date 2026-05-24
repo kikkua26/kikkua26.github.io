@@ -450,6 +450,11 @@ body {
                     <button class="btn btn-secondary btn-sm" id="cmBtnToggleBatch">☑ 批量</button>
                     <button class="btn btn-danger btn-sm" id="cmBtnBatch" style="display:none;">🗑 删除选中</button>
                     <span style="flex:1;"></span>
+                    <select id="cmDsModel" style="width:130px;padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:11px;" title="模型选择">
+                        <option value="deepseek-v4-flash">v4 Flash (快)</option>
+                        <option value="deepseek-v4-pro" selected>v4 Pro (强)</option>
+                    </select>
+                    <input type="password" id="cmDsKey" placeholder="DeepSeek API Key (sk-...)" style="width:180px;padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:11px;" onfocus="this.type='text'" onblur="this.type='password'">
                     <span style="font-size:12px;color:var(--text3);" id="cmStatus">就绪</span>
                 </div>
 
@@ -547,9 +552,12 @@ body {
 功用：发汗解表，宣肺平喘
 拓展解析
 方歌：麻黄汤中用桂枝"></textarea>
-                        <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end;">
-                            <button class="btn btn-secondary btn-sm" id="cmPasteCancel">取消</button>
-                            <button class="btn btn-primary btn-sm" id="cmPasteApply">解析并填入</button>
+                        <div style="display:flex;gap:8px;margin-top:12px;justify-content:space-between;">
+                            <button class="btn btn-secondary btn-sm" id="cmAiParse" style="color:var(--accent);">🤖 AI 解析</button>
+                            <div style="display:flex;gap:8px;">
+                                <button class="btn btn-secondary btn-sm" id="cmPasteCancel">取消</button>
+                                <button class="btn btn-primary btn-sm" id="cmPasteApply">解析并填入</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -639,12 +647,21 @@ const $$ = s => document.querySelectorAll(s);
 const esc = s => (''+s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
 async function gh(url, opts = {}) {
-    const res = await fetch(url.startsWith('http') ? url : GH + url, {
-        ...opts,
-        headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github.v3+json', ...opts.headers }
-    });
-    if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error(e.message || `HTTP ${res.status}`); }
-    return res.json();
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 6000);
+    try {
+        const res = await fetch(url.startsWith('http') ? url : GH + url, {
+            ...opts,
+            signal: ctrl.signal,
+            headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github.v3+json', ...opts.headers }
+        });
+        clearTimeout(timer);
+        if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error(e.message || `HTTP ${res.status}`); }
+        return res.json();
+    } catch (e) {
+        clearTimeout(timer);
+        throw e;
+    }
 }
 function b64enc(s) { return btoa(unescape(encodeURIComponent(s))); }
 function b64dec(s) { const r = atob(s.replace(/\s/g,'')); return new TextDecoder().decode(Uint8Array.from(r,c=>c.charCodeAt(0))); }
@@ -747,7 +764,11 @@ async function connect() {
         $('#tokenInput').disabled = true;
         updateDashboard();
         $('#footerStats').textContent = `📋 ${decks.length} 牌组 · 🎨 ${tplNames.length} 模板`;
-    } catch (e) { setStatus('❌ ' + e.message, 'err'); }
+    } catch (e) {
+        const msg = e.name === 'AbortError' ? '连接超时（已离线模式，可本地制卡）' : e.message;
+        setStatus('⚠ ' + msg, 'err');
+        $('#connectBtn').textContent = '重试';
+    }
 }
 function disconnect() {
     sessionStorage.removeItem('admin_token'); token = '';
