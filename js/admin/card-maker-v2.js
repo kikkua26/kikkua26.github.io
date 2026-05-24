@@ -246,7 +246,7 @@ function renderAll() {
 
     // Status
     const status = rootEl.querySelector('#cmStatus');
-    if (status) status.textContent = `📓 ${state.activeNotebook} · ${notes.length}条` + (state.currentNoteId ? ' · 编辑中' : '') + ' · v2.1';
+    if (status) status.textContent = `📓 ${state.activeNotebook} · ${notes.length}条` + (state.currentNoteId ? ' · 编辑中' : '') + ' · v2.2';
 }
 
 function renderChapterNode(node, depth) {
@@ -881,7 +881,7 @@ function setupEvents() {
     });
     rootEl.addEventListener('dragover', e => {
         const sf = e.target.closest('.cm-subfield');
-        if (!sf || !dragSrc || sf === dragSrc || sf.dataset.type !== dragSrc.dataset.type) return;
+        if (!sf || !dragSrc || sf === dragSrc) return;
         e.preventDefault();
         e.dataTransfer.dropEffect = 'move';
         sf.classList.add('cm-drag-over');
@@ -944,13 +944,17 @@ export function initCardMaker(containerEl) {
     const savedModel = localStorage.getItem('kikkua_ds_model');
     if (savedModel) { const el = rootEl.querySelector('#cmDsModel'); if (el) el.value = savedModel; }
     clearForm(false);
-    // Expand all top-level chapters on first load
+    // Expand ALL chapters recursively on first load
     const notes = activeNotes();
     if (notes.length && state.expandedChapters.size === 0) {
         const tree = buildChapterTree(notes);
-        for (const k of Object.keys(tree.children)) {
-            state.expandedChapters.add(tree.children[k].fullPath);
-        }
+        (function expandAll(node) {
+            for (const k of Object.keys(node.children)) {
+                const child = node.children[k];
+                state.expandedChapters.add(child.fullPath);
+                expandAll(child);
+            }
+        })(tree);
     }
     renderAll();
     setTimeout(updatePreview, 100);
