@@ -512,6 +512,7 @@ function hideQuickPaste() { const m = rootEl.querySelector('#cmPasteModal'); if 
 async function aiParse() {
     const input = rootEl.querySelector('#cmPasteInput');
     const btn = rootEl.querySelector('#cmAiParse');
+    console.log('AI Parse triggered', { hasInput: !!input, hasBtn: !!btn, rootEl: !!rootEl });
     if (!input || !btn) return;
     const text = input.value.trim();
     if (!text) { toast('请先粘贴内容', 'error'); return; }
@@ -526,8 +527,10 @@ async function aiParse() {
 
     btn.disabled = true;
     btn.textContent = '⏳ AI 思考中...';
+    console.log('Calling DeepSeek with model:', rootEl.querySelector('#cmDsModel')?.value);
     try {
         const result = await callDeepSeek(text, dsKey);
+        console.log('DeepSeek response:', result);
         const data = typeof result === 'string' ? JSON.parse(result) : result;
         parseDataObject(data);
         hideQuickPaste();
