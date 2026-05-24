@@ -474,7 +474,11 @@ async function updatePreview() {
     // 4. Replace remaining fields in back template
     backHTML = replaceFields(backHTML, record);
 
-    // 5. Wrap with CSS if needed
+    // 5. Strip decrypt calls (template scripts reference non-existent decrypt functions)
+    backHTML = backHTML.replace(/<script[^>]*>\s*decrypt(Back|Front)\s*\(\s*\)\s*<\/script>/gi, '');
+    backHTML = backHTML.replace(/decrypt(Back|Front)\s*\(\s*\)/g, '');
+
+    // 6. Wrap with CSS if needed
     if (!/<\/style>/i.test(backHTML) && tmpl.css) {
         backHTML = backHTML.replace(/<\/head>/i, `<style>${tmpl.css}</style></head>`);
     }
