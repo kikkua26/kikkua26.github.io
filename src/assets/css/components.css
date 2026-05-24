@@ -1540,9 +1540,10 @@
    ═══════════════════════════════════════ */
 
 .docs-page {
-    min-height: calc(100vh - 56px);
+    height: 100vh;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 
 .docs-layout {
@@ -1550,6 +1551,7 @@
     grid-template-columns: 260px 1fr 200px;
     flex: 1;
     min-height: 0;
+    overflow: hidden;
 }
 
 /* ── Left Sidebar ── */
@@ -1559,9 +1561,6 @@
     border-right: 1px solid var(--paper-warm);
     overflow-y: auto;
     padding: 16px 0;
-    position: sticky;
-    top: 56px;
-    height: calc(100vh - 56px);
     overscroll-behavior: contain;
 }
 
@@ -1640,6 +1639,8 @@
     max-width: 780px;
     margin: 0 auto;
     width: 100%;
+    overflow-y: auto;
+    overscroll-behavior: contain;
 }
 
 .docs-content-loading {
@@ -1885,9 +1886,6 @@
 /* ── Right TOC ── */
 
 .docs-sidebar-right {
-    position: sticky;
-    top: 56px;
-    height: calc(100vh - 56px);
     overflow-y: auto;
     padding: 24px 0 24px 16px;
     overscroll-behavior: contain;
