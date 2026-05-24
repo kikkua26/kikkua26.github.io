@@ -125,7 +125,7 @@ body {
 .media-context-menu .ctx-divider { height: 1px; background: var(--border); margin: 4px 0; }
 
 /* ── Card Maker ── */
-.cm-root { display: flex; flex-direction: column; height: calc(100vh - 60px); overflow: hidden; }
+.cm-root { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
 .cm-toolbar { display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0; flex-wrap: wrap; }
 .cm-toolbar select { padding: 6px 28px 6px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; background: var(--bg); cursor: pointer; appearance: none; -webkit-appearance: none; }
 .cm-layout { display: flex; flex: 1; overflow: hidden; }
@@ -172,6 +172,8 @@ body {
 .cm-toast.error { background: var(--accent); }
 .cm-empty { text-align: center; padding: 40px 16px; color: var(--text3); }
 .cm-empty-icon { font-size: 40px; margin-bottom: 8px; opacity: .4; }
+#secCardmaker.active ~ .page-content,
+.page-content:has(#secCardmaker.active) { padding: 0; overflow: hidden; }
 
 /* ── Pages ── */
 .pages-layout { display: grid; grid-template-columns: 260px 1fr; gap: 20px; min-height: 400px; }
@@ -672,7 +674,8 @@ function switchSection(name) {
     if (name === 'tags') renderTagTree();
     if (name === 'pages') { renderPageList(); if (window.innerWidth <= 767) { document.getElementById('pageListView').classList.add('mob-show'); document.getElementById('pageDetailView').classList.remove('mob-show'); } }
     if (name === 'media') loadMedia();
-    if (name === 'cardmaker') initCardMakerModule();
+    if (name === 'cardmaker') { initCardMakerModule(); $('.page-content').style.padding = '0'; $('.page-content').style.overflow = 'hidden'; }
+    else { $('.page-content').style.padding = ''; $('.page-content').style.overflow = ''; }
 }
 $$('.nav-item').forEach(n => n.addEventListener('click', () => switchSection(n.dataset.section)));
 
