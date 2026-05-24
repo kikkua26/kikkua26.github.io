@@ -520,8 +520,9 @@ async function aiParse() {
     if (!dsKey) { toast('请先在工具栏填写 DeepSeek API Key', 'error'); return; }
     if (!dsKey.startsWith('sk-')) { toast('API Key 格式不正确（应以 sk- 开头）', 'error'); return; }
 
-    // Save key
+    // Save key + model
     try { localStorage.setItem('kikkua_ds_key', dsKey); } catch {}
+    try { localStorage.setItem('kikkua_ds_model', rootEl.querySelector('#cmDsModel')?.value || 'deepseek-v4-pro'); } catch {}
 
     btn.disabled = true;
     btn.textContent = '⏳ AI 思考中...';
@@ -568,7 +569,7 @@ async function callDeepSeek(text, apiKey) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
         body: JSON.stringify({
-            model: 'deepseek-chat',
+            model: rootEl.querySelector('#cmDsModel')?.value || 'deepseek-v4-pro',
             messages: [
                 { role: 'system', content: systemPrompt },
                 { role: 'user', content: text }
@@ -934,9 +935,11 @@ export function initCardMaker(containerEl) {
     loadData();
     setupEvents();
     state.initialized = true;
-    // Restore saved API key
+    // Restore saved API key + model
     const savedKey = localStorage.getItem('kikkua_ds_key');
     if (savedKey) { const el = rootEl.querySelector('#cmDsKey'); if (el) el.value = savedKey; }
+    const savedModel = localStorage.getItem('kikkua_ds_model');
+    if (savedModel) { const el = rootEl.querySelector('#cmDsModel'); if (el) el.value = savedModel; }
     clearForm(false);
     renderAll();
     setTimeout(updatePreview, 100);
