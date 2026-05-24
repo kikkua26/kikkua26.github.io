@@ -1633,7 +1633,7 @@ let cardMakerInited = false;
 async function initCardMakerModule() {
     const root = document.getElementById('cardMakerRoot');
     if (!root) return;
-    const { initCardMaker } = await import('./js/admin/card-maker.js');
+    const { initCardMaker } = await import('./js/admin/card-maker.js?v=2');
     initCardMaker(root);
     cardMakerInited = true;
 }
