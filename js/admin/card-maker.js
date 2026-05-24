@@ -291,17 +291,19 @@ function renderChapterTags(notes) {
 }
 
 // ── Form ──
+const q = (sel) => rootEl.querySelector(sel);
+
 function clearForm(keepChapter) {
     state.currentNoteId = null;
     state.batchMode = false;
     state.batchSet.clear();
-    if (!keepChapter) rootEl.querySelector('#cmInputChapter').value = '';
-    rootEl.querySelector('#cmInputMain').value = '';
-    rootEl.querySelector('#cmKnowledgeFields').innerHTML = '';
-    rootEl.querySelector('#cmExtendedFields').innerHTML = '';
-    rootEl.querySelector('#cmBtnDelete').style.display = 'none';
-    rootEl.querySelector('#cmBtnBatch').style.display = 'none';
-    rootEl.querySelector('#cmSearch').value = '';
+    const ch = q('#cmInputChapter'); if (ch && !keepChapter) ch.value = '';
+    const mf = q('#cmInputMain'); if (mf) mf.value = '';
+    const kf = q('#cmKnowledgeFields'); if (kf) kf.innerHTML = '';
+    const ef = q('#cmExtendedFields'); if (ef) ef.innerHTML = '';
+    const del = q('#cmBtnDelete'); if (del) del.style.display = 'none';
+    const bat = q('#cmBtnBatch'); if (bat) bat.style.display = 'none';
+    const sch = q('#cmSearch'); if (sch) sch.value = '';
     state.searchQuery = '';
     addSubfield('knowledge', true);
     addSubfield('extended', true);
@@ -574,16 +576,22 @@ function setupEvents() {
         }
     });
 
+    // Helper: safe event listener
+    const on = (id, event, fn) => {
+        const el = rootEl.querySelector(id);
+        if (el) el.addEventListener(event, fn);
+    };
+
     // Buttons
-    rootEl.querySelector('#cmBtnSave').addEventListener('click', saveNote);
-    rootEl.querySelector('#cmBtnClear').addEventListener('click', () => {
+    on('#cmBtnSave', 'click', saveNote);
+    on('#cmBtnClear', 'click', () => {
         if (state.currentNoteId && !confirm('正在编辑笔记，清空表单将放弃当前修改。确定清空吗？')) return;
         clearForm(false);
     });
-    rootEl.querySelector('#cmBtnDelete').addEventListener('click', deleteNote);
-    rootEl.querySelector('#cmBtnNew').addEventListener('click', () => { clearForm(false); rootEl.querySelector('#cmInputMain').focus(); });
+    on('#cmBtnDelete', 'click', deleteNote);
+    on('#cmBtnNew', 'click', () => { clearForm(false); rootEl.querySelector('#cmInputMain')?.focus(); });
 
-    rootEl.querySelector('#cmBtnNewNb').addEventListener('click', () => {
+    on('#cmBtnNewNb', 'click', () => {
         const name = prompt('新笔记本名称：', '笔记本_' + new Date().toLocaleDateString('zh-CN'));
         if (!name || !name.trim()) return;
         const tn = name.trim();
@@ -595,19 +603,18 @@ function setupEvents() {
         renderAll();
     });
 
-    rootEl.querySelector('#cmBtnExport').addEventListener('click', exportCSV);
-    rootEl.querySelector('#cmBtnImport').addEventListener('click', () => rootEl.querySelector('#cmFileInput').click());
-    rootEl.querySelector('#cmFileInput').addEventListener('change', function () {
+    on('#cmBtnExport', 'click', exportCSV);
+    on('#cmBtnImport', 'click', () => rootEl.querySelector('#cmFileInput')?.click());
+    on('#cmFileInput', 'change', function () {
         if (this.files[0]) { importCSV(this.files[0]); this.value = ''; }
     });
 
-    rootEl.querySelector('#cmBtnBatch').addEventListener('click', deleteBatch);
+    on('#cmBtnBatch', 'click', deleteBatch);
 
     // Notebook selector
-    rootEl.querySelector('#cmNotebook').addEventListener('change', function () {
+    on('#cmNotebook', 'change', function () {
         const name = this.value;
         if (name && state.notebooks[name]) {
-            // Save draft before switch
             const fd = getFormData();
             if (fd.mainField || fd.chapter) saveDraft(fd);
             state.activeNotebook = name;
@@ -616,8 +623,10 @@ function setupEvents() {
             renderAll();
             const draft = loadDraft();
             if (draft && draft.mainField) {
-                rootEl.querySelector('#cmInputChapter').value = draft.chapter || '';
-                rootEl.querySelector('#cmInputMain').value = draft.mainField || '';
+                const chEl = rootEl.querySelector('#cmInputChapter');
+                const mEl = rootEl.querySelector('#cmInputMain');
+                if (chEl) chEl.value = draft.chapter || '';
+                if (mEl) mEl.value = draft.mainField || '';
             } else {
                 clearForm(false);
             }
@@ -626,14 +635,14 @@ function setupEvents() {
     });
 
     // Search
-    rootEl.querySelector('#cmSearch').addEventListener('input', function () {
+    on('#cmSearch', 'input', function () {
         state.searchQuery = this.value.trim();
         renderAll();
     });
 
     // Chapter input
-    rootEl.querySelector('#cmInputChapter').addEventListener('input', function () { renderAll(); });
-    rootEl.querySelector('#cmInputChapter').addEventListener('blur', function () { renderAll(); });
+    on('#cmInputChapter', 'input', () => { renderAll(); });
+    on('#cmInputChapter', 'blur', () => { renderAll(); });
 
     // Form change → auto-save draft
     const formEls = rootEl.querySelectorAll('#cmInputChapter, #cmInputMain');
@@ -644,7 +653,7 @@ function setupEvents() {
     // Keyboard
     rootEl.addEventListener('keydown', e => {
         if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveNote(); }
-        if ((e.ctrlKey || e.metaKey) && e.key === 'n') { e.preventDefault(); clearForm(false); rootEl.querySelector('#cmInputMain').focus(); }
+        if ((e.ctrlKey || e.metaKey) && e.key === 'n') { e.preventDefault(); clearForm(false); rootEl.querySelector('#cmInputMain')?.focus(); }
     });
 
     // Debounced auto-update preview on form input
@@ -657,11 +666,13 @@ function setupEvents() {
     });
 
     // Batch toggle
-    rootEl.querySelector('#cmBtnToggleBatch').addEventListener('click', () => {
+    on('#cmBtnToggleBatch', 'click', () => {
         state.batchMode = !state.batchMode;
         state.batchSet.clear();
-        rootEl.querySelector('#cmBtnBatch').style.display = state.batchMode ? 'inline-flex' : 'none';
-        rootEl.querySelector('#cmBtnToggleBatch').textContent = state.batchMode ? '☑ 取消批量' : '☑ 批量';
+        const batchBtn = rootEl.querySelector('#cmBtnBatch');
+        const toggleBtn = rootEl.querySelector('#cmBtnToggleBatch');
+        if (batchBtn) batchBtn.style.display = state.batchMode ? 'inline-flex' : 'none';
+        if (toggleBtn) toggleBtn.textContent = state.batchMode ? '☑ 取消批量' : '☑ 批量';
         renderAll();
     });
 }
