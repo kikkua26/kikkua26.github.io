@@ -20,10 +20,12 @@ export const ROUTES = {
     decks: 'decks',
     deckDetail: 'deck/',
     study: 'study/',
+    about: 'about',
 };
 
 export const DATA_PATHS = {
     index: '/data/index.json',
+    pages: '/data/pages.json',
     deckData: (name) => `/data/${encodeURIComponent(name)}/data.csv`,
     templateFront: (name) => `/templates/${encodeURIComponent(name)}/正面模板.html`,
     templateBack: (name) => `/templates/${encodeURIComponent(name)}/背面模板.html`,
@@ -82,6 +84,19 @@ export const UI = {
         flip: '翻转',
         next: '下一张',
         purchase: '购买完整牌组 →',
+    },
+    about: {
+        title: '关于 kikkua',
+        back: '返回首页',
+        loading: '加载中...',
+        notFound: '页面不存在',
+        breadcrumbHome: '首页',
+        tocTitle: '本页目录',
+        prevPage: '上一页',
+        nextPage: '下一页',
+        minuteRead: '分钟阅读',
+        updatedAt: '更新时间',
+        tags: '标签',
     },
     time: {
         justNow: '刚刚',

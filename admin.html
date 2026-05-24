@@ -227,6 +227,7 @@ body {
         <div class="nav-item" data-section="decks">📋 牌组</div>
         <div class="nav-item" data-section="templates">🎨 模板</div>
         <div class="nav-item" data-section="tags">🏷 标签</div>
+        <div class="nav-item" data-section="pages">📄 页面</div>
     </nav>
     <div class="sidebar-footer">
         <div class="token-row">
@@ -248,6 +249,7 @@ body {
         <div style="display:flex;gap:8px;">
             <button class="btn btn-secondary btn-sm" id="saveBtn">💾 保存</button>
             <button class="btn btn-secondary btn-sm" id="saveTagsBtn" style="display:none;">💾 保存标签</button>
+            <button class="btn btn-primary btn-sm" id="savePagesBtn" style="display:none;">💾 保存页面</button>
         </div>
     </div>
     <div class="page-content">
@@ -294,6 +296,26 @@ body {
                 <button class="btn btn-secondary btn-sm" onclick="addRootTag()">+ 新建根标签</button>
             </div>
             <div id="tagTreeContainer"></div>
+        </div>
+
+        <!-- Pages -->
+        <div class="page-section" id="secPages">
+            <div class="deck-layout">
+                <div class="deck-list-view" id="pageListView">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+                        <span style="font-size:13px;font-weight:600;color:var(--text2);">页面列表</span>
+                        <button class="btn btn-secondary btn-sm" id="addPageBtn">+ 新建</button>
+                    </div>
+                    <div class="deck-list-panel" id="pageListPanel"><div class="deck-edit-panel empty">加载中…</div></div>
+                </div>
+                <div class="deck-detail-view" id="pageDetailView">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+                    <button class="btn btn-secondary btn-sm mob-back" onclick="showPageList()">← 返回</button>
+                    <span style="font-size:13px;font-weight:600;color:var(--text2);">编辑页面</span>
+                </div>
+                <div class="deck-edit-panel" id="pageEditPanel"></div>
+            </div>
+            </div>
         </div>
 
 <!-- Templates -->
@@ -365,6 +387,7 @@ const REPO = 'kikkua26/kikkua26.github.io';
 let token = '', decks = [], dataSha = '', tplNames = [];
 let currentDeckIdx = -1, currentTpl = '', currentTplFile = '';
 let tplFiles = {};
+let pages = [], pagesSha = '', currentPageIdx = -1;
 
 const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
@@ -437,16 +460,17 @@ function updateDashboard() {
 function switchSection(name) {
     $$('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.section === name));
     $$('.page-section').forEach(s => s.classList.toggle('active', s.id === 'sec' + name.charAt(0).toUpperCase() + name.slice(1)));
-    const titles = { dashboard: '📊 仪表盘', decks: '📋 牌组', templates: '🎨 模板', tags: '🏷 标签' };
+    const titles = { dashboard: '📊 仪表盘', decks: '📋 牌组', templates: '🎨 模板', tags: '🏷 标签', pages: '📄 页面' };
     $('#pageTitle').textContent = titles[name] || name;
     // Toggle save buttons
     $('#saveBtn').style.display = (name === 'decks') ? 'inline-flex' : 'none';
     $('#saveTagsBtn').style.display = (name === 'tags') ? 'inline-flex' : 'none';
+    $('#savePagesBtn').style.display = (name === 'pages') ? 'inline-flex' : 'none';
     if (window.innerWidth <= 767) closeSidebar();
     if (name === 'decks') { renderDeckList(); if (window.innerWidth <= 767) { document.getElementById('deckListView').classList.add('mob-show'); document.getElementById('deckDetailView').classList.remove('mob-show'); } }
     if (name === 'templates') renderTplGrid();
     if (name === 'tags') renderTagTree();
-    if (name === 'tags') renderTagTree();
+    if (name === 'pages') { renderPageList(); if (window.innerWidth <= 767) { document.getElementById('pageListView').classList.add('mob-show'); document.getElementById('pageDetailView').classList.remove('mob-show'); } }
 }
 $$('.nav-item').forEach(n => n.addEventListener('click', () => switchSection(n.dataset.section)));
 
@@ -467,6 +491,7 @@ async function connect() {
         await loadDecks();
         await loadTemplates();
         await loadTags();
+        await loadPages();
         setStatus(`✅ ${user.login}`, 'ok');
         $('#connectBtn').textContent = '已连';
         $('#connectBtn').disabled = true;
@@ -910,11 +935,117 @@ async function removeDeckTag(i, path) {
     await selectDeck(i);
 }
 
+// ─── PAGES ───
+async function loadPages() {
+    try {
+        const r = await readRepo('data/pages.json');
+        pagesSha = r.sha;
+        const data = JSON.parse(r.text);
+        pages = data.pages || [];
+    } catch (e) {
+        pagesSha = null;
+        pages = [];
+    }
+    renderPageList();
+}
+
+function renderPageList() {
+    const el = $('#pageListPanel');
+    if (!el) return;
+    if (!pages.length) { el.innerHTML = '<div class="deck-edit-panel empty"><span>暂无页面</span></div>'; return; }
+    el.innerHTML = pages.map((p, i) => `
+        <div class="deck-list-item${i===currentPageIdx?' active':''}" onclick="selectPage(${i})">
+            <div class="name">${esc(p.icon||'📄')} ${esc(p.title)}</div>
+            <div class="meta"><span>${esc(p.group||'')}</span><span>ID: ${esc(p.id)}</span></div>
+        </div>
+    `).join('');
+}
+
+function showPageList() {
+    if (window.innerWidth <= 767) {
+        document.getElementById('pageListView').classList.add('mob-show');
+        document.getElementById('pageDetailView').classList.remove('mob-show');
+    }
+    renderPageList();
+    var ep = document.getElementById('pageEditPanel');
+    if (ep) { ep.className = 'deck-edit-panel empty'; ep.innerHTML = '<span>选择一个页面开始编辑</span>'; }
+    currentPageIdx = -1;
+}
+
+function selectPage(i) {
+    currentPageIdx = i; renderPageList();
+    if (window.innerWidth <= 767) {
+        document.getElementById('pageListView').classList.remove('mob-show');
+        document.getElementById('pageDetailView').classList.add('mob-show');
+    }
+    const p = pages[i];
+    $('#pageEditPanel').className = 'deck-edit-panel';
+    $('#pageEditPanel').innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+            <h3 style="font-size:16px;font-weight:600;">${esc(p.title)}</h3>
+        </div>
+        <div class="field-row">
+            <div class="field"><label>页面 ID</label><input value="${esc(p.id)}" oninput="updPage(${i},'id',this.value);renderPageList();" placeholder="about"></div>
+            <div class="field"><label>标题</label><input value="${esc(p.title)}" oninput="updPage(${i},'title',this.value);renderPageList();"></div>
+        </div>
+        <div class="field-row">
+            <div class="field"><label>分组</label><input value="${esc(p.group||'')}" oninput="updPage(${i},'group',this.value);renderPageList();" placeholder="入门指南"></div>
+            <div class="field"><label>排序</label><input type="number" value="${p.order||0}" oninput="updPage(${i},'order',parseInt(this.value)||0);" style="width:80px;"></div>
+        </div>
+        <div class="field-row">
+            <div class="field"><label>图标 (Emoji)</label><input value="${esc(p.icon||'')}" oninput="updPage(${i},'icon',this.value);" placeholder="📖"></div>
+            <div class="field"><label>标签 (逗号分隔)</label><input value="${esc((p.tags||[]).join(', '))}" oninput="updPage(${i},'tags',this.value.split(',').map(s=>s.trim()).filter(Boolean));"></div>
+        </div>
+        <div class="field"><label>内容 (Markdown)</label><textarea rows="12" oninput="updPage(${i},'content',this.value)">${esc(p.content||'')}</textarea></div>
+        <div class="field"><label>更新日期</label><input value="${esc(p.updatedAt||'')}" oninput="updPage(${i},'updatedAt',this.value);" placeholder="2026-05-24"></div>
+        <div class="edit-actions">
+            <button class="btn btn-primary btn-sm" onclick="savePages()">💾 保存</button>
+            <button class="btn btn-danger btn-sm" onclick="delPage(${i})">删除</button>
+        </div>
+    `;
+}
+
+function updPage(i, k, v) { pages[i][k] = v; }
+
+async function savePages() {
+    const btn = $('#savePagesBtn');
+    try {
+        btn.textContent = '⏳ 保存中…'; btn.disabled = true;
+        const data = JSON.stringify({ pages }, null, 2);
+        await writeRepo('data/pages.json', data, pagesSha, 'Update pages from admin');
+        const r = await readRepo('data/pages.json');
+        pagesSha = r.sha;
+        toast('✅ 页面已保存到 GitHub');
+    } catch (e) { toast('❌ ' + e.message, 'error'); }
+    finally { btn.textContent = '💾 保存页面'; btn.disabled = false; }
+}
+
+async function delPage(i) {
+    const ok = await confirmModal('删除', `确认删除"${pages[i].title}"？`);
+    if (!ok) return;
+    pages.splice(i, 1); currentPageIdx = -1;
+    await savePages();
+    renderPageList();
+    $('#pageEditPanel').className = 'deck-edit-panel empty';
+    $('#pageEditPanel').innerHTML = '<span>选择一个页面开始编辑</span>';
+}
+
+async function addPage() {
+    const name = await inputModal('新建页面', '页面 ID', 'about');
+    if (!name) return;
+    if (pages.find(p => p.id === name)) { toast('页面 ID 已存在', 'error'); return; }
+    const today = new Date().toISOString().slice(0, 10);
+    pages.push({ id: name, title: name, group: '', icon: '📄', order: pages.length + 1, tags: [], content: '## ' + name + '\n\n在这里输入内容…', updatedAt: today });
+    renderPageList(); selectPage(pages.length - 1);
+    toast('已添加，点击保存提交');
+}
+
 // ─── INIT ───
 $('#connectBtn').addEventListener('click', connect);
 $('#disconnectBtn').addEventListener('click', disconnect);
 $('#tokenInput').addEventListener('keydown', e => { if (e.key === 'Enter') connect(); });
 $('#saveBtn').addEventListener('click', saveDecks);
+$('#savePagesBtn').addEventListener('click', savePages);
 $('#addDeckBtn').addEventListener('click', async () => {
     const name = await inputModal('新建牌组', '牌组名称', '新牌组');
     if (!name) return;
@@ -923,6 +1054,7 @@ $('#addDeckBtn').addEventListener('click', async () => {
     renderDeckList(); selectDeck(decks.length-1);
     toast('已添加，点击保存提交');
 });
+$('#addPageBtn').addEventListener('click', addPage);
 
 const saved = sessionStorage.getItem('admin_token');
 if (saved) { $('#tokenInput').value = saved; connect(); }

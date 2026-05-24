@@ -3,8 +3,9 @@ import { renderHome } from './views/home.js';
 import { renderDeckList } from './views/decks.js';
 import { renderDeckDetail } from './views/detail.js';
 import { renderStudy } from './views/study.js';
+import { renderAbout } from './views/about.js';
 import { setRouteHandler } from './navigation.js';
-import { ROUTES, SITE } from './config.js';
+import { ROUTES, SITE, UI } from './config.js';
 
 async function handleRoute() {
     try {
@@ -26,6 +27,9 @@ async function handleRoute() {
         } else if (path.startsWith(ROUTES.study)) {
             const name = decodeURIComponent(path.slice(ROUTES.study.length));
             renderStudy(name);
+        } else if (path === ROUTES.about || path.startsWith(ROUTES.about + '?')) {
+            setPageMeta(UI.about.title, '');
+            await renderAbout();
         } else {
             history.pushState(null, '', '/');
             handleRoute();
