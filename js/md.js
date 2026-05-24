@@ -5,8 +5,12 @@ export function mdToHtml(text) {
         .replace(/`([^`]+)`/g, '<code>$1</code>')
         .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
         .replace(/\*(.+?)\*/g, '<em>$1</em>')
-        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
-        .replace(/(?<!["'>])(https?:\/\/[^\s<>"')\]，。]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (m, text, url) => {
+            if (/^(https?:|mailto:)/.test(url)) return `<a href="${url}" target="_blank" rel="noopener">${text}</a>`;
+            return `<a href="${url}">${text}</a>`;
+        })
+        .replace(/(?<!["'>])(https?:\/\/[^\s<>"'，。；：、]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>')
+        .replace(/(?<!["'>])([\w.-]+@[\w.-]+\.\w+)/g, '<a href="mailto:$1">$1</a>');
 
     // Handle fenced callout blocks
     const calloutMap = {};
@@ -30,6 +34,7 @@ export function mdToHtml(text) {
             const level = b.match(/^#{1,3}/)[0].length;
             return `<h${level}>${inline(b.slice(level + 1))}</h${level}>`;
         }
+        if (/^[-*]{3,}\s*$/.test(b)) return '<hr>';
         if (/^> /.test(b)) {
             return `<blockquote>${inline(b.replace(/\n> /g, '\n').slice(2))}</blockquote>`;
         }

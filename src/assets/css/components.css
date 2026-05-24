@@ -1759,6 +1759,13 @@
 
 .docs-body blockquote p { margin-bottom: 0; }
 
+.docs-body hr {
+    border: none;
+    height: 1px;
+    background: var(--paper-warm);
+    margin: 32px 0;
+}
+
 .docs-body code {
     font-family: 'Menlo', 'Consolas', 'Monaco', monospace;
     font-size: 0.88em;
@@ -1829,6 +1836,7 @@
     color: #2d5a3d;
 }
 
+.callout p { margin-bottom: 0; }
 .callout strong { color: inherit; }
 
 /* ── Prev/Next Pager ── */
