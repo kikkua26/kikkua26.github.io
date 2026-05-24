@@ -314,8 +314,10 @@ function clearForm(keepChapter) {
 
 function loadForm(note) {
     state.currentNoteId = note.id;
-    rootEl.querySelector('#cmInputChapter').value = note.chapter || '';
-    rootEl.querySelector('#cmInputMain').value = note.mainField || '';
+    const chEl = rootEl.querySelector('#cmInputChapter');
+    const mfEl = rootEl.querySelector('#cmInputMain');
+    if (chEl) chEl.value = note.chapter || '';
+    if (mfEl) mfEl.value = note.mainField || '';
 
     const kf = rootEl.querySelector('#cmKnowledgeFields');
     kf.innerHTML = '';
@@ -330,7 +332,9 @@ function loadForm(note) {
     rootEl.querySelector('#cmBtnDelete').style.display = 'inline-flex';
     clearDraft();
     renderAll();
-    updatePreview();
+
+    // Dispatch input events to trigger preview update
+    if (mfEl) mfEl.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
 function getFormData() {
@@ -447,11 +451,14 @@ async function loadTemplate() {
 }
 
 // ── Preview ──
+let previewSeq = 0;
 async function updatePreview() {
     const iframe = rootEl.querySelector('#cmPreviewFrame');
     const infoEl = rootEl.querySelector('#cmPreviewInfo');
     if (!iframe) return;
+    const seq = ++previewSeq;
     const tmpl = await loadTemplate();
+    if (seq !== previewSeq) return; // Skip stale calls
     const fd = getFormData();
 
     // Build record object matching kikkua template fields
