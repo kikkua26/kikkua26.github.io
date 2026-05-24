@@ -509,7 +509,87 @@ function showQuickPaste() {
 }
 function hideQuickPaste() { const m = rootEl.querySelector('#cmPasteModal'); if (m) m.style.display = 'none'; }
 
-function applyQuickPaste() {
+async function aiParse() {
+    const input = rootEl.querySelector('#cmPasteInput');
+    const btn = rootEl.querySelector('#cmAiParse');
+    if (!input || !btn) return;
+    const text = input.value.trim();
+    if (!text) { toast('请先粘贴内容', 'error'); return; }
+
+    const dsKey = rootEl.querySelector('#cmDsKey')?.value?.trim();
+    if (!dsKey) { toast('请先在工具栏填写 DeepSeek API Key', 'error'); return; }
+    if (!dsKey.startsWith('sk-')) { toast('API Key 格式不正确（应以 sk- 开头）', 'error'); return; }
+
+    // Save key
+    try { localStorage.setItem('kikkua_ds_key', dsKey); } catch {}
+
+    btn.disabled = true;
+    btn.textContent = '⏳ AI 思考中...';
+    try {
+        const result = await callDeepSeek(text, dsKey);
+        const data = typeof result === 'string' ? JSON.parse(result) : result;
+        parseDataObject(data);
+        hideQuickPaste();
+        const kCount = Object.keys(data['知识解析'] || {}).length;
+        const eCount = Object.keys(data['拓展解析'] || data['知识拓展'] || {}).length;
+        toast(`AI 解析完成：${data['主字段'] || ''} | ${kCount + eCount}条字段`, 'success');
+    } catch (e) {
+        toast('AI 解析失败: ' + (e.message || '未知错误'), 'error');
+        console.error('DeepSeek error:', e);
+    }
+    btn.disabled = false;
+    btn.textContent = '🤖 AI 解析';
+}
+
+async function callDeepSeek(text, apiKey) {
+    const systemPrompt = `你是一个知识卡片结构化助手。将用户输入的文本解析为以下JSON格式（只输出JSON，不要任何其他文字）：
+
+{
+  "主字段": "核心知识点名称（简洁标题，不超过20字）",
+  "章节": "学科::大类::小类（根据内容推断章节层级，用::分隔）",
+  "知识解析": {
+    "字段名": "内容（简洁准确）",
+    ...
+  },
+  "拓展解析": {
+    "字段名": "补充说明/例子/记忆技巧",
+    ...
+  }
+}
+
+规则：
+- 主字段必须提取最核心的知识点名称
+- 章节用 :: 分隔层级（如 方剂学::解表剂::辛温解表），如果无法推断则留空字符串
+- 知识解析提取3-5个关键概念或定义，每个字段名不超过8字
+- 拓展解析提取1-3个补充内容（方歌、特点、鉴别等），没有则为空对象
+- 只输出JSON，不要markdown代码块包裹`;
+
+    const resp = await fetch('https://api.deepseek.com/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+        body: JSON.stringify({
+            model: 'deepseek-chat',
+            messages: [
+                { role: 'system', content: systemPrompt },
+                { role: 'user', content: text }
+            ],
+            temperature: 0.3,
+            max_tokens: 2000,
+        }),
+    });
+
+    if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        throw new Error(err.error?.message || `HTTP ${resp.status}`);
+    }
+
+    const data = await resp.json();
+    const content = data.choices?.[0]?.message?.content || '';
+    // Try to extract JSON from response
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('AI 未返回有效的 JSON');
+    return JSON.parse(jsonMatch[0]);
+}
     const input = rootEl.querySelector('#cmPasteInput');
     if (!input) return;
     const text = input.value.trim();
@@ -827,6 +907,7 @@ function setupEvents() {
     // Quick paste modal
     on('#cmPasteCancel', 'click', hideQuickPaste);
     on('#cmPasteApply', 'click', applyQuickPaste);
+    on('#cmAiParse', 'click', aiParse);
     rootEl.querySelector('#cmPasteModal')?.addEventListener('click', e => { if (e.target === e.currentTarget) hideQuickPaste(); });
 
     // Expose to admin.html button
@@ -853,6 +934,9 @@ export function initCardMaker(containerEl) {
     loadData();
     setupEvents();
     state.initialized = true;
+    // Restore saved API key
+    const savedKey = localStorage.getItem('kikkua_ds_key');
+    if (savedKey) { const el = rootEl.querySelector('#cmDsKey'); if (el) el.value = savedKey; }
     clearForm(false);
     renderAll();
     setTimeout(updatePreview, 100);

@@ -450,6 +450,7 @@ body {
                     <button class="btn btn-secondary btn-sm" id="cmBtnToggleBatch">☑ 批量</button>
                     <button class="btn btn-danger btn-sm" id="cmBtnBatch" style="display:none;">🗑 删除选中</button>
                     <span style="flex:1;"></span>
+                    <input type="password" id="cmDsKey" placeholder="DeepSeek API Key (sk-...)" style="width:180px;padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:11px;" onfocus="this.type='text'" onblur="this.type='password'">
                     <span style="font-size:12px;color:var(--text3);" id="cmStatus">就绪</span>
                 </div>
 
@@ -547,9 +548,12 @@ body {
 功用：发汗解表，宣肺平喘
 拓展解析
 方歌：麻黄汤中用桂枝"></textarea>
-                        <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end;">
-                            <button class="btn btn-secondary btn-sm" id="cmPasteCancel">取消</button>
-                            <button class="btn btn-primary btn-sm" id="cmPasteApply">解析并填入</button>
+                        <div style="display:flex;gap:8px;margin-top:12px;justify-content:space-between;">
+                            <button class="btn btn-secondary btn-sm" id="cmAiParse" style="color:var(--accent);">🤖 AI 解析</button>
+                            <div style="display:flex;gap:8px;">
+                                <button class="btn btn-secondary btn-sm" id="cmPasteCancel">取消</button>
+                                <button class="btn btn-primary btn-sm" id="cmPasteApply">解析并填入</button>
+                            </div>
                         </div>
                     </div>
                 </div>
