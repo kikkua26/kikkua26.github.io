@@ -12,17 +12,6 @@ export function renderHome() {
     const app = $('#app');
     app.innerHTML = `
         <div class="page home-page">
-            <header class="header" style="border:none;background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;position:relative;">
-                <div class="header-inner">
-                    <div class="header-left">
-                        <span class="header-brand">${SITE.brand}<span class="accent">·</span></span>
-                    </div>
-                    <h1 class="header-title"></h1>
-                    <div class="header-right">
-                        <a href="/about" class="header-about-link">关于</a>
-                    </div>
-                </div>
-            </header>
             <div class="home-hero">
                 <div class="home-logo">${SITE.brand}<span class="accent">·</span></div>
                 <div class="home-tagline">${SITE.tagline}</div>
@@ -47,6 +36,7 @@ export function renderHome() {
             </div>
 
             <footer class="footer">
+                <a href="/about" class="footer-about-link">关于</a>
                 <p class="footer-quote">${SITE.footerQuote}</p>
             </footer>
         </div>
