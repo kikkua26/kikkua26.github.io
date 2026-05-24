@@ -171,6 +171,10 @@ body {
 .cm-sf-inputs input:focus, .cm-sf-inputs textarea:focus { outline: none; border-color: var(--accent); background: #fff; }
 .cm-sf-remove { width: 24px; height: 24px; border-radius: 50%; border: none; background: transparent; cursor: pointer; color: #c5cad3; font-size: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; transition: .15s; }
 .cm-sf-remove:hover { color: var(--accent); background: var(--accent-bg); }
+.cm-sf-drag { flex-shrink: 0; cursor: grab; color: #c5cad3; font-size: 12px; letter-spacing: 2px; user-select: none; padding: 2px 4px; align-self: stretch; display: flex; align-items: center; }
+.cm-sf-drag:active { cursor: grabbing; }
+.cm-subfield.cm-dragging { opacity: 0.4; }
+.cm-subfield.cm-drag-over { border-color: var(--accent); border-style: dashed; }
 .cm-form-actions { display: flex; gap: 8px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border); flex-wrap: wrap; }
 .cm-toast { position: fixed; bottom: 24px; right: 24px; background: #2c3e50; color: #fff; padding: 10px 18px; border-radius: var(--radius); font-size: 13px; z-index: 9999; opacity: 0; transform: translateY(16px); transition: .3s; pointer-events: none; font-weight: 500; }
 .cm-toast.show { opacity: 1; transform: translateY(0); }
