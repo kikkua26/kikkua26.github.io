@@ -442,6 +442,7 @@ body {
 
 <!-- Card Maker -->
         <div class="page-section" id="secCardmaker">
+            <!-- CARD-MAKER v2.2 -->
             <div class="cm-root" id="cardMakerRoot">
                 <!-- Toolbar -->
                 <div class="cm-toolbar">
@@ -1650,7 +1651,7 @@ let cardMakerInited = false;
 async function initCardMakerModule() {
     const root = document.getElementById('cardMakerRoot');
     if (!root) return;
-    const { initCardMaker } = await import('./js/admin/card-maker-v2.js');
+    const { initCardMaker } = await import('./js/admin/cm-640689.js');
     initCardMaker(root);
     cardMakerInited = true;
 }
