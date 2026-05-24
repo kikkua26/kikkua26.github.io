@@ -1,7 +1,7 @@
 // kikkua · 制卡工具 — 本地知识笔记管理器
 // 纯本地工具，数据存储在 localStorage，不与 GitHub 交互
 
-import { replaceFields, escapeRegex } from '../card.js';
+import { replaceFields, wrapWithCSS, escapeRegex } from '../card.js';
 
 const STORAGE_KEY = 'kikkua_cardmaker_data_v1';
 const DRAFT_KEY = 'kikkua_cardmaker_draft';
@@ -461,26 +461,23 @@ async function updatePreview() {
         '知识拓展': fd.extendedAnalysis || '',
     };
 
-    // 1. Replace fields in front template
-    let frontHTML = replaceFields(tmpl.front, record);
+    // 1. Replace fields in front template, then wrap with CSS
+    const frontHTML = replaceFields(tmpl.front, record);
+    const wrappedFront = wrapWithCSS(frontHTML, tmpl.css);
 
-    // 2. Extract body from frontHTML for {{FrontSide}}
-    const bodyMatch = frontHTML.match(/<body[^>]*>([\s\S]*)<\/body>/i);
-    const frontBody = bodyMatch ? bodyMatch[1] : frontHTML;
+    // 2. Extract body from wrapped front HTML (for {{FrontSide}})
+    const bodyMatch = wrappedFront.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+    const frontBody = bodyMatch ? bodyMatch[1] : wrappedFront;
 
-    // 3. Replace {{FrontSide}} in back template with front body
-    let backHTML = tmpl.back.replace(/\{\{FrontSide\}\}/gi, frontBody);
+    // 3. Replace fields in back template, then inject {{FrontSide}} body
+    const backWithFields = replaceFields(tmpl.back, record);
+    const backWithFront = backWithFields.replace(/\{\{FrontSide\}\}/gi, frontBody);
 
-    // 4. Replace remaining fields in back template
-    backHTML = replaceFields(backHTML, record);
+    // 4. Wrap back template with CSS to get full HTML document
+    let backHTML = wrapWithCSS(backWithFront, tmpl.css);
 
-    // 5. Inject dummy decrypt functions BEFORE any other scripts
-    backHTML = `<script>function decryptBack(){}function decryptFront(){}</script>${backHTML}`;
-
-    // 6. Wrap with CSS if needed
-    if (!/<\/style>/i.test(backHTML) && tmpl.css) {
-        backHTML = `<style>${tmpl.css}</style>${backHTML}`;
-    }
+    // 5. Inject dummy decrypt functions to prevent ReferenceError
+    backHTML = backHTML.replace(/<\/head>/i, '<script>function decryptBack(){}function decryptFront(){}</script></head>');
 
     iframe.srcdoc = backHTML;
 }
