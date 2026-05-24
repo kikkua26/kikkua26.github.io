@@ -546,27 +546,26 @@ async function aiParse() {
 }
 
 async function callDeepSeek(text, apiKey) {
-    const systemPrompt = `你是一个知识卡片结构化助手。将用户输入的文本解析为以下JSON格式（只输出JSON，不要任何其他文字）：
+    const systemPrompt = `你是知识卡片结构化助手。无论用户输入的是自由文本、笔记摘录、教材段落、聊天记录还是已标注字段，都要准确解析。只输出JSON。
 
+输出格式：
 {
-  "主字段": "核心知识点名称（简洁标题，不超过20字）",
-  "章节": "学科::大类::小类（根据内容推断章节层级，用::分隔）",
-  "知识解析": {
-    "字段名": "内容（简洁准确）",
-    ...
-  },
-  "拓展解析": {
-    "字段名": "补充说明/例子/记忆技巧",
-    ...
-  }
+  "主字段": "知识点名称（≤20字，提取核心概念）",
+  "章节": "层级路径（用::分隔，如 方剂学::解表剂；无法推断则为空字符串）",
+  "知识解析": { "要点1": "内容", "要点2": "内容" },
+  "拓展解析": { "补充1": "内容" }
 }
 
-规则：
-- 主字段必须提取最核心的知识点名称
-- 章节用 :: 分隔层级（如 方剂学::解表剂::辛温解表），如果无法推断则留空字符串
-- 知识解析提取3-5个关键概念或定义，每个字段名不超过8字
-- 拓展解析提取1-3个补充内容（方歌、特点、鉴别等），没有则为空对象
-- 只输出JSON，不要markdown代码块包裹`;
+解析规则：
+1. 如果输入已含"主字段："等标记 → 直接提取
+2. 如果是自由文本 → 先判断知识领域，再提炼核心概念作为主字段
+3. 章节推断：从上下文推断学科归属（中西医/理工/人文等），识别章节/单元信息
+4. 知识解析：提取3-5个关键点，可以是 定义/组成/功效/主治/特征/原理/步骤 等，字段名≤8字
+5. 拓展解析：提取1-3个补充信息，如 方歌/口诀/鉴别/举例/注意事项/记忆技巧 等
+6. 如果输入本身就是结构化的 name：value 格式，保留原有字段名
+7. 如果输入是纯数据/表格，按列名拆分为不同字段
+8. 空白字段用空字符串""，不要写"无"或"暂无"
+9. 只输出JSON，不要markdown包裹`;
 
     const resp = await fetch('https://api.deepseek.com/chat/completions', {
         method: 'POST',
@@ -593,73 +592,6 @@ async function callDeepSeek(text, apiKey) {
     const jsonMatch = content.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new Error('AI 未返回有效的 JSON');
     return JSON.parse(jsonMatch[0]);
-}
-    const input = rootEl.querySelector('#cmPasteInput');
-    if (!input) return;
-    const text = input.value.trim();
-    if (!text) { toast('请粘贴内容', 'error'); return; }
-
-    let data;
-    // 1. Try JSON
-    try { data = JSON.parse(text); if (typeof data === 'object' && !Array.isArray(data)) parseDataObject(data); hideQuickPaste(); return; } catch {}
-
-    // 2. Line-by-line parsing
-    const lines = text.split(/[\n\r]+/).map(l => l.trim()).filter(Boolean);
-    let chapter = '', mainField = '';
-    const knowledge = [], extended = [];
-    let mode = 'top'; // 'top' | 'knowledge' | 'extended'
-
-    for (const line of lines) {
-        // Section headers
-        if (/^知识解析[：:]?\s*$/.test(line)) { mode = 'knowledge'; continue; }
-        if (/^拓展解析[：:]?\s*$/.test(line)) { mode = 'extended'; continue; }
-        if (/^知识拓展[：:]?\s*$/.test(line)) { mode = 'extended'; continue; }
-
-        // Key: value pattern
-        const m = line.match(/^(.+?)[：:]\s*(.*)$/);
-        if (m) {
-            const key = m[1].trim();
-            const val = m[2].trim();
-            if (!val) continue;
-
-            if (key === '主字段' || key === '知识名称' || key === 'Front' || key === '标题') {
-                mainField = val;
-            } else if (key === '章节' || key === 'Chapter' || key === '分类') {
-                chapter = val;
-            } else if (key === '等级' || key === '提要' || key === '用户笔记') {
-                // Known fields but not subfields — store as knowledge with field name
-                if (mode === 'top') { knowledge.push({ name: key, content: val }); }
-            } else if (mode === 'extended') {
-                extended.push({ name: key, content: val });
-            } else {
-                // Default: treat as knowledge subfield
-                knowledge.push({ name: key, content: val });
-            }
-            continue;
-        }
-
-        // Line with :: → likely chapter
-        if (line.includes('::') && !chapter && mode === 'top') {
-            chapter = line;
-            continue;
-        }
-
-        // Plain text at top level with no colon → could be mainField
-        if (mode === 'top' && !mainField && !line.includes('：') && !line.includes(':')) {
-            mainField = line;
-            continue;
-        }
-
-        // Catch-all: add to knowledge
-        if (line) knowledge.push({ name: '', content: line });
-    }
-
-    // Fill form
-    fillFormFromParsed({ chapter, mainField, knowledge, extended });
-    hideQuickPaste();
-    const kCount = knowledge.filter(f => f.name || f.content).length;
-    const eCount = extended.filter(f => f.name || f.content).length;
-    toast(`已填入：主字段 | ${chapter ? '章节' : ''} | ${kCount}条知识解析${eCount ? ' | ' + eCount + '条拓展解析' : ''}`, 'success');
 }
 
 function parseDataObject(obj) {
