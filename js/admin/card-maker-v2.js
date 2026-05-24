@@ -7,6 +7,15 @@ const STORAGE_KEY = 'kikkua_cardmaker_data_v1';
 const DRAFT_KEY = 'kikkua_cardmaker_draft';
 const TEMPLATE_NAME = 'kikkua高级模板';
 
+// ── Inject critical styles ──
+(function injectStyles() {
+    if (document.getElementById('cm-drag-styles')) return;
+    const s = document.createElement('style');
+    s.id = 'cm-drag-styles';
+    s.textContent = `.cm-sf-drag{flex-shrink:0;cursor:grab;color:#c5cad3;font-size:12px;letter-spacing:2px;user-select:none;padding:2px 4px;align-self:stretch;display:flex;align-items:center}.cm-sf-drag:active{cursor:grabbing}.cm-subfield.cm-dragging{opacity:.4}.cm-subfield.cm-drag-over{border-color:var(--accent,#0d9488)!important;border-style:dashed!important}`;
+    document.head.appendChild(s);
+})();
+
 // ── State ──
 let state = {
     notebooks: {},
@@ -237,7 +246,7 @@ function renderAll() {
 
     // Status
     const status = rootEl.querySelector('#cmStatus');
-    if (status) status.textContent = `📓 ${state.activeNotebook} · ${notes.length}条` + (state.currentNoteId ? ' · 编辑中' : '');
+    if (status) status.textContent = `📓 ${state.activeNotebook} · ${notes.length}条` + (state.currentNoteId ? ' · 编辑中' : '') + ' · v2.1';
 }
 
 function renderChapterNode(node, depth) {
