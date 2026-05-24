@@ -108,6 +108,32 @@ body {
 }
 .deck-edit-panel.empty { display: flex; align-items: center; justify-content: center; color: var(--text3); }
 
+/* ── Pages ── */
+.pages-layout { display: grid; grid-template-columns: 260px 1fr; gap: 20px; min-height: 400px; }
+.pages-list-panel {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    overflow-y: auto; max-height: 600px;
+}
+.pages-list-item {
+    padding: 12px 16px; border-bottom: 1px solid var(--border); cursor: pointer;
+    transition: background .15s; border-left: 3px solid transparent;
+}
+.pages-list-item:hover { background: var(--bg); }
+.pages-list-item.active { background: var(--accent-bg); border-left-color: var(--accent); }
+.pages-list-item .name { font-weight: 600; font-size: 14px; }
+.pages-list-item .meta { font-size: 12px; color: var(--text3); margin-top: 2px; display: flex; gap: 10px; }
+.pages-edit-panel {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 24px; max-height: 600px; overflow-y: auto;
+}
+.pages-edit-panel.empty { display: flex; align-items: center; justify-content: center; color: var(--text3); min-height: 200px; }
+@media (max-width: 767px) {
+    .pages-layout { grid-template-columns: 1fr; }
+    .pages-list-panel { max-height: 250px; }
+    .pages-list-view, .pages-detail-view { display: none !important; }
+    .pages-list-view.mob-show, .pages-detail-view.mob-show { display: block !important; }
+}
+
 /* ── Fields ── */
 .field { margin-bottom: 12px; }
 .field label { display: block; font-size: 11px; font-weight: 600; color: var(--text2); margin-bottom: 3px; text-transform: uppercase; letter-spacing: .03em; }
@@ -300,20 +326,20 @@ body {
 
         <!-- Pages -->
         <div class="page-section" id="secPages">
-            <div class="deck-layout">
-                <div class="deck-list-view" id="pageListView">
+            <div class="pages-layout">
+                <div class="pages-list-view" id="pageListView">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
                         <span style="font-size:13px;font-weight:600;color:var(--text2);">页面列表</span>
                         <button class="btn btn-secondary btn-sm" id="addPageBtn">+ 新建</button>
                     </div>
-                    <div class="deck-list-panel" id="pageListPanel"><div class="deck-edit-panel empty">加载中…</div></div>
+                    <div class="pages-list-panel" id="pageListPanel"><div class="pages-edit-panel empty">加载中…</div></div>
                 </div>
-                <div class="deck-detail-view" id="pageDetailView">
+                <div class="pages-detail-view" id="pageDetailView">
                 <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
                     <button class="btn btn-secondary btn-sm mob-back" onclick="showPageList()">← 返回</button>
                     <span style="font-size:13px;font-weight:600;color:var(--text2);">编辑页面</span>
                 </div>
-                <div class="deck-edit-panel" id="pageEditPanel"></div>
+                <div class="pages-edit-panel" id="pageEditPanel"></div>
             </div>
             </div>
         </div>
@@ -952,9 +978,9 @@ async function loadPages() {
 function renderPageList() {
     const el = $('#pageListPanel');
     if (!el) return;
-    if (!pages.length) { el.innerHTML = '<div class="deck-edit-panel empty"><span>暂无页面</span></div>'; return; }
+    if (!pages.length) { el.innerHTML = '<div class="pages-edit-panel empty"><span>暂无页面</span></div>'; return; }
     el.innerHTML = pages.map((p, i) => `
-        <div class="deck-list-item${i===currentPageIdx?' active':''}" onclick="selectPage(${i})">
+        <div class="pages-list-item${i===currentPageIdx?' active':''}" onclick="selectPage(${i})">
             <div class="name">${esc(p.icon||'📄')} ${esc(p.title)}</div>
             <div class="meta"><span>${esc(p.group||'')}</span><span>ID: ${esc(p.id)}</span></div>
         </div>
@@ -968,7 +994,7 @@ function showPageList() {
     }
     renderPageList();
     var ep = document.getElementById('pageEditPanel');
-    if (ep) { ep.className = 'deck-edit-panel empty'; ep.innerHTML = '<span>选择一个页面开始编辑</span>'; }
+    if (ep) { ep.className = 'pages-edit-panel empty'; ep.innerHTML = '<span>选择一个页面开始编辑</span>'; }
     currentPageIdx = -1;
 }
 
@@ -979,7 +1005,7 @@ function selectPage(i) {
         document.getElementById('pageDetailView').classList.add('mob-show');
     }
     const p = pages[i];
-    $('#pageEditPanel').className = 'deck-edit-panel';
+    $('#pageEditPanel').className = 'pages-edit-panel';
     $('#pageEditPanel').innerHTML = `
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
             <h3 style="font-size:16px;font-weight:600;">${esc(p.title)}</h3>
@@ -1026,7 +1052,7 @@ async function delPage(i) {
     pages.splice(i, 1); currentPageIdx = -1;
     await savePages();
     renderPageList();
-    $('#pageEditPanel').className = 'deck-edit-panel empty';
+    $('#pageEditPanel').className = 'pages-edit-panel empty';
     $('#pageEditPanel').innerHTML = '<span>选择一个页面开始编辑</span>';
 }
 
