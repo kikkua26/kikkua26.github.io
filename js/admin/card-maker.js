@@ -360,10 +360,13 @@ function addSubfield(type, isInit, name, content) {
     const c = rootEl.querySelector(type === 'knowledge' ? '#cmKnowledgeFields' : '#cmExtendedFields');
     const div = document.createElement('div');
     div.className = 'cm-subfield';
-    div.innerHTML = `<div class="cm-sf-inputs">
-        <input class="cm-sf-name" placeholder="字段名称" value="${esc(name || '')}">
-        <textarea class="cm-sf-content" placeholder="字段内容..." rows="2">${esc(content || '')}</textarea>
-    </div><button class="cm-sf-remove" data-action="remove-subfield" title="移除">✕</button>`;
+    div.draggable = true;
+    div.dataset.type = type;
+    div.innerHTML = `<span class="cm-sf-drag" title="拖动排序">⋮⋮</span>
+        <div class="cm-sf-inputs">
+            <input class="cm-sf-name" placeholder="字段名称" value="${esc(name || '')}">
+            <textarea class="cm-sf-content" placeholder="字段内容..." rows="2">${esc(content || '')}</textarea>
+        </div><button class="cm-sf-remove" data-action="remove-subfield" title="移除">✕</button>`;
     c.appendChild(div);
     if (!isInit && !name && !content) setTimeout(() => div.querySelector('.cm-sf-name')?.focus(), 100);
 }
@@ -856,6 +859,51 @@ function setupEvents() {
     on('#cmPasteApply', 'click', applyQuickPaste);
     on('#cmAiParse', 'click', aiParse);
     rootEl.querySelector('#cmPasteModal')?.addEventListener('click', e => { if (e.target === e.currentTarget) hideQuickPaste(); });
+
+    // Drag-and-drop subfield reordering
+    let dragSrc = null;
+    rootEl.addEventListener('dragstart', e => {
+        const sf = e.target.closest('.cm-subfield');
+        if (!sf) return;
+        dragSrc = sf;
+        sf.classList.add('cm-dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', '');
+    });
+    rootEl.addEventListener('dragover', e => {
+        const sf = e.target.closest('.cm-subfield');
+        if (!sf || !dragSrc || sf === dragSrc || sf.dataset.type !== dragSrc.dataset.type) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        sf.classList.add('cm-drag-over');
+    });
+    rootEl.addEventListener('dragleave', e => {
+        const sf = e.target.closest('.cm-subfield');
+        if (sf) sf.classList.remove('cm-drag-over');
+    });
+    rootEl.addEventListener('drop', e => {
+        const sf = e.target.closest('.cm-subfield');
+        if (sf) sf.classList.remove('cm-drag-over');
+        if (!sf || !dragSrc || sf === dragSrc || sf.dataset.type !== dragSrc.dataset.type) return;
+        e.preventDefault();
+        const container = sf.parentElement;
+        const siblings = [...container.querySelectorAll('.cm-subfield')];
+        const srcIdx = siblings.indexOf(dragSrc);
+        const dstIdx = siblings.indexOf(sf);
+        if (srcIdx < dstIdx) {
+            container.insertBefore(dragSrc, sf.nextSibling);
+        } else {
+            container.insertBefore(dragSrc, sf);
+        }
+        dragSrc.classList.remove('cm-dragging');
+        dragSrc = null;
+    });
+    rootEl.addEventListener('dragend', e => {
+        const sf = e.target.closest('.cm-subfield');
+        if (sf) sf.classList.remove('cm-dragging');
+        rootEl.querySelectorAll('.cm-drag-over').forEach(el => el.classList.remove('cm-drag-over'));
+        dragSrc = null;
+    });
 
     // Expose to admin.html button
     window._cmQuickPaste = showQuickPaste;
