@@ -1,14 +1,30 @@
 export function mdToHtml(text) {
     if (!text) return '';
     const inline = (s) => s
+        .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" loading="lazy">')
         .replace(/`([^`]+)`/g, '<code>$1</code>')
         .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
         .replace(/\*(.+?)\*/g, '<em>$1</em>')
         .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+
+    // Handle fenced callout blocks
+    const calloutMap = {};
+    text = text.replace(/^:::(\w+)\n([\s\S]*?)\n:::/gm, (_, type, content) => {
+        const key = 'CALLOUT_' + Math.random().toString(36).slice(2);
+        const inner = content.split(/\n{2,}/).map(b => {
+            b = b.trim();
+            if (!b) return '';
+            return `<p>${inline(b.replace(/\n/g, '<br>'))}</p>`;
+        }).join('');
+        calloutMap[key] = `<div class="callout callout-${type}"><div>${inner}</div></div>`;
+        return key;
+    });
+
     const blocks = text.split(/\n{2,}/);
     return blocks.map(b => {
         b = b.trim();
         if (!b) return '';
+        if (calloutMap[b]) return calloutMap[b];
         if (/^#{1,3}\s/.test(b)) {
             const level = b.match(/^#{1,3}/)[0].length;
             return `<h${level}>${inline(b.slice(level + 1))}</h${level}>`;
