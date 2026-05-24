@@ -309,7 +309,7 @@ function clearForm(keepChapter) {
     addSubfield('extended', true);
     clearDraft();
     renderAll();
-    updatePreview();
+    setTimeout(updatePreview, 30);
 }
 
 function loadForm(note) {
@@ -332,9 +332,8 @@ function loadForm(note) {
     rootEl.querySelector('#cmBtnDelete').style.display = 'inline-flex';
     clearDraft();
     renderAll();
-
-    // Dispatch input events to trigger preview update
-    if (mfEl) mfEl.dispatchEvent(new Event('input', { bubbles: true }));
+    // Trigger preview immediately (DOM is populated synchronously)
+    setTimeout(updatePreview, 30);
 }
 
 function getFormData() {
@@ -406,7 +405,7 @@ function saveNote() {
     clearDraft();
     rootEl.querySelector('#cmBtnDelete').style.display = 'inline-flex';
     renderAll();
-    updatePreview();
+    setTimeout(updatePreview, 30);
 }
 
 function deleteNote() {
@@ -571,7 +570,7 @@ function setupEvents() {
             clearDraft();
             rootEl.querySelector('#cmInputMain').focus();
             renderAll();
-            updatePreview();
+            setTimeout(updatePreview, 30);
         } else if (action === 'note-click') {
             if (e.target.matches('input[type=checkbox]')) return; // handled by batch-check
             const notes = activeNotes();
@@ -715,7 +714,7 @@ export function initCardMaker(containerEl) {
     state.initialized = true;
     clearForm(false);
     renderAll();
-    updatePreview();
+    setTimeout(updatePreview, 100);
 
     // Restore draft if any
     const draft = loadDraft();
