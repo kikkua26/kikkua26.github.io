@@ -309,6 +309,7 @@ function clearForm(keepChapter) {
     addSubfield('extended', true);
     clearDraft();
     renderAll();
+    updatePreview();
 }
 
 function loadForm(note) {
@@ -329,6 +330,7 @@ function loadForm(note) {
     rootEl.querySelector('#cmBtnDelete').style.display = 'inline-flex';
     clearDraft();
     renderAll();
+    updatePreview();
 }
 
 function getFormData() {
@@ -400,6 +402,7 @@ function saveNote() {
     clearDraft();
     rootEl.querySelector('#cmBtnDelete').style.display = 'inline-flex';
     renderAll();
+    updatePreview();
 }
 
 function deleteNote() {
@@ -551,6 +554,7 @@ function setupEvents() {
             clearDraft();
             rootEl.querySelector('#cmInputMain').focus();
             renderAll();
+            updatePreview();
         } else if (action === 'note-click') {
             if (e.target.matches('input[type=checkbox]')) return; // handled by batch-check
             const notes = activeNotes();
