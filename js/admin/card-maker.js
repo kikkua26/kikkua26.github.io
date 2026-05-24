@@ -509,75 +509,6 @@ function showQuickPaste() {
 }
 function hideQuickPaste() { const m = rootEl.querySelector('#cmPasteModal'); if (m) m.style.display = 'none'; }
 
-function applyQuickPaste() {
-    const input = rootEl.querySelector('#cmPasteInput');
-    if (!input) return;
-    const text = input.value.trim();
-    if (!text) { toast('请粘贴内容', 'error'); return; }
-
-    let data;
-    // 1. Try JSON
-    try { data = JSON.parse(text); if (typeof data === 'object' && !Array.isArray(data)) parseDataObject(data); hideQuickPaste(); return; } catch {}
-
-    // 2. Line-by-line parsing
-    const lines = text.split(/[\n\r]+/).map(l => l.trim()).filter(Boolean);
-    let chapter = '', mainField = '';
-    const knowledge = [], extended = [];
-    let mode = 'top'; // 'top' | 'knowledge' | 'extended'
-
-    for (const line of lines) {
-        // Section headers
-        if (/^知识解析[：:]?\s*$/.test(line)) { mode = 'knowledge'; continue; }
-        if (/^拓展解析[：:]?\s*$/.test(line)) { mode = 'extended'; continue; }
-        if (/^知识拓展[：:]?\s*$/.test(line)) { mode = 'extended'; continue; }
-
-        // Key: value pattern
-        const m = line.match(/^(.+?)[：:]\s*(.*)$/);
-        if (m) {
-            const key = m[1].trim();
-            const val = m[2].trim();
-            if (!val) continue;
-
-            if (key === '主字段' || key === '知识名称' || key === 'Front' || key === '标题') {
-                mainField = val;
-            } else if (key === '章节' || key === 'Chapter' || key === '分类') {
-                chapter = val;
-            } else if (key === '等级' || key === '提要' || key === '用户笔记') {
-                // Known fields but not subfields — store as knowledge with field name
-                if (mode === 'top') { knowledge.push({ name: key, content: val }); }
-            } else if (mode === 'extended') {
-                extended.push({ name: key, content: val });
-            } else {
-                // Default: treat as knowledge subfield
-                knowledge.push({ name: key, content: val });
-            }
-            continue;
-        }
-
-        // Line with :: → likely chapter
-        if (line.includes('::') && !chapter && mode === 'top') {
-            chapter = line;
-            continue;
-        }
-
-        // Plain text at top level with no colon → could be mainField
-        if (mode === 'top' && !mainField && !line.includes('：') && !line.includes(':')) {
-            mainField = line;
-            continue;
-        }
-
-        // Catch-all: add to knowledge
-        if (line) knowledge.push({ name: '', content: line });
-    }
-
-    // Fill form
-    fillFormFromParsed({ chapter, mainField, knowledge, extended });
-    hideQuickPaste();
-    const kCount = knowledge.filter(f => f.name || f.content).length;
-    const eCount = extended.filter(f => f.name || f.content).length;
-    toast(`已填入：主字段 | ${chapter ? '章节' : ''} | ${kCount}条知识解析${eCount ? ' | ' + eCount + '条拓展解析' : ''}`, 'success');
-}
-
 function parseDataObject(obj) {
     const chapter = obj['章节'] || obj['chapter'] || obj['Chapter'] || '';
     const mainField = obj['主字段'] || obj['Front'] || obj['mainField'] || obj['知识名称'] || '';
@@ -623,6 +554,66 @@ function fillFormFromParsed(data) {
     }
     renderAll();
     setTimeout(updatePreview, 60);
+}
+
+// ── AI Parse ──
+async function aiParse() {
+    const input = rootEl.querySelector('#cmPasteInput');
+    const btn = rootEl.querySelector('#cmAiParse');
+    if (!input || !btn) return;
+    const text = input.value.trim();
+    if (!text) { toast('请先粘贴内容', 'error'); return; }
+
+    const dsKey = rootEl.querySelector('#cmDsKey')?.value?.trim();
+    if (!dsKey || !dsKey.startsWith('sk-')) { toast('请在工具栏填写 DeepSeek API Key', 'error'); return; }
+    try { localStorage.setItem('kikkua_ds_key', dsKey); } catch {}
+    try { localStorage.setItem('kikkua_ds_model', rootEl.querySelector('#cmDsModel')?.value || 'deepseek-v4-pro'); } catch {}
+
+    btn.disabled = true; btn.textContent = '⏳ AI 思考中...';
+    try {
+        const result = await callDeepSeek(text, dsKey);
+        parseDataObject(typeof result === 'string' ? JSON.parse(result) : result);
+        hideQuickPaste();
+        toast('AI 解析完成', 'success');
+    } catch (e) {
+        toast('AI 解析失败: ' + (e.message || '未知错误'), 'error');
+    }
+    btn.disabled = false; btn.textContent = '🤖 AI 解析';
+}
+
+async function callDeepSeek(text, apiKey) {
+    const systemPrompt = `你是一个知识卡片结构化助手。将用户输入的文本解析为JSON格式（只输出JSON，不要任何其他文字）。
+
+{
+  "主字段": "核心知识点名称（不超过20字）",
+  "章节": "学科::大类::小类（用::分隔层级，无法推断则留空）",
+  "知识解析": { "要点1": "内容", "要点2": "内容" },
+  "拓展解析": { "补充1": "内容" }
+}
+
+规则：
+- 主字段提取最核心的知识点名称
+- 章节推断学科归属，用::分隔（如 方剂学::解表剂::辛温解表）
+- 知识解析提取3-5个关键概念/定义/组成/功效，字段名不超过8字
+- 拓展解析提取1-3个补充信息（方歌/口诀/鉴别/举例/注意事项）
+- 兼容多种输入格式：自由文本/教材段落/已标注字段/表格数据
+- 空字段用空字符串""，不要写"无"或"暂无"`;
+
+    const resp = await fetch('https://api.deepseek.com/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+        body: JSON.stringify({
+            model: rootEl.querySelector('#cmDsModel')?.value || 'deepseek-v4-pro',
+            messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: text }],
+            temperature: 0.3, max_tokens: 2000,
+        }),
+    });
+    if (!resp.ok) { const err = await resp.json().catch(() => ({})); throw new Error(err.error?.message || `HTTP ${resp.status}`); }
+    const data = await resp.json();
+    const content = data.choices?.[0]?.message?.content || '';
+    const m = content.match(/\{[\s\S]*\}/);
+    if (!m) throw new Error('AI 未返回有效的 JSON');
+    return JSON.parse(m[0]);
 }
 
 // Wrap updatePreview with error handling for setTimeout calls
@@ -827,6 +818,7 @@ function setupEvents() {
     // Quick paste modal
     on('#cmPasteCancel', 'click', hideQuickPaste);
     on('#cmPasteApply', 'click', applyQuickPaste);
+    on('#cmAiParse', 'click', aiParse);
     rootEl.querySelector('#cmPasteModal')?.addEventListener('click', e => { if (e.target === e.currentTarget) hideQuickPaste(); });
 
     // Expose to admin.html button
@@ -853,7 +845,20 @@ export function initCardMaker(containerEl) {
     loadData();
     setupEvents();
     state.initialized = true;
+    // Restore saved API key + model
+    const savedKey = localStorage.getItem('kikkua_ds_key');
+    if (savedKey) { const el = rootEl.querySelector('#cmDsKey'); if (el) el.value = savedKey; }
+    const savedModel = localStorage.getItem('kikkua_ds_model');
+    if (savedModel) { const el = rootEl.querySelector('#cmDsModel'); if (el) el.value = savedModel; }
     clearForm(false);
+    // Expand all top-level chapters on first load
+    const notes = activeNotes();
+    if (notes.length && state.expandedChapters.size === 0) {
+        const tree = buildChapterTree(notes);
+        for (const k of Object.keys(tree.children)) {
+            state.expandedChapters.add(tree.children[k].fullPath);
+        }
+    }
     renderAll();
     setTimeout(updatePreview, 100);
 
