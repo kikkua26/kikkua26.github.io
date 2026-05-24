@@ -509,89 +509,73 @@ function showQuickPaste() {
 }
 function hideQuickPaste() { const m = rootEl.querySelector('#cmPasteModal'); if (m) m.style.display = 'none'; }
 
-async function aiParse() {
+function applyQuickPaste() {
     const input = rootEl.querySelector('#cmPasteInput');
-    const btn = rootEl.querySelector('#cmAiParse');
-    console.log('AI Parse triggered', { hasInput: !!input, hasBtn: !!btn, rootEl: !!rootEl });
-    if (!input || !btn) return;
+    if (!input) return;
     const text = input.value.trim();
-    if (!text) { toast('请先粘贴内容', 'error'); return; }
+    if (!text) { toast('请粘贴内容', 'error'); return; }
 
-    const dsKey = rootEl.querySelector('#cmDsKey')?.value?.trim();
-    if (!dsKey) { toast('请先在工具栏填写 DeepSeek API Key', 'error'); return; }
-    if (!dsKey.startsWith('sk-')) { toast('API Key 格式不正确（应以 sk- 开头）', 'error'); return; }
+    let data;
+    // 1. Try JSON
+    try { data = JSON.parse(text); if (typeof data === 'object' && !Array.isArray(data)) parseDataObject(data); hideQuickPaste(); return; } catch {}
 
-    // Save key + model
-    try { localStorage.setItem('kikkua_ds_key', dsKey); } catch {}
-    try { localStorage.setItem('kikkua_ds_model', rootEl.querySelector('#cmDsModel')?.value || 'deepseek-v4-pro'); } catch {}
+    // 2. Line-by-line parsing
+    const lines = text.split(/[\n\r]+/).map(l => l.trim()).filter(Boolean);
+    let chapter = '', mainField = '';
+    const knowledge = [], extended = [];
+    let mode = 'top'; // 'top' | 'knowledge' | 'extended'
 
-    btn.disabled = true;
-    btn.textContent = '⏳ AI 思考中...';
-    console.log('Calling DeepSeek with model:', rootEl.querySelector('#cmDsModel')?.value);
-    try {
-        const result = await callDeepSeek(text, dsKey);
-        console.log('DeepSeek response:', result);
-        const data = typeof result === 'string' ? JSON.parse(result) : result;
-        parseDataObject(data);
-        hideQuickPaste();
-        const kCount = Object.keys(data['知识解析'] || {}).length;
-        const eCount = Object.keys(data['拓展解析'] || data['知识拓展'] || {}).length;
-        toast(`AI 解析完成：${data['主字段'] || ''} | ${kCount + eCount}条字段`, 'success');
-    } catch (e) {
-        toast('AI 解析失败: ' + (e.message || '未知错误'), 'error');
-        console.error('DeepSeek error:', e);
-    }
-    btn.disabled = false;
-    btn.textContent = '🤖 AI 解析';
-}
+    for (const line of lines) {
+        // Section headers
+        if (/^知识解析[：:]?\s*$/.test(line)) { mode = 'knowledge'; continue; }
+        if (/^拓展解析[：:]?\s*$/.test(line)) { mode = 'extended'; continue; }
+        if (/^知识拓展[：:]?\s*$/.test(line)) { mode = 'extended'; continue; }
 
-async function callDeepSeek(text, apiKey) {
-    const systemPrompt = `你是知识卡片结构化助手。无论用户输入的是自由文本、笔记摘录、教材段落、聊天记录还是已标注字段，都要准确解析。只输出JSON。
+        // Key: value pattern
+        const m = line.match(/^(.+?)[：:]\s*(.*)$/);
+        if (m) {
+            const key = m[1].trim();
+            const val = m[2].trim();
+            if (!val) continue;
 
-输出格式：
-{
-  "主字段": "知识点名称（≤20字，提取核心概念）",
-  "章节": "层级路径（用::分隔，如 方剂学::解表剂；无法推断则为空字符串）",
-  "知识解析": { "要点1": "内容", "要点2": "内容" },
-  "拓展解析": { "补充1": "内容" }
-}
+            if (key === '主字段' || key === '知识名称' || key === 'Front' || key === '标题') {
+                mainField = val;
+            } else if (key === '章节' || key === 'Chapter' || key === '分类') {
+                chapter = val;
+            } else if (key === '等级' || key === '提要' || key === '用户笔记') {
+                // Known fields but not subfields — store as knowledge with field name
+                if (mode === 'top') { knowledge.push({ name: key, content: val }); }
+            } else if (mode === 'extended') {
+                extended.push({ name: key, content: val });
+            } else {
+                // Default: treat as knowledge subfield
+                knowledge.push({ name: key, content: val });
+            }
+            continue;
+        }
 
-解析规则：
-1. 如果输入已含"主字段："等标记 → 直接提取
-2. 如果是自由文本 → 先判断知识领域，再提炼核心概念作为主字段
-3. 章节推断：从上下文推断学科归属（中西医/理工/人文等），识别章节/单元信息
-4. 知识解析：提取3-5个关键点，可以是 定义/组成/功效/主治/特征/原理/步骤 等，字段名≤8字
-5. 拓展解析：提取1-3个补充信息，如 方歌/口诀/鉴别/举例/注意事项/记忆技巧 等
-6. 如果输入本身就是结构化的 name：value 格式，保留原有字段名
-7. 如果输入是纯数据/表格，按列名拆分为不同字段
-8. 空白字段用空字符串""，不要写"无"或"暂无"
-9. 只输出JSON，不要markdown包裹`;
+        // Line with :: → likely chapter
+        if (line.includes('::') && !chapter && mode === 'top') {
+            chapter = line;
+            continue;
+        }
 
-    const resp = await fetch('https://api.deepseek.com/chat/completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-        body: JSON.stringify({
-            model: rootEl.querySelector('#cmDsModel')?.value || 'deepseek-v4-pro',
-            messages: [
-                { role: 'system', content: systemPrompt },
-                { role: 'user', content: text }
-            ],
-            temperature: 0.3,
-            max_tokens: 2000,
-        }),
-    });
+        // Plain text at top level with no colon → could be mainField
+        if (mode === 'top' && !mainField && !line.includes('：') && !line.includes(':')) {
+            mainField = line;
+            continue;
+        }
 
-    if (!resp.ok) {
-        const err = await resp.json().catch(() => ({}));
-        throw new Error(err.error?.message || `HTTP ${resp.status}`);
+        // Catch-all: add to knowledge
+        if (line) knowledge.push({ name: '', content: line });
     }
 
-    const data = await resp.json();
-    const content = data.choices?.[0]?.message?.content || '';
-    // Try to extract JSON from response
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error('AI 未返回有效的 JSON');
-    return JSON.parse(jsonMatch[0]);
+    // Fill form
+    fillFormFromParsed({ chapter, mainField, knowledge, extended });
+    hideQuickPaste();
+    const kCount = knowledge.filter(f => f.name || f.content).length;
+    const eCount = extended.filter(f => f.name || f.content).length;
+    toast(`已填入：主字段 | ${chapter ? '章节' : ''} | ${kCount}条知识解析${eCount ? ' | ' + eCount + '条拓展解析' : ''}`, 'success');
 }
 
 function parseDataObject(obj) {
@@ -843,7 +827,6 @@ function setupEvents() {
     // Quick paste modal
     on('#cmPasteCancel', 'click', hideQuickPaste);
     on('#cmPasteApply', 'click', applyQuickPaste);
-    on('#cmAiParse', 'click', aiParse);
     rootEl.querySelector('#cmPasteModal')?.addEventListener('click', e => { if (e.target === e.currentTarget) hideQuickPaste(); });
 
     // Expose to admin.html button
@@ -870,11 +853,6 @@ export function initCardMaker(containerEl) {
     loadData();
     setupEvents();
     state.initialized = true;
-    // Restore saved API key + model
-    const savedKey = localStorage.getItem('kikkua_ds_key');
-    if (savedKey) { const el = rootEl.querySelector('#cmDsKey'); if (el) el.value = savedKey; }
-    const savedModel = localStorage.getItem('kikkua_ds_model');
-    if (savedModel) { const el = rootEl.querySelector('#cmDsModel'); if (el) el.value = savedModel; }
     clearForm(false);
     renderAll();
     setTimeout(updatePreview, 100);
