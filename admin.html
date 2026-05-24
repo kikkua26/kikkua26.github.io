@@ -108,6 +108,22 @@ body {
 }
 .deck-edit-panel.empty { display: flex; align-items: center; justify-content: center; color: var(--text3); }
 
+/* ── Media context menu ── */
+.media-context-menu {
+    display: none; position: fixed; z-index: 3000;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); box-shadow: 0 4px 20px rgba(0,0,0,.15);
+    padding: 4px; min-width: 150px;
+}
+.media-context-menu .ctx-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 14px; font-size: 13px; cursor: pointer; border-radius: 4px;
+    color: var(--text); transition: background .1s;
+}
+.media-context-menu .ctx-item:hover { background: var(--bg); }
+.media-context-menu .ctx-item.danger { color: var(--accent); }
+.media-context-menu .ctx-divider { height: 1px; background: var(--border); margin: 4px 0; }
+
 /* ── Pages ── */
 .pages-layout { display: grid; grid-template-columns: 260px 1fr; gap: 20px; min-height: 400px; }
 .pages-list-panel {
@@ -418,6 +434,9 @@ body {
         </div>
     </div>
 </div>
+
+<!-- Media context menu -->
+<div class="media-context-menu" id="mediaCtxMenu"></div>
 
 <!-- Toast -->
 <div class="toast" id="toast"></div>
@@ -1139,11 +1158,13 @@ async function createMediaFolder() {
     } catch (e) { toast('创建失败: ' + e.message, 'error'); }
 }
 
+function isMediaFile(name) { return /\.(png|jpe?g|gif|svg|webp|bmp|ico|mp4|webm|mov|mp3|wav|ogg|pdf)$/i.test(name); }
+
 function renderMediaGrid() {
     const grid = $('#mediaGrid');
     if (!grid) return;
     const dirs = mediaItems.filter(i => i.type === 'dir');
-    const files = mediaItems.filter(i => i.type === 'file' && i.name !== '.gitkeep');
+    const files = mediaItems.filter(i => i.type === 'file' && isMediaFile(i.name));
 
     if (!dirs.length && !files.length) {
         grid.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text3);width:100%;">此文件夹为空，上传文件或创建子文件夹</div>';
@@ -1151,58 +1172,107 @@ function renderMediaGrid() {
     }
 
     grid.innerHTML = dirs.map(d => `
-        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;width:140px;text-align:center;cursor:pointer;" onclick="navigateMedia('${currentMediaPath + '/' + d.name}')">
+        <div class="media-card media-folder" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;width:140px;text-align:center;cursor:pointer;transition:all .15s;"
+             onclick="navigateMedia('${currentMediaPath + '/' + d.name}')"
+             oncontextmenu="showMediaMenu(event, '${esc(d.name)}', true);return false;">
             <div style="font-size:36px;">📁</div>
             <div style="font-size:12px;color:var(--text);margin-top:6px;word-break:break-all;font-weight:500;">${esc(d.name)}</div>
-            <div style="margin-top:6px;display:flex;gap:4px;justify-content:center;" onclick="event.stopPropagation();">
-                <button class="btn btn-secondary btn-xs" onclick="renameMediaItem('${esc(d.name)}', true)">重命名</button>
-                <button class="btn btn-danger btn-xs" onclick="delMediaItem('${esc(d.name)}', true)">✕</button>
-            </div>
         </div>
     `).join('') + files.map(f => {
         const url = '/' + currentMediaPath + '/' + f.name;
-        const isImg = /\.(png|jpe?g|gif|svg|webp)$/i.test(f.name);
-        return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px;width:150px;text-align:center;">
-            ${isImg ? `<img src="${url}" style="width:100%;height:90px;object-fit:cover;border-radius:4px;margin-bottom:4px;">` : `<div style="width:100%;height:90px;display:flex;align-items:center;justify-content:center;font-size:36px;background:var(--bg);border-radius:4px;margin-bottom:4px;">📄</div>`}
-            <div style="font-size:11px;color:var(--text2);word-break:break-all;margin-bottom:6px;line-height:1.3;">${esc(f.name)}</div>
-            <div style="display:flex;gap:3px;justify-content:center;flex-wrap:wrap;">
-                <button class="btn btn-secondary btn-xs" onclick="copyMediaUrl('${esc(f.name)}')">复制</button>
-                <button class="btn btn-secondary btn-xs" onclick="renameMediaItem('${esc(f.name)}', false)">改名</button>
-                <button class="btn btn-secondary btn-xs" onclick="replaceMediaFile('${esc(f.name)}')">替换</button>
-                <button class="btn btn-danger btn-xs" onclick="delMediaItem('${esc(f.name)}', false)">✕</button>
-            </div>
+        const isImg = /\.(png|jpe?g|gif|svg|webp|bmp|ico)$/i.test(f.name);
+        const isVideo = /\.(mp4|webm|mov)$/i.test(f.name);
+        const isAudio = /\.(mp3|wav|ogg)$/i.test(f.name);
+        const icon = isVideo ? '🎬' : isAudio ? '🎵' : '🖼';
+        return `<div class="media-card" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px;width:150px;text-align:center;cursor:default;transition:all .15s;"
+             oncontextmenu="showMediaMenu(event, '${esc(f.name)}', false);return false;">
+            ${isImg ? `<img src="${url}" style="width:100%;height:90px;object-fit:cover;border-radius:4px;margin-bottom:4px;pointer-events:none;">`
+              : `<div style="width:100%;height:90px;display:flex;align-items:center;justify-content:center;font-size:36px;background:var(--bg);border-radius:4px;margin-bottom:4px;">${icon}</div>`}
+            <div style="font-size:11px;color:var(--text2);word-break:break-all;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(f.name)}</div>
+            <div style="font-size:10px;color:var(--text3);margin-top:2px;">右键操作</div>
         </div>`;
     }).join('');
 }
+
+// ─── Context menu ───
+function showMediaMenu(e, name, isDir) {
+    e.preventDefault();
+    const menu = $('#mediaCtxMenu');
+    const url = '/' + currentMediaPath + '/' + name;
+    const isImg = /\.(png|jpe?g|gif|svg|webp|bmp|ico)$/i.test(name);
+
+    let html = `<div style="padding:4px 14px;font-size:11px;color:var(--text3);">${esc(name)}</div><div class="ctx-divider"></div>`;
+    if (!isDir) {
+        html += `<div class="ctx-item" onclick="copyMediaUrl('${esc(name)}');closeMediaMenu();">📋 复制路径</div>`;
+        html += `<div class="ctx-item" onclick="replaceMediaFile('${esc(name)}');closeMediaMenu();">🔄 替换文件</div>`;
+    }
+    html += `<div class="ctx-item" onclick="promptRenameMedia('${esc(name)}', ${isDir});closeMediaMenu();">✏️ 重命名</div>`;
+    html += `<div class="ctx-divider"></div>`;
+    html += `<div class="ctx-item danger" onclick="delMediaItem('${esc(name)}', ${isDir});closeMediaMenu();">🗑 删除</div>`;
+
+    menu.innerHTML = html;
+    menu.style.display = 'block';
+    const x = Math.min(e.clientX, window.innerWidth - 170);
+    const y = Math.min(e.clientY, window.innerHeight - 200);
+    menu.style.left = x + 'px';
+    menu.style.top = y + 'px';
+}
+
+function closeMediaMenu() { $('#mediaCtxMenu').style.display = 'none'; }
+document.addEventListener('click', (e) => { if (!e.target.closest('.media-context-menu') && !e.target.closest('.media-card')) closeMediaMenu(); });
 
 function copyMediaUrl(name) {
     const path = '/' + currentMediaPath + '/' + name;
     navigator.clipboard.writeText(path).then(() => toast('已复制: ' + path)).catch(() => { prompt('复制以下路径:', path); });
 }
 
-let _renameTarget = '';
-async function renameMediaItem(name, isDir) {
-    const newName = await inputModal('重命名', '新名称', name);
-    if (!newName || newName === name) return;
-    const oldPath = currentMediaPath + '/' + name;
-    const newPath = currentMediaPath + '/' + newName;
+function promptRenameMedia(name, isDir) {
+    const newName = prompt('新名称：', name);
+    if (newName && newName !== name) renameMediaItem(name, newName, isDir);
+}
+
+async function renameMediaItem(oldName, newName, isDir) {
+    const oldRelPath = currentMediaPath + '/' + oldName;
+    const newRelPath = currentMediaPath + '/' + newName;
     try {
         if (isDir) {
-            // Move all files in the folder
-            const items = await listRepo(oldPath);
+            const items = await listRepo(oldRelPath);
             for (const item of items) {
-                const r = await readRepo(oldPath + '/' + item.name);
-                await writeRepo(newPath + '/' + item.name, r.content, null, 'Rename folder');
+                const r = await readRepo(oldRelPath + '/' + item.name);
+                await writeRepo(newRelPath + '/' + item.name, r.content, null, 'Rename folder: ' + oldName + ' -> ' + newName);
             }
-            // Can't delete dirs directly, so just create new and leave old
         } else {
-            const r = await readRepo(oldPath);
-            await writeRepo(newPath, r.content, null, 'Rename: ' + name + ' -> ' + newName);
-            await writeRepo(oldPath, '', r.sha, 'Delete old: ' + name);
+            const r = await readRepo(oldRelPath);
+            await writeRepo(newRelPath, r.content, null, 'Rename: ' + oldName + ' -> ' + newName);
+            await writeRepo(oldRelPath, '', r.sha, 'Delete old: ' + oldName);
+
+            // Auto-update references in pages.json
+            const oldUrl = '/' + oldRelPath;
+            const newUrl = '/' + newRelPath;
+            let updated = 0;
+            for (const p of pages) {
+                const before = p.content;
+                p.content = p.content.split(oldUrl).join(newUrl);
+                if (p.content !== before) updated++;
+            }
+            if (updated > 0) {
+                await savePagesSilent();
+                toast(`已重命名，并更新了 ${updated} 个页面的引用`);
+                return;
+            }
         }
         toast('已重命名');
-        await loadMedia();
     } catch (e) { toast('重命名失败: ' + e.message, 'error'); }
+    await loadMedia();
+}
+
+async function savePagesSilent() {
+    try {
+        const data = JSON.stringify({ pages }, null, 2);
+        await writeRepo('data/pages.json', data, pagesSha, 'Auto-update media refs');
+        const r = await readRepo('data/pages.json');
+        pagesSha = r.sha;
+    } catch (e) { console.warn('Auto-update pages failed:', e); }
 }
 
 function replaceMediaFile(name) {
@@ -1228,7 +1298,7 @@ function replaceMediaFile(name) {
 }
 
 async function delMediaItem(name, isDir) {
-    const ok = await confirmModal('删除', `确认删除 "${name}"？`);
+    const ok = await confirmModal('删除', `确认删除 "${name}"？此操作不可恢复。`);
     if (!ok) return;
     try {
         if (isDir) {
