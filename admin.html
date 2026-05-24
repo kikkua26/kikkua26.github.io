@@ -455,6 +455,11 @@ body {
                         <option value="deepseek-v4-pro" selected>v4 Pro (强)</option>
                     </select>
                     <input type="password" id="cmDsKey" placeholder="DeepSeek API Key (sk-...)" style="width:180px;padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:11px;" onfocus="this.type='text'" onblur="this.type='password'">
+                    <select id="cmDsModel" style="width:120px;padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:11px;">
+                        <option value="deepseek-v4-flash">v4 Flash</option>
+                        <option value="deepseek-v4-pro" selected>v4 Pro</option>
+                    </select>
+                    <input type="password" id="cmDsKey" placeholder="DeepSeek Key (sk-...)" style="width:170px;padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:11px;" onfocus="this.type='text'" onblur="this.type='password'">
                     <span style="font-size:12px;color:var(--text3);" id="cmStatus">就绪</span>
                 </div>
 
@@ -1646,7 +1651,7 @@ let cardMakerInited = false;
 async function initCardMakerModule() {
     const root = document.getElementById('cardMakerRoot');
     if (!root) return;
-    const { initCardMaker } = await import('./js/admin/card-maker.js');
+    const { initCardMaker } = await import('./js/admin/card-maker-v2.js');
     initCardMaker(root);
     cardMakerInited = true;
 }
