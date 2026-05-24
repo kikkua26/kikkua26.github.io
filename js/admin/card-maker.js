@@ -500,6 +500,9 @@ async function updatePreview() {
 
     iframe.srcdoc = backHTML;
 }
+// Wrap updatePreview with error handling for setTimeout calls
+const _updatePreviewSafe = updatePreview;
+updatePreview = function() { _updatePreviewSafe().catch(e => console.warn('Preview update failed:', e)); };
 
 function previewIfNeeded() {
     const panel = rootEl.querySelector('.cm-preview-panel');
@@ -572,10 +575,15 @@ function setupEvents() {
             renderAll();
             setTimeout(updatePreview, 30);
         } else if (action === 'note-click') {
-            if (e.target.matches('input[type=checkbox]')) return; // handled by batch-check
+            if (e.target.matches('input[type=checkbox]')) return;
             const notes = activeNotes();
             const note = notes.find(n => n.id === row.dataset.noteId);
-            if (note) { loadForm(note); rootEl.querySelector('#cmContentScroll').scrollTop = 0; }
+            if (note) {
+                loadForm(note);
+                rootEl.querySelector('#cmContentScroll').scrollTop = 0;
+                // Force immediate preview update after DOM settles
+                requestAnimationFrame(() => { requestAnimationFrame(() => updatePreview()); });
+            }
         } else if (action === 'chapter-toggle') {
             const path = row.dataset.path;
             state.expandedChapters.has(path) ? state.expandedChapters.delete(path) : state.expandedChapters.add(path);
