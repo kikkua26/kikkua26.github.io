@@ -449,6 +449,7 @@ async function loadTemplate() {
 // ── Preview ──
 async function updatePreview() {
     const iframe = rootEl.querySelector('#cmPreviewFrame');
+    const infoEl = rootEl.querySelector('#cmPreviewInfo');
     if (!iframe) return;
     const tmpl = await loadTemplate();
     const fd = getFormData();
@@ -463,6 +464,15 @@ async function updatePreview() {
         '知识解析': fd.knowledgeAnalysis || '',
         '知识拓展': fd.extendedAnalysis || '',
     };
+
+    // Debug: show what data is being sent to template
+    if (infoEl) {
+        const hasData = record['主字段'].trim() || record['章节'] || record['知识解析'] || record['知识拓展'];
+        infoEl.innerHTML = hasData
+            ? `主字段:${record['主字段']?.slice(0,20) || '-'} | 章节:${record['章节']?.slice(0,20) || '-'} | 解析:${(record['知识解析']?.length||0)}字 | 拓展:${(record['知识拓展']?.length||0)}字`
+            : '⚠ 表单为空，请选择笔记或填写字段';
+        infoEl.style.color = hasData ? 'var(--green)' : 'var(--accent)';
+    }
 
     // 1. Replace fields in front template, then wrap with CSS
     const frontHTML = replaceFields(tmpl.front, record);
@@ -660,14 +670,20 @@ function setupEvents() {
         if ((e.ctrlKey || e.metaKey) && e.key === 'n') { e.preventDefault(); clearForm(false); rootEl.querySelector('#cmInputMain')?.focus(); }
     });
 
-    // Debounced auto-update preview on form input
+    // Auto-update preview on form input (debounced) + blur (immediate)
     let previewTimer;
     rootEl.addEventListener('input', e => {
         if (e.target.closest('#cmInputChapter, #cmInputMain, .cm-sf-name, .cm-sf-content')) {
             clearTimeout(previewTimer);
-            previewTimer = setTimeout(updatePreview, 400);
+            previewTimer = setTimeout(updatePreview, 300);
         }
     });
+    rootEl.addEventListener('blur', e => {
+        if (e.target.closest('#cmInputChapter, #cmInputMain, .cm-sf-name, .cm-sf-content')) {
+            clearTimeout(previewTimer);
+            updatePreview();
+        }
+    }, true);
 
     // Batch toggle
     on('#cmBtnToggleBatch', 'click', () => {
