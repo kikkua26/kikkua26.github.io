@@ -246,7 +246,7 @@ function renderAll() {
 
     // Status
     const status = rootEl.querySelector('#cmStatus');
-    if (status) status.textContent = `📓 ${state.activeNotebook} · ${notes.length}条` + (state.currentNoteId ? ' · 编辑中' : '') + ' · v2.2';
+    if (status) status.textContent = `📓 ${state.activeNotebook} · ${notes.length}条` + (state.currentNoteId ? ' · 编辑中' : '') + ' · v2.3';
 }
 
 function renderChapterNode(node, depth) {
@@ -893,7 +893,7 @@ function setupEvents() {
     rootEl.addEventListener('drop', e => {
         const sf = e.target.closest('.cm-subfield');
         if (sf) sf.classList.remove('cm-drag-over');
-        if (!sf || !dragSrc || sf === dragSrc || sf.dataset.type !== dragSrc.dataset.type) return;
+        if (!sf || !dragSrc || sf === dragSrc) return;
         e.preventDefault();
         const container = sf.parentElement;
         const siblings = [...container.querySelectorAll('.cm-subfield')];
