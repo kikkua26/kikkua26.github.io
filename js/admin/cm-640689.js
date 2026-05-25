@@ -262,9 +262,9 @@ function renderAll() {
         treeEl.innerHTML = '<div class="cm-empty"><div class="cm-empty-icon">📝</div><p>暂无笔记</p><p style="font-size:12px;">新建笔记或导入CSV开始使用</p></div>';
     } else {
         let html = '';
-        for (const n of tree.notes) html += renderNoteNode(n, 0);
+        for (let i = 0; i < tree.notes.length; i++) html += renderNoteNode(tree.notes[i], 0, (i + 1) + '.');
         const rootKeys = Object.keys(tree.children);
-        for (let i = 0; i < rootKeys.length; i++) html += renderChapterNode(tree.children[rootKeys[i]], 0, '', i);
+        for (let i = 0; i < rootKeys.length; i++) html += renderChapterNode(tree.children[rootKeys[i]], 0, '', (i + 1) + '.');
         treeEl.innerHTML = html;
     }
 
@@ -282,40 +282,45 @@ function renderAll() {
     if (status) status.textContent = `📓 ${state.activeNotebook} · ${notes.length}条` + (state.currentNoteId ? ' · 编辑中' : '') + ' · v2.3';
 }
 
-function renderChapterNode(node, depth, parentPath, index) {
+function renderChapterNode(node, depth, parentPath, numPrefix) {
     const hasKids = Object.keys(node.children).length > 0;
     const cnt = countTreeNotes(node);
     const expanded = state.expandedChapters.has(node.fullPath);
     const emptyClass = node.isEmpty && cnt === 0 ? ' cm-empty-chapter' : '';
-    const num = index !== undefined ? (index + 1) + '. ' : '';
+    const sortedKeys = Object.keys(node.children);
+    // Multi-level number: e.g., "1.", "1.1", "1.1.1"
+    const myNum = numPrefix ? numPrefix + (sortedKeys.indexOf(node.name) >= 0 ? sortedKeys.indexOf(node.name) + 1 : 1) + '.' : '';
+    const label = numPrefix ? myNum + ' ' + node.name : node.name;
+
     let h = `<div class="cm-chapter" data-path="${esc(node.fullPath)}" data-parent="${esc(parentPath || '')}">`;
     h += `<div class="cm-tree-row${emptyClass}" style="padding-left:${12 + depth * 16}px;" data-action="chapter-click" data-path="${esc(node.fullPath)}" oncontextmenu="return false;">`;
     h += `<span class="cm-toggle${hasKids ? (expanded ? ' expanded' : '') : ''}" data-action="chapter-toggle" data-path="${esc(node.fullPath)}">▶</span>`;
     h += `<span class="cm-icon">${node.isEmpty && cnt === 0 ? '📂' : '📁'}</span>`;
-    h += `<span class="cm-label">${esc(num + node.name)}</span>`;
+    h += `<span class="cm-label">${esc(label)}</span>`;
     if (cnt > 0) h += `<span class="cm-badge">${cnt}</span>`;
     h += `<span class="cm-empty-hint">${node.isEmpty && cnt === 0 ? '空' : ''}</span>`;
     h += `</div></div>`;
     h += `<div class="cm-children${expanded ? ' expanded' : ''}" data-children="${esc(node.fullPath)}">`;
-    for (const n of node.notes) h += renderNoteNode(n, depth + 1);
-    const sortedKeys = Object.keys(node.children);
+    for (let i = 0; i < node.notes.length; i++) h += renderNoteNode(node.notes[i], depth + 1, numPrefix ? myNum : (i + 1) + '.');
     for (let i = 0; i < sortedKeys.length; i++) {
-        h += renderChapterNode(node.children[sortedKeys[i]], depth + 1, node.fullPath, i);
+        const childNum = numPrefix ? myNum + (i + 1) : (i + 1) + '.';
+        h += renderChapterNode(node.children[sortedKeys[i]], depth + 1, node.fullPath, childNum);
     }
     h += `</div>`;
     return h;
 }
 
-function renderNoteNode(note, depth) {
+function renderNoteNode(note, depth, numPrefix) {
     const active = state.currentNoteId === note.id ? ' active' : '';
     const checked = state.batchSet.has(note.id);
     const label = note.mainField || '(未命名)';
+    const num = numPrefix ? numPrefix + ' ' : '';
     return `<div class="cm-note" data-note-id="${note.id}">
-        <div class="cm-tree-row${active}" style="padding-left:${12 + depth * 16 + 20}px;" data-action="note-click" data-note-id="${note.id}">
+        <div class="cm-tree-row${active}" style="padding-left:${12 + depth * 16 + 20}px;" data-action="note-click" data-note-id="${note.id}" oncontextmenu="return false;">
             ${state.batchMode ? `<input type="checkbox" class="cm-check" data-action="batch-check" data-note-id="${note.id}" ${checked ? 'checked' : ''}>` : ''}
             <span class="cm-toggle" style="visibility:hidden;">▶</span>
             <span class="cm-icon">📄</span>
-            <span class="cm-label">${esc(label)}</span>
+            <span class="cm-label">${esc(num + label)}</span>
         </div>
     </div>`;
 }
@@ -962,13 +967,20 @@ function setupEvents() {
 
     rootEl.addEventListener('contextmenu', e => {
         const chapRow = e.target.closest('.cm-chapter');
+        const noteRow = e.target.closest('.cm-note');
         const treeArea = e.target.closest('#cmTree');
         if (!chapterMenu || !treeArea) return;
         e.preventDefault();
         hideChapterMenu();
 
         const menuItems = [];
-        if (chapRow) {
+        if (noteRow) {
+            const noteId = noteRow.dataset.noteId;
+            menuItems.push({ label: '🗑 删除笔记', action: 'delNote', noteId });
+            menuItems.push({ label: '⬆ 上移', action: 'noteUp', noteId });
+            menuItems.push({ label: '⬇ 下移', action: 'noteDown', noteId });
+            menuItems.push({ label: '📂 移动到...', action: 'noteMove', noteId });
+        } else if (chapRow) {
             ctxChapterPath = chapRow.dataset.path;
             menuItems.push({ label: '📂 新建子目录', action: 'addSub' });
             menuItems.push({ label: '✏️ 重命名', action: 'rename' });
@@ -998,7 +1010,34 @@ function setupEvents() {
         if (!nb._chapters) nb._chapters = [];
         if (!nb._order) nb._order = {};
 
-        if (action === 'addRoot') {
+        if (action === 'delNote') {
+            const notes = activeNotes();
+            const idx = notes.findIndex(n => n.id === item.dataset.noteId);
+            if (idx >= 0 && confirm(`删除笔记 "${notes[idx].mainField || '(未命名)'}"？`)) {
+                notes.splice(idx, 1); flushData(); renderAll();
+                if (state.currentNoteId === item.dataset.noteId) clearForm(false);
+            }
+        } else if (action === 'noteUp' || action === 'noteDown') {
+            const notes = activeNotes();
+            const idx = notes.findIndex(n => n.id === item.dataset.noteId);
+            if (idx < 0) { hideChapterMenu(); return; }
+            const note = notes[idx];
+            const sameChapter = notes.filter(n => n.chapter === note.chapter);
+            const ci = sameChapter.indexOf(note);
+            const newCi = action === 'noteUp' ? Math.max(0, ci - 1) : Math.min(sameChapter.length - 1, ci + 1);
+            if (ci !== newCi) {
+                // Swap positions in the global notes array
+                const globalIdxA = notes.indexOf(sameChapter[ci]);
+                const globalIdxB = notes.indexOf(sameChapter[newCi]);
+                [notes[globalIdxA], notes[globalIdxB]] = [notes[globalIdxB], notes[globalIdxA]];
+                flushData(); renderAll();
+            }
+        } else if (action === 'noteMove') {
+            const newChapter = prompt('移动到章节（留空移到根目录）：', '');
+            const notes = activeNotes();
+            const note = notes.find(n => n.id === item.dataset.noteId);
+            if (note) { note.chapter = (newChapter || '').trim(); flushData(); renderAll(); }
+        } else if (action === 'addRoot') {
             const name = prompt('根目录名称：', '');
             if (!name || !name.trim()) { hideChapterMenu(); return; }
             const p = name.trim();
