@@ -288,9 +288,9 @@ function renderChapterNode(node, depth, parentPath, numPrefix) {
     const expanded = state.expandedChapters.has(node.fullPath);
     const emptyClass = node.isEmpty && cnt === 0 ? ' cm-empty-chapter' : '';
     const sortedKeys = Object.keys(node.children);
-    // Multi-level number: e.g., "1.", "1.1", "1.1.1"
-    const myNum = numPrefix ? numPrefix + (sortedKeys.indexOf(node.name) >= 0 ? sortedKeys.indexOf(node.name) + 1 : 1) + '.' : '';
-    const label = numPrefix ? myNum + ' ' + node.name : node.name;
+    // numPrefix is already the full number for this node, e.g. "1.", "1.1", "1.1.1"
+    const myNum = numPrefix || '';
+    const label = myNum ? myNum + ' ' + node.name : node.name;
 
     let h = `<div class="cm-chapter" data-path="${esc(node.fullPath)}" data-parent="${esc(parentPath || '')}">`;
     h += `<div class="cm-tree-row${emptyClass}" style="padding-left:${12 + depth * 16}px;" data-action="chapter-click" data-path="${esc(node.fullPath)}" oncontextmenu="return false;">`;
@@ -303,7 +303,7 @@ function renderChapterNode(node, depth, parentPath, numPrefix) {
     h += `<div class="cm-children${expanded ? ' expanded' : ''}" data-children="${esc(node.fullPath)}">`;
     for (let i = 0; i < node.notes.length; i++) h += renderNoteNode(node.notes[i], depth + 1, numPrefix ? myNum : (i + 1) + '.');
     for (let i = 0; i < sortedKeys.length; i++) {
-        const childNum = numPrefix ? myNum + (i + 1) : (i + 1) + '.';
+        const childNum = myNum ? myNum + (i + 1) + '.' : (i + 1) + '.';
         h += renderChapterNode(node.children[sortedKeys[i]], depth + 1, node.fullPath, childNum);
     }
     h += `</div>`;
