@@ -176,6 +176,25 @@ function downloadCSV(csv, filename) {
 }
 
 // ── Tree ──
+function getChOrder() {
+    const nb = state.notebooks[state.activeNotebook];
+    if (!nb._order) nb._order = {};
+    return nb._order;
+}
+
+function getSortedChildKeys(node, parentPath) {
+    const order = getChOrder()[parentPath || ''] || [];
+    const keys = [...Object.keys(node.children)];
+    keys.sort((a, b) => {
+        const ia = order.indexOf(a), ib = order.indexOf(b);
+        if (ia >= 0 && ib >= 0) return ia - ib;
+        if (ia >= 0) return -1;
+        if (ib >= 0) return 1;
+        return a.localeCompare(b, 'zh-CN');
+    });
+    return keys;
+}
+
 function buildChapterTree(notes) {
     const root = { children: {}, notes: [], fullPath: '' };
     for (const n of notes) {
@@ -190,7 +209,7 @@ function buildChapterTree(notes) {
             cur = cur.children[p];
         }
         cur.notes.push(n);
-        cur.isEmpty = false; // Has real notes, not just empty
+        cur.isEmpty = false;
     }
     // Add empty chapters
     const emptyChapters = state.notebooks[state.activeNotebook]?._chapters || [];
@@ -207,10 +226,10 @@ function buildChapterTree(notes) {
     return root;
 }
 
-function sortTree(node) {
-    const keys = Object.keys(node.children).sort((a, b) => a.localeCompare(b, 'zh-CN'));
+function sortTree(node, parentPath) {
+    const keys = getSortedChildKeys(node, parentPath);
     const sorted = {};
-    for (const k of keys) sorted[k] = sortTree(node.children[k]);
+    for (const k of keys) sorted[k] = sortTree(node.children[k], node.children[k].fullPath);
     node.children = sorted;
     node.notes.sort((a, b) => (a.mainField || '').localeCompare(b.mainField || '', 'zh-CN'));
     return node;
@@ -230,7 +249,7 @@ function renderAll() {
         const q = state.searchQuery.toLowerCase();
         filtered = notes.filter(n => (n.mainField || '').toLowerCase().includes(q) || (n.chapter || '').toLowerCase().includes(q));
     }
-    const tree = sortTree(buildChapterTree(filtered));
+    const tree = sortTree(buildChapterTree(filtered), '');
 
     // Note count
     const countEl = rootEl.querySelector('#cmNoteCount');
@@ -244,7 +263,8 @@ function renderAll() {
     } else {
         let html = '';
         for (const n of tree.notes) html += renderNoteNode(n, 0);
-        for (const k of Object.keys(tree.children)) html += renderChapterNode(tree.children[k], 0);
+        const rootKeys = Object.keys(tree.children);
+        for (let i = 0; i < rootKeys.length; i++) html += renderChapterNode(tree.children[rootKeys[i]], 0, '', i);
         treeEl.innerHTML = html;
     }
 
@@ -262,22 +282,26 @@ function renderAll() {
     if (status) status.textContent = `📓 ${state.activeNotebook} · ${notes.length}条` + (state.currentNoteId ? ' · 编辑中' : '') + ' · v2.3';
 }
 
-function renderChapterNode(node, depth) {
+function renderChapterNode(node, depth, parentPath, index) {
     const hasKids = Object.keys(node.children).length > 0;
     const cnt = countTreeNotes(node);
     const expanded = state.expandedChapters.has(node.fullPath);
     const emptyClass = node.isEmpty && cnt === 0 ? ' cm-empty-chapter' : '';
-    let h = `<div class="cm-chapter" data-path="${esc(node.fullPath)}">`;
-    h += `<div class="cm-tree-row${emptyClass}" style="padding-left:${12 + depth * 16}px;" data-action="chapter-click" data-path="${esc(node.fullPath)}">`;
+    const num = index !== undefined ? (index + 1) + '. ' : '';
+    let h = `<div class="cm-chapter" data-path="${esc(node.fullPath)}" data-parent="${esc(parentPath || '')}">`;
+    h += `<div class="cm-tree-row${emptyClass}" style="padding-left:${12 + depth * 16}px;" data-action="chapter-click" data-path="${esc(node.fullPath)}" oncontextmenu="return false;">`;
     h += `<span class="cm-toggle${hasKids ? (expanded ? ' expanded' : '') : ''}" data-action="chapter-toggle" data-path="${esc(node.fullPath)}">▶</span>`;
     h += `<span class="cm-icon">${node.isEmpty && cnt === 0 ? '📂' : '📁'}</span>`;
-    h += `<span class="cm-label">${esc(node.name)}</span>`;
+    h += `<span class="cm-label">${esc(num + node.name)}</span>`;
     if (cnt > 0) h += `<span class="cm-badge">${cnt}</span>`;
     h += `<span class="cm-empty-hint">${node.isEmpty && cnt === 0 ? '空' : ''}</span>`;
     h += `</div></div>`;
     h += `<div class="cm-children${expanded ? ' expanded' : ''}" data-children="${esc(node.fullPath)}">`;
     for (const n of node.notes) h += renderNoteNode(n, depth + 1);
-    for (const k of Object.keys(node.children)) h += renderChapterNode(node.children[k], depth + 1);
+    const sortedKeys = Object.keys(node.children);
+    for (let i = 0; i < sortedKeys.length; i++) {
+        h += renderChapterNode(node.children[sortedKeys[i]], depth + 1, node.fullPath, i);
+    }
     h += `</div>`;
     return h;
 }
@@ -739,17 +763,6 @@ function setupEvents() {
 
         if (action === 'chapter-click') {
             const path = row.dataset.path;
-            if (e.button === 2 || e.ctrlKey) {
-                e.preventDefault();
-                const nb = state.notebooks[state.activeNotebook];
-                if (nb._chapters && nb._chapters.includes(path)) {
-                    if (confirm(`删除空章节 "${path}"？`)) {
-                        nb._chapters = nb._chapters.filter(c => c !== path && !c.startsWith(path + '::'));
-                        flushData(); renderAll();
-                    }
-                }
-                return;
-            }
             rootEl.querySelector('#cmInputChapter').value = path;
             rootEl.querySelector('#cmInputMain').value = '';
             rootEl.querySelector('#cmKnowledgeFields').innerHTML = '';
@@ -940,16 +953,103 @@ function setupEvents() {
         dragSrc = null;
     });
 
-    // New chapter button
-    on('#cmBtnNewChapter', 'click', () => {
-        const path = prompt('新章节路径（多级用::分隔）：', '');
-        if (!path || !path.trim()) return;
+    // Chapter context menu
+    const chapterMenu = rootEl.querySelector('#cmChapterMenu');
+    let ctxChapterPath = '';
+
+    function hideChapterMenu() { if (chapterMenu) chapterMenu.style.display = 'none'; }
+    document.addEventListener('click', hideChapterMenu);
+
+    rootEl.addEventListener('contextmenu', e => {
+        const chapRow = e.target.closest('.cm-chapter');
+        const treeArea = e.target.closest('#cmTree');
+        if (!chapterMenu || !treeArea) return;
+        e.preventDefault();
+        hideChapterMenu();
+
+        const menuItems = [];
+        if (chapRow) {
+            ctxChapterPath = chapRow.dataset.path;
+            menuItems.push({ label: '📂 新建子目录', action: 'addSub' });
+            menuItems.push({ label: '✏️ 重命名', action: 'rename' });
+            menuItems.push({ label: '⬆ 上移', action: 'moveUp' });
+            menuItems.push({ label: '⬇ 下移', action: 'moveDown' });
+            menuItems.push({ label: '🗑 删除目录', action: 'delete', danger: true });
+        } else {
+            ctxChapterPath = '';
+            menuItems.push({ label: '📂 新建根目录', action: 'addRoot' });
+        }
+
+        chapterMenu.innerHTML = menuItems.map((m, i) => {
+            if (i > 0 && m.danger && !menuItems[i-1].danger) return `<div class="cm-ctx-divider"></div><div class="cm-ctx-item${m.danger?' cm-ctx-danger':''}" data-cm-action="${m.action}">${m.label}</div>`;
+            return `<div class="cm-ctx-item${m.danger?' cm-ctx-danger':''}" data-cm-action="${m.action}">${m.label}</div>`;
+        }).join('');
+
+        chapterMenu.style.display = 'block';
+        chapterMenu.style.left = Math.min(e.clientX, window.innerWidth - 160) + 'px';
+        chapterMenu.style.top = Math.min(e.clientY, window.innerHeight - 220) + 'px';
+    });
+
+    chapterMenu?.addEventListener('click', e => {
+        const item = e.target.closest('.cm-ctx-item');
+        if (!item) return;
+        const action = item.dataset.cmAction;
         const nb = state.notebooks[state.activeNotebook];
         if (!nb._chapters) nb._chapters = [];
-        const p = path.trim();
-        if (!nb._chapters.includes(p)) { nb._chapters.push(p); flushData(); }
-        state.expandedChapters.add(p); // Auto-expand
-        renderAll();
+        if (!nb._order) nb._order = {};
+
+        if (action === 'addRoot') {
+            const name = prompt('根目录名称：', '');
+            if (!name || !name.trim()) { hideChapterMenu(); return; }
+            const p = name.trim();
+            if (!nb._chapters.includes(p)) nb._chapters.push(p);
+            state.expandedChapters.add(p);
+            flushData(); renderAll();
+        } else if (action === 'addSub') {
+            const name = prompt('子目录名称：', '');
+            if (!name || !name.trim()) { hideChapterMenu(); return; }
+            const p = ctxChapterPath + '::' + name.trim();
+            if (!nb._chapters.includes(p)) nb._chapters.push(p);
+            state.expandedChapters.add(p);
+            state.expandedChapters.add(ctxChapterPath);
+            flushData(); renderAll();
+        } else if (action === 'rename') {
+            const oldName = ctxChapterPath.split('::').pop();
+            const parentPath = ctxChapterPath.split('::').slice(0, -1).join('::');
+            const newName = prompt('新名称：', oldName);
+            if (!newName || newName === oldName) { hideChapterMenu(); return; }
+            const newPath = parentPath ? parentPath + '::' + newName : newName;
+            // Rename in _chapters
+            nb._chapters = nb._chapters.map(c => c === ctxChapterPath ? newPath : (c.startsWith(ctxChapterPath + '::') ? newPath + c.slice(ctxChapterPath.length) : c));
+            // Rename in _order
+            if (nb._order[parentPath]) {
+                nb._order[parentPath] = nb._order[parentPath].map(k => k === oldName ? newName.trim() : k);
+            }
+            if (nb._order[ctxChapterPath]) { nb._order[newPath] = nb._order[ctxChapterPath]; delete nb._order[ctxChapterPath]; }
+            // Rename notes that use this chapter
+            const notes = activeNotes();
+            for (const n of notes) {
+                if (n.chapter === ctxChapterPath) n.chapter = newPath;
+                else if (n.chapter?.startsWith(ctxChapterPath + '::')) n.chapter = newPath + n.chapter.slice(ctxChapterPath.length);
+            }
+            flushData(); renderAll();
+        } else if (action === 'moveUp' || action === 'moveDown') {
+            const oldName = ctxChapterPath.split('::').pop();
+            const parentPath = ctxChapterPath.split('::').slice(0, -1).join('::');
+            const key = parentPath || '';
+            if (!nb._order[key]) nb._order[key] = [...Object.keys(buildChapterTree(activeNotes()).children)];
+            const arr = nb._order[key];
+            const idx = arr.indexOf(oldName);
+            if (idx < 0) { arr.push(oldName); renderAll(); }
+            const newIdx = action === 'moveUp' ? Math.max(0, idx - 1) : Math.min(arr.length - 1, idx + 1);
+            if (newIdx !== idx) { arr.splice(idx, 1); arr.splice(newIdx, 0, oldName); }
+            flushData(); renderAll();
+        } else if (action === 'delete') {
+            if (!confirm(`删除目录 "${ctxChapterPath}" 及其子目录？`)) { hideChapterMenu(); return; }
+            nb._chapters = nb._chapters.filter(c => c !== ctxChapterPath && !c.startsWith(ctxChapterPath + '::'));
+            flushData(); renderAll();
+        }
+        hideChapterMenu();
     });
 
     // Expose to admin.html button

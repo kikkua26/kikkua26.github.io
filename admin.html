@@ -177,6 +177,10 @@ body {
 .cm-subfield.cm-drag-over { border-color: var(--accent); border-style: dashed; }
 .cm-empty-chapter { opacity: 0.6; font-style: italic; }
 .cm-empty-hint { font-size: 9px; color: var(--text3); margin-left: auto; }
+.cm-ctx-menu .cm-ctx-item { display:flex;align-items:center;gap:8px;padding:7px 14px;font-size:12px;cursor:pointer;border-radius:4px;color:var(--text);transition:background .1s; }
+.cm-ctx-menu .cm-ctx-item:hover { background: var(--bg); }
+.cm-ctx-menu .cm-ctx-divider { height:1px;background:var(--border);margin:4px 0; }
+.cm-ctx-menu .cm-ctx-danger { color:var(--accent,#c5532c); }
 .cm-form-actions { display: flex; gap: 8px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border); flex-wrap: wrap; }
 .cm-toast { position: fixed; bottom: 24px; right: 24px; background: #2c3e50; color: #fff; padding: 10px 18px; border-radius: var(--radius); font-size: 13px; z-index: 9999; opacity: 0; transform: translateY(16px); transition: .3s; pointer-events: none; font-weight: 500; }
 .cm-toast.show { opacity: 1; transform: translateY(0); }
@@ -474,11 +478,10 @@ body {
                         </div>
                         <div class="cm-sidebar-header">
                             <span style="font-weight:600;font-size:13px;">📂 章节目录</span>
-                            <div style="display:flex;gap:6px;align-items:center;">
-                                <span class="cm-note-count" id="cmNoteCount">0条笔记</span>
-                                <button class="btn btn-secondary btn-xs" id="cmBtnNewChapter" style="font-size:10px;">＋章节</button>
-                            </div>
+                            <span class="cm-note-count" id="cmNoteCount">0条笔记</span>
                         </div>
+                        <!-- Chapter context menu -->
+                        <div class="cm-ctx-menu" id="cmChapterMenu" style="display:none;position:fixed;z-index:4000;background:var(--surface);border:1px solid var(--border);border-radius:6px;box-shadow:0 4px 20px rgba(0,0,0,.15);padding:4px;min-width:140px;"></div>
                         <div class="cm-tree" id="cmTree"></div>
                     </div>
 
