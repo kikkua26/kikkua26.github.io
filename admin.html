@@ -478,7 +478,10 @@ body {
                         </div>
                         <div class="cm-sidebar-header">
                             <span style="font-weight:600;font-size:13px;">📂 章节目录</span>
-                            <span class="cm-note-count" id="cmNoteCount">0条笔记</span>
+                            <div style="display:flex;gap:6px;align-items:center;">
+                                <span class="cm-note-count" id="cmNoteCount">0条笔记</span>
+                                <button class="btn btn-xs" id="cmBtnAddRoot" style="padding:2px 8px;font-size:16px;line-height:1;background:var(--accent);color:#fff;border:none;border-radius:4px;cursor:pointer;">+</button>
+                            </div>
                         </div>
                         <!-- Chapter context menu -->
                         <div class="cm-ctx-menu" id="cmChapterMenu" style="display:none;position:fixed;z-index:4000;background:var(--surface);border:1px solid var(--border);border-radius:6px;box-shadow:0 4px 20px rgba(0,0,0,.15);padding:4px;min-width:140px;"></div>

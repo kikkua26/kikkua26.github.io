@@ -1052,6 +1052,18 @@ function setupEvents() {
         hideChapterMenu();
     });
 
+    // + button in sidebar header
+    on('#cmBtnAddRoot', 'click', () => {
+        const name = prompt('根目录名称：', '');
+        if (!name || !name.trim()) return;
+        const nb = state.notebooks[state.activeNotebook];
+        if (!nb._chapters) nb._chapters = [];
+        const p = name.trim();
+        if (!nb._chapters.includes(p)) nb._chapters.push(p);
+        state.expandedChapters.add(p);
+        flushData(); renderAll();
+    });
+
     // Expose to admin.html button
     window._cmQuickPaste = showQuickPaste;
 
