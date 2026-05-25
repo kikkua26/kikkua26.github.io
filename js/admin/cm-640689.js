@@ -183,14 +183,18 @@ function getChOrder() {
 }
 
 function getSortedChildKeys(node, parentPath) {
-    const order = getChOrder()[parentPath || ''] || [];
+    const chOrder = getChOrder();
+    const key = parentPath || '';
+    if (!chOrder[key]) chOrder[key] = [];
+    const order = chOrder[key];
     const keys = [...Object.keys(node.children)];
+    // Auto-add existing chapters not in order to the end
+    for (const k of keys) {
+        if (!order.includes(k)) order.push(k);
+    }
     keys.sort((a, b) => {
         const ia = order.indexOf(a), ib = order.indexOf(b);
-        if (ia >= 0 && ib >= 0) return ia - ib;
-        if (ia >= 0) return -1;
-        if (ib >= 0) return 1;
-        return a.localeCompare(b, 'zh-CN');
+        return ia - ib;
     });
     return keys;
 }
@@ -258,7 +262,8 @@ function renderAll() {
     // Tree
     const treeEl = rootEl.querySelector('#cmTree');
     if (!treeEl) return;
-    if (!notes.length) {
+    const hasChapters = Object.keys(tree.children).length > 0;
+    if (!notes.length && !hasChapters) {
         treeEl.innerHTML = '<div class="cm-empty"><div class="cm-empty-icon">📝</div><p>暂无笔记</p><p style="font-size:12px;">新建笔记或导入CSV开始使用</p></div>';
     } else {
         let html = '';
@@ -963,7 +968,9 @@ function setupEvents() {
     let ctxChapterPath = '';
 
     function hideChapterMenu() { if (chapterMenu) chapterMenu.style.display = 'none'; }
-    document.addEventListener('click', hideChapterMenu);
+    document.addEventListener('click', e => {
+        if (!e.target.closest('#cmChapterMenu')) hideChapterMenu();
+    });
 
     rootEl.addEventListener('contextmenu', e => {
         const chapRow = e.target.closest('.cm-chapter');
