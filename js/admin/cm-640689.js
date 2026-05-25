@@ -982,6 +982,7 @@ function setupEvents() {
             menuItems.push({ label: '📂 移动到...', action: 'noteMove', noteId });
         } else if (chapRow) {
             ctxChapterPath = chapRow.dataset.path;
+            menuItems.push({ label: '📝 在此目录下新建笔记', action: 'addNote' });
             menuItems.push({ label: '📂 新建子目录', action: 'addSub' });
             menuItems.push({ label: '✏️ 重命名', action: 'rename' });
             menuItems.push({ label: '⬆ 上移', action: 'moveUp' });
@@ -1037,18 +1038,35 @@ function setupEvents() {
             const notes = activeNotes();
             const note = notes.find(n => n.id === item.dataset.noteId);
             if (note) { note.chapter = (newChapter || '').trim(); flushData(); renderAll(); }
+        } else if (action === 'addNote') {
+            hideChapterMenu();
+            rootEl.querySelector('#cmInputChapter').value = ctxChapterPath;
+            rootEl.querySelector('#cmInputMain').value = '';
+            rootEl.querySelector('#cmKnowledgeFields').innerHTML = '';
+            rootEl.querySelector('#cmExtendedFields').innerHTML = '';
+            addSubfield('knowledge', true); addSubfield('extended', true);
+            rootEl.querySelector('#cmBtnDelete').style.display = 'none';
+            state.currentNoteId = null; clearDraft();
+            rootEl.querySelector('#cmInputMain').focus();
+            renderAll(); setTimeout(updatePreview, 30);
         } else if (action === 'addRoot') {
             const name = prompt('根目录名称：', '');
             if (!name || !name.trim()) { hideChapterMenu(); return; }
             const p = name.trim();
-            if (!nb._chapters.includes(p)) nb._chapters.push(p);
+            if (!nb._chapters.includes(p)) { nb._chapters.push(p); }
+            // Add to end of root order
+            if (!nb._order['']) nb._order[''] = [];
+            if (!nb._order[''].includes(p)) nb._order[''].push(p);
             state.expandedChapters.add(p);
             flushData(); renderAll();
         } else if (action === 'addSub') {
             const name = prompt('子目录名称：', '');
             if (!name || !name.trim()) { hideChapterMenu(); return; }
             const p = ctxChapterPath + '::' + name.trim();
-            if (!nb._chapters.includes(p)) nb._chapters.push(p);
+            if (!nb._chapters.includes(p)) { nb._chapters.push(p); }
+            // Add to end of parent order
+            if (!nb._order[ctxChapterPath]) nb._order[ctxChapterPath] = [];
+            if (!nb._order[ctxChapterPath].includes(name.trim())) nb._order[ctxChapterPath].push(name.trim());
             state.expandedChapters.add(p);
             state.expandedChapters.add(ctxChapterPath);
             flushData(); renderAll();
@@ -1097,8 +1115,11 @@ function setupEvents() {
         if (!name || !name.trim()) return;
         const nb = state.notebooks[state.activeNotebook];
         if (!nb._chapters) nb._chapters = [];
+        if (!nb._order) nb._order = {};
         const p = name.trim();
         if (!nb._chapters.includes(p)) nb._chapters.push(p);
+        if (!nb._order['']) nb._order[''] = [];
+        if (!nb._order[''].includes(p)) nb._order[''].push(p);
         state.expandedChapters.add(p);
         flushData(); renderAll();
     });
