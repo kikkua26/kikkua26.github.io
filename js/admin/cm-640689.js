@@ -1001,8 +1001,9 @@ function setupEvents() {
         }
 
         chapterMenu.innerHTML = menuItems.map((m, i) => {
-            if (i > 0 && m.danger && !menuItems[i-1].danger) return `<div class="cm-ctx-divider"></div><div class="cm-ctx-item${m.danger?' cm-ctx-danger':''}" data-cm-action="${m.action}">${m.label}</div>`;
-            return `<div class="cm-ctx-item${m.danger?' cm-ctx-danger':''}" data-cm-action="${m.action}">${m.label}</div>`;
+            const noteIdAttr = m.noteId ? ` data-note-id="${m.noteId}"` : '';
+            if (i > 0 && m.danger && !menuItems[i-1].danger) return `<div class="cm-ctx-divider"></div><div class="cm-ctx-item${m.danger?' cm-ctx-danger':''}" data-cm-action="${m.action}"${noteIdAttr}>${m.label}</div>`;
+            return `<div class="cm-ctx-item${m.danger?' cm-ctx-danger':''}" data-cm-action="${m.action}"${noteIdAttr}>${m.label}</div>`;
         }).join('');
 
         chapterMenu.style.display = 'block';
@@ -1109,8 +1110,13 @@ function setupEvents() {
             if (newIdx !== idx) { arr.splice(idx, 1); arr.splice(newIdx, 0, oldName); }
             flushData(); renderAll();
         } else if (action === 'delete') {
-            if (!confirm(`删除目录 "${ctxChapterPath}" 及其子目录？`)) { hideChapterMenu(); return; }
+            const notes = activeNotes();
+            const notesUnder = notes.filter(n => n.chapter === ctxChapterPath || n.chapter?.startsWith(ctxChapterPath + '::'));
+            const warn = notesUnder.length ? `（将同时删除该目录下的 ${notesUnder.length} 条笔记）` : '';
+            if (!confirm(`删除目录 "${ctxChapterPath}" 及其子目录？${warn}`)) { hideChapterMenu(); return; }
             nb._chapters = nb._chapters.filter(c => c !== ctxChapterPath && !c.startsWith(ctxChapterPath + '::'));
+            // Delete notes under this chapter
+            state.notebooks[state.activeNotebook] = notes.filter(n => n.chapter !== ctxChapterPath && !n.chapter?.startsWith(ctxChapterPath + '::'));
             flushData(); renderAll();
         }
         hideChapterMenu();
