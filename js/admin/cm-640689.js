@@ -917,6 +917,7 @@ function setupEvents() {
     on('#cmPasteApply', 'click', applyQuickPaste);
     on('#cmAiParse', 'click', aiParse);
     rootEl.querySelector('#cmPasteModal')?.addEventListener('click', e => { if (e.target === e.currentTarget) hideQuickPaste(); });
+    rootEl.querySelector('#cmBatchDirModal')?.addEventListener('click', e => { if (e.target === e.currentTarget) { const m = rootEl.querySelector('#cmBatchDirModal'); if (m) m.style.display = 'none'; } });
 
     // Drag-and-drop subfield reordering
     let dragSrc = null;
@@ -1122,19 +1123,45 @@ function setupEvents() {
         hideChapterMenu();
     });
 
-    // + button in sidebar header
+    // + button in sidebar header → batch import modal
     on('#cmBtnAddRoot', 'click', () => {
-        const name = prompt('根目录名称：', '');
-        if (!name || !name.trim()) return;
+        const modal = rootEl.querySelector('#cmBatchDirModal');
+        const input = rootEl.querySelector('#cmBatchDirInput');
+        if (modal && input) { modal.style.display = 'flex'; input.value = ''; input.focus(); }
+    });
+    on('#cmBatchDirCancel', 'click', () => { const m = rootEl.querySelector('#cmBatchDirModal'); if (m) m.style.display = 'none'; });
+    on('#cmBatchDirApply', 'click', () => {
+        const input = rootEl.querySelector('#cmBatchDirInput');
+        if (!input || !input.value.trim()) return;
+        const lines = input.value.split(/[\n\r]+/).map(l => l.trim()).filter(Boolean);
         const nb = state.notebooks[state.activeNotebook];
         if (!nb._chapters) nb._chapters = [];
         if (!nb._order) nb._order = {};
-        const p = name.trim();
-        if (!nb._chapters.includes(p)) nb._chapters.push(p);
         if (!nb._order['']) nb._order[''] = [];
-        if (!nb._order[''].includes(p)) nb._order[''].push(p);
-        state.expandedChapters.add(p);
+        const stack = []; // [{depth, path}] — current nesting path
+        let added = 0;
+        for (const line of lines) {
+            const m = line.match(/^(#{1,9})\s+(.+)/);
+            if (!m) continue;
+            const depth = m[1].length;
+            const name = m[2].trim();
+            // Pop stack until we find parent
+            while (stack.length > 0 && stack[stack.length - 1].depth >= depth) stack.pop();
+            const parentPath = stack.length > 0 ? stack[stack.length - 1].path : '';
+            const fullPath = parentPath ? parentPath + '::' + name : name;
+            // Add chapter
+            if (!nb._chapters.includes(fullPath)) { nb._chapters.push(fullPath); added++; }
+            // Add to parent order
+            const orderKey = parentPath || '';
+            if (!nb._order[orderKey]) nb._order[orderKey] = [];
+            if (!nb._order[orderKey].includes(name)) nb._order[orderKey].push(name);
+            // Push to stack
+            stack.push({ depth, path: fullPath });
+            state.expandedChapters.add(fullPath);
+        }
         flushData(); renderAll();
+        const m = rootEl.querySelector('#cmBatchDirModal'); if (m) m.style.display = 'none';
+        toast(`已导入 ${added} 个目录`, 'success');
     });
 
     // Expose to admin.html button
