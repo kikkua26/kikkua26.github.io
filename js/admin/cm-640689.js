@@ -186,10 +186,23 @@ function buildChapterTree(notes) {
         let cur = root; let acc = '';
         for (const p of parts) {
             acc = acc ? acc + '::' + p : p;
-            if (!cur.children[p]) cur.children[p] = { children: {}, notes: [], fullPath: acc, name: p };
+            if (!cur.children[p]) cur.children[p] = { children: {}, notes: [], fullPath: acc, name: p, isEmpty: true };
             cur = cur.children[p];
         }
         cur.notes.push(n);
+        cur.isEmpty = false; // Has real notes, not just empty
+    }
+    // Add empty chapters
+    const emptyChapters = state.notebooks[state.activeNotebook]?._chapters || [];
+    for (const ecp of emptyChapters) {
+        const parts = ecp.split('::').map(p => p.trim()).filter(Boolean);
+        if (!parts.length) continue;
+        let cur = root; let acc = '';
+        for (const p of parts) {
+            acc = acc ? acc + '::' + p : p;
+            if (!cur.children[p]) cur.children[p] = { children: {}, notes: [], fullPath: acc, name: p, isEmpty: true };
+            cur = cur.children[p];
+        }
     }
     return root;
 }
@@ -253,12 +266,14 @@ function renderChapterNode(node, depth) {
     const hasKids = Object.keys(node.children).length > 0;
     const cnt = countTreeNotes(node);
     const expanded = state.expandedChapters.has(node.fullPath);
+    const emptyClass = node.isEmpty && cnt === 0 ? ' cm-empty-chapter' : '';
     let h = `<div class="cm-chapter" data-path="${esc(node.fullPath)}">`;
-    h += `<div class="cm-tree-row" style="padding-left:${12 + depth * 16}px;" data-action="chapter-click" data-path="${esc(node.fullPath)}">`;
+    h += `<div class="cm-tree-row${emptyClass}" style="padding-left:${12 + depth * 16}px;" data-action="chapter-click" data-path="${esc(node.fullPath)}">`;
     h += `<span class="cm-toggle${hasKids ? (expanded ? ' expanded' : '') : ''}" data-action="chapter-toggle" data-path="${esc(node.fullPath)}">▶</span>`;
-    h += `<span class="cm-icon">📁</span>`;
+    h += `<span class="cm-icon">${node.isEmpty && cnt === 0 ? '📂' : '📁'}</span>`;
     h += `<span class="cm-label">${esc(node.name)}</span>`;
     if (cnt > 0) h += `<span class="cm-badge">${cnt}</span>`;
+    h += `<span class="cm-empty-hint">${node.isEmpty && cnt === 0 ? '空' : ''}</span>`;
     h += `</div></div>`;
     h += `<div class="cm-children${expanded ? ' expanded' : ''}" data-children="${esc(node.fullPath)}">`;
     for (const n of node.notes) h += renderNoteNode(n, depth + 1);
@@ -724,6 +739,17 @@ function setupEvents() {
 
         if (action === 'chapter-click') {
             const path = row.dataset.path;
+            if (e.button === 2 || e.ctrlKey) {
+                e.preventDefault();
+                const nb = state.notebooks[state.activeNotebook];
+                if (nb._chapters && nb._chapters.includes(path)) {
+                    if (confirm(`删除空章节 "${path}"？`)) {
+                        nb._chapters = nb._chapters.filter(c => c !== path && !c.startsWith(path + '::'));
+                        flushData(); renderAll();
+                    }
+                }
+                return;
+            }
             rootEl.querySelector('#cmInputChapter').value = path;
             rootEl.querySelector('#cmInputMain').value = '';
             rootEl.querySelector('#cmKnowledgeFields').innerHTML = '';
@@ -912,6 +938,18 @@ function setupEvents() {
         if (sf) sf.classList.remove('cm-dragging');
         rootEl.querySelectorAll('.cm-drag-over').forEach(el => el.classList.remove('cm-drag-over'));
         dragSrc = null;
+    });
+
+    // New chapter button
+    on('#cmBtnNewChapter', 'click', () => {
+        const path = prompt('新章节路径（多级用::分隔）：', '');
+        if (!path || !path.trim()) return;
+        const nb = state.notebooks[state.activeNotebook];
+        if (!nb._chapters) nb._chapters = [];
+        const p = path.trim();
+        if (!nb._chapters.includes(p)) { nb._chapters.push(p); flushData(); }
+        state.expandedChapters.add(p); // Auto-expand
+        renderAll();
     });
 
     // Expose to admin.html button

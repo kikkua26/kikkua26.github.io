@@ -175,6 +175,8 @@ body {
 .cm-sf-drag:active { cursor: grabbing; }
 .cm-subfield.cm-dragging { opacity: 0.4; }
 .cm-subfield.cm-drag-over { border-color: var(--accent); border-style: dashed; }
+.cm-empty-chapter { opacity: 0.6; font-style: italic; }
+.cm-empty-hint { font-size: 9px; color: var(--text3); margin-left: auto; }
 .cm-form-actions { display: flex; gap: 8px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border); flex-wrap: wrap; }
 .cm-toast { position: fixed; bottom: 24px; right: 24px; background: #2c3e50; color: #fff; padding: 10px 18px; border-radius: var(--radius); font-size: 13px; z-index: 9999; opacity: 0; transform: translateY(16px); transition: .3s; pointer-events: none; font-weight: 500; }
 .cm-toast.show { opacity: 1; transform: translateY(0); }
@@ -472,7 +474,10 @@ body {
                         </div>
                         <div class="cm-sidebar-header">
                             <span style="font-weight:600;font-size:13px;">📂 章节目录</span>
-                            <span class="cm-note-count" id="cmNoteCount">0条笔记</span>
+                            <div style="display:flex;gap:6px;align-items:center;">
+                                <span class="cm-note-count" id="cmNoteCount">0条笔记</span>
+                                <button class="btn btn-secondary btn-xs" id="cmBtnNewChapter" style="font-size:10px;">＋章节</button>
+                            </div>
                         </div>
                         <div class="cm-tree" id="cmTree"></div>
                     </div>
