@@ -35,19 +35,20 @@ function setOptCols(n) {
 function buildColGroup(optCount) {
     const cg = document.getElementById('colgroup');
     const visibleOpts = optCount != null ? optCount : (7 - hiddenOptCols);
-    const flexCols = 8 + visibleOpts; // non-fixed columns
-    const flexW = `calc((100% - 68px) / ${flexCols})`;
-    let html = '<col style="width:38px">'; // idx
-    html += '<col style="width:' + flexW + '">'; // chapter
-    html += '<col style="width:' + flexW + '">'; // type
-    html += '<col style="width:' + flexW + '">'; // question
-    html += '<col style="width:' + flexW + '">'; // clozetext
-    for (let i = 0; i < visibleOpts; i++) html += '<col style="width:' + flexW + '">'; // optA..optG
-    html += '<col style="width:' + flexW + '">'; // answer
-    html += '<col style="width:' + flexW + '">'; // answertext
-    html += '<col style="width:' + flexW + '">'; // analysis
-    html += '<col style="width:' + flexW + '">'; // reference
-    html += '<col style="width:30px">'; // actions
+    const flexCols = 8 + visibleOpts; // chapter, type, question, clozetext, opts, answer, answertext, analysis, reference
+    // idx=3%, actions=2.5%, remaining 94.5% split equally among flex columns
+    const flexPct = (94.5 / flexCols).toFixed(3);
+    let html = '<col style="width:3%">';
+    html += '<col style="width:' + flexPct + '%">'; // chapter
+    html += '<col style="width:' + flexPct + '%">'; // type
+    html += '<col style="width:' + flexPct + '%">'; // question
+    html += '<col style="width:' + flexPct + '%">'; // clozetext
+    for (let i = 0; i < visibleOpts; i++) html += '<col style="width:' + flexPct + '%">';
+    html += '<col style="width:' + flexPct + '%">'; // answer
+    html += '<col style="width:' + flexPct + '%">'; // answertext
+    html += '<col style="width:' + flexPct + '%">'; // analysis
+    html += '<col style="width:' + flexPct + '%">'; // reference
+    html += '<col style="width:2.5%">'; // actions
     cg.innerHTML = html;
 }
 
