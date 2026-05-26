@@ -3,7 +3,7 @@
 
 import { replaceFields, wrapWithCSS, escapeRegex } from '../card.js';
 
-const STORAGE_KEY = 'kikkua_cardmaker_data_v1';
+const STORAGE_KEY = 'kikkua_cardmaker_data_v2';
 const DRAFT_KEY = 'kikkua_cardmaker_draft';
 const TEMPLATE_NAME = 'kikkua高级模板';
 
@@ -45,26 +45,45 @@ function loadData() {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (raw) {
             state.notebooks = JSON.parse(raw);
-            // Migrate old format: array → {notes:[], _chapters:[], _order:{}}
-            for (const k of Object.keys(state.notebooks)) {
-                if (Array.isArray(state.notebooks[k])) {
-                    state.notebooks[k] = { notes: state.notebooks[k], _chapters: [], _order: {} };
-                }
-                const nb = state.notebooks[k];
-                if (!Array.isArray(nb.notes)) nb.notes = [];
-                if (!Array.isArray(nb._chapters)) nb._chapters = [];
-                if (!nb._order || typeof nb._order !== 'object') nb._order = {};
-            }
-            const names = Object.keys(state.notebooks);
-            if (names.length === 0) {
+        } else {
+            // Try migrating from old v1 key
+            const oldRaw = localStorage.getItem('kikkua_cardmaker_data_v1');
+            if (oldRaw) {
+                try {
+                    const old = JSON.parse(oldRaw);
+                    state.notebooks = {};
+                    for (const k of Object.keys(old)) {
+                        const val = old[k];
+                        state.notebooks[k] = {
+                            notes: Array.isArray(val) ? val : (Array.isArray(val?.notes) ? val.notes : []),
+                            _chapters: Array.isArray(val?._chapters) ? val._chapters : [],
+                            _order: (val?._order && typeof val._order === 'object' && !Array.isArray(val._order)) ? val._order : {},
+                        };
+                    }
+                    state.activeNotebook = Object.keys(state.notebooks)[0] || '默认笔记本';
+                } catch { state.notebooks = createDefaultData(); state.activeNotebook = '默认笔记本'; }
+            } else {
                 state.notebooks = createDefaultData();
                 state.activeNotebook = '默认笔记本';
-            } else if (!state.notebooks[state.activeNotebook]) {
-                state.activeNotebook = names[0];
             }
-        } else {
-            state.notebooks = createDefaultData();
-            state.activeNotebook = '默认笔记本';
+        }
+        // Validate
+        for (const k of Object.keys(state.notebooks)) {
+            const nb = state.notebooks[k];
+            if (!nb || Array.isArray(nb)) {
+                state.notebooks[k] = { notes: Array.isArray(nb) ? nb : [], _chapters: [], _order: {} };
+            }
+            if (!Array.isArray(state.notebooks[k].notes)) state.notebooks[k].notes = [];
+            if (!Array.isArray(state.notebooks[k]._chapters)) state.notebooks[k]._chapters = [];
+            if (!state.notebooks[k]._order || Array.isArray(state.notebooks[k]._order) || typeof state.notebooks[k]._order !== 'object') {
+                state.notebooks[k]._order = {};
+            }
+        }
+        if (!state.notebooks[state.activeNotebook]) {
+            state.activeNotebook = Object.keys(state.notebooks)[0] || '默认笔记本';
+        }
+        if (!state.notebooks['默认笔记本']) {
+            state.notebooks['默认笔记本'] = { notes: [], _chapters: [], _order: {} };
         }
     } catch {
         state.notebooks = createDefaultData();
