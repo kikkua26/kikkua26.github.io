@@ -73,6 +73,7 @@ export async function renderDeckList(filterPath) {
                         </div>
                         <div></div>
                         <div class="header-right">
+                            <a href="/pro" class="header-about-link" style="margin-right:4px;">Pro</a>
                             <a href="/about" class="header-about-link">关于</a>
                         </div>
                     </div>

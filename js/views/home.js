@@ -37,6 +37,7 @@ export function renderHome() {
 
             <footer class="footer">
                 <a href="/about" class="footer-about-link">关于</a>
+                <a href="/pro" class="footer-about-link">kikkua Pro</a>
                 <p class="footer-quote">${SITE.footerQuote}</p>
             </footer>
         </div>

@@ -4,6 +4,7 @@ import { renderDeckList } from './views/decks.js';
 import { renderDeckDetail } from './views/detail.js';
 import { renderStudy } from './views/study.js';
 import { renderAbout } from './views/about.js';
+import { renderPro } from './views/pro.js';
 import { setRouteHandler } from './navigation.js';
 import { ROUTES, SITE, UI } from './config.js';
 
@@ -30,6 +31,9 @@ async function handleRoute() {
         } else if (path === ROUTES.about || path.startsWith(ROUTES.about + '?')) {
             setPageMeta(UI.about.title, '');
             await renderAbout();
+        } else if (path === ROUTES.pro || path.startsWith(ROUTES.pro + '?')) {
+            setPageMeta('kikkua Pro', '专业制卡工具集');
+            renderPro();
         } else {
             history.pushState(null, '', '/');
             handleRoute();

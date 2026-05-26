@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片遮挡编辑工具 - 增强版</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#10B981',
+                        neutral: '#6B7280',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .scrollbar-hide {
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+            }
+            .scrollbar-hide::-webkit-scrollbar {
+                display: none;
+            }
+            .canvas-container {
+                position: relative;
+                overflow: hidden;
+                background-color: #f8f9fa;
+                max-width: 100%;
+                height: 100%; /* 使用100%高度填充父容器 */
+            }
+            .rectangle {
+                position: absolute;
+                border: 1px dashed rgba(0, 0, 0, 0.5);
+                border-radius: 8px;
+                cursor: move;
+                transition: opacity 0.2s;
+                pointer-events: auto;
+            }
+            .rectangle:hover {
+                opacity: 0.8;
+                border-color: rgba(0, 0, 0, 0.8);
+            }
+            .color-picker {
+                -webkit-appearance: none;
+                -moz-appearance: none;
+                appearance: none;
+                width: 40px;
+                height: 40px;
+                border: none;
+                cursor: pointer;
+                background-color: transparent;
+                border-radius: 4px;
+            }
+            .color-picker::-webkit-color-swatch-wrapper {
+                padding: 0;
+            }
+            .color-picker::-webkit-color-swatch {
+                border-radius: 4px;
+                border: 1px solid rgba(0, 0, 0, 0.2);
+            }
+            .color-picker::-moz-color-swatch {
+                border-radius: 4px;
+                border: 1px solid rgba(0, 0, 0, 0.2);
+            }
+            .collapsible {
+                transition: max-height 0.3s ease-out;
+                overflow: hidden;
+            }
+            .collapsed {
+                max-height: 0;
+            }
+            .expanded {
+                max-height: 500px;
+            }
+
+            .fixed-top {
+                position: sticky;
+                top: 0;
+                z-index: 20;
+                background: white;
+            }
+            .main-content {
+                margin-top: 0;
+                padding-top: 0;
+            }
+            .opacity-panel {
+                position: absolute;
+                right: 100%;
+                top: 50%;
+                transform: translateY(-50%);
+                background: transparent;
+                border: none;
+                box-shadow: none;
+                padding: 4px;
+                min-width: 120px;
+                z-index: 30;
+                display: none;
+                margin-right: 4px;
+            }
+            .opacity-panel.show {
+                display: block;
+            }
+            .opacity-panel-mobile {
+                position: absolute;
+                top: 100%;
+                right: 0;
+                background: transparent;
+                border: none;
+                box-shadow: none;
+                padding: 4px;
+                min-width: 120px;
+                z-index: 30;
+                display: none;
+                margin-top: 4px;
+            }
+            .opacity-panel-mobile.show {
+                display: block;
+            }
+            .opacity-button {
+                position: relative;
+            }
+            
+            /* 美化滑块样式 */
+            input[type="range"] {
+                -webkit-appearance: none;
+                appearance: none;
+                background: transparent;
+                cursor: pointer;
+                height: 12px;
+                margin: 0;
+                padding: 0;
+            }
+            
+            input[type="range"]::-webkit-slider-track {
+                width: 100%;
+                height: 12px;
+                cursor: pointer;
+                background: #e5e7eb;
+                border-radius: 6px;
+                border: none;
+                box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+            }
+            
+            input[type="range"]::-webkit-slider-thumb {
+                -webkit-appearance: none;
+                appearance: none;
+                height: 18px;
+                width: 18px;
+                border-radius: 50%;
+                background: #3b82f6;
+                cursor: pointer;
+                border: 2px solid white;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+                margin-top: -3px;
+            }
+            
+            input[type="range"]::-moz-range-track {
+                width: 100%;
+                height: 12px;
+                cursor: pointer;
+                background: #e5e7eb;
+                border-radius: 6px;
+                border: none;
+                box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+            }
+            
+            input[type="range"]::-moz-range-thumb {
+                height: 18px;
+                width: 18px;
+                border-radius: 50%;
+                background: #3b82f6;
+                cursor: pointer;
+                border: 2px solid white;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            }
+            
+            /* 确保滑块轨道可见 */
+            input[type="range"] {
+                background: #e5e7eb;
+                border-radius: 6px;
+                box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+            }
+            
+            /* 顶部发光科技线（浅色） */
+            .tech-glow-bar {
+                position: fixed;
+                top: 0; left: 0; right: 0;
+                height: 5px;
+                z-index: 100;
+                background: linear-gradient(90deg, #60a5fa 0%, #5eead4 100%);
+                box-shadow: 0 0 24px 8px #60a5fa55;
+                opacity: 0.5;
+            }
+            /* 玻璃拟态卡片 */
+            .glass-card {
+                background: rgba(255,255,255,0.6);
+                border-radius: 1rem;
+                box-shadow: 0 4px 32px 0 rgba(31, 38, 135, 0.08);
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
+                border: 1px solid rgba(255,255,255,0.4);
+            }
+        }
+    </style>
+</head>
+<body class="font-sans text-gray-800 min-h-screen flex flex-col" style="background:#f4f7fa;">
+    <div class="tech-glow-bar"></div>
+    <!-- 固定的顶部操作区域 -->
+    <div class="fixed-top">
+        <!-- 头部操作按钮 -->
+        <header class="bg-white shadow-sm border-b border-gray-200">
+            <div class="container mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+                <h1 class="text-xl font-bold text-gray-800">图片遮挡编辑工具</h1>
+                <div class="flex flex-wrap gap-3">
+                    <label for="image-upload" class="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-md flex items-center cursor-pointer transition-all duration-200">
+                        <i class="fa fa-upload mr-2"></i>
+                        <span>导入图片</span>
+                    </label>
+                    <input type="file" id="image-upload" accept="image/*" class="hidden">
+                    <button id="copy-to-clipboard" class="bg-secondary hover:bg-secondary/90 text-white px-4 py-2 rounded-md flex items-center transition-all duration-200">
+                        <i class="fa fa-clipboard mr-2"></i>
+                        <span>复制数据</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+
+    </div>
+
+    <!-- 主要内容区域 -->
+    <main class="main-content flex-1 container mx-auto px-4 flex gap-4 max-w-7xl pt-4">
+
+        <!-- 移动端顶部工具栏 -->
+        <div class="lg:hidden fixed top-16 left-0 right-0 glass-card border-b border-gray-200 py-2 px-4 z-20">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div id="preset-colors-mobile" class="flex gap-2">
+                        <div class="color-option bg-[#FF6B6B] rounded-full w-8 h-8 cursor-pointer border-2 border-white hover:ring-2 hover:ring-offset-2 hover:ring-gray-300 transition-all" data-color="#FF6B6B"></div>
+                        <div class="color-option bg-[#FFD166] rounded-full w-8 h-8 cursor-pointer border-2 border-white hover:ring-2 hover:ring-offset-2 hover:ring-gray-300 transition-all" data-color="#FFD166"></div>
+                        <div class="color-option bg-[#06D6A0] rounded-full w-8 h-8 cursor-pointer border-2 border-white hover:ring-2 hover:ring-offset-2 hover:ring-gray-300 transition-all" data-color="#06D6A0"></div>
+                        <div class="color-option bg-[#118AB2] rounded-full w-8 h-8 cursor-pointer border-2 border-white hover:ring-2 hover:ring-offset-2 hover:ring-gray-300 transition-all" data-color="#118AB2"></div>
+                        <div class="color-option bg-[#073B4C] rounded-full w-8 h-8 cursor-pointer border-2 border-white hover:ring-2 hover:ring-offset-2 hover:ring-gray-300 transition-all" data-color="#073B4C"></div>
+                        <div class="color-option bg-[#EF476F] rounded-full w-8 h-8 cursor-pointer border-2 border-white hover:ring-2 hover:ring-offset-2 hover:ring-gray-300 transition-all" data-color="#EF476F"></div>
+                        <div class="color-option bg-[#FF9F1C] rounded-full w-8 h-8 cursor-pointer border-2 border-white hover:ring-2 hover:ring-offset-2 hover:ring-gray-300 transition-all" data-color="#FF9F1C"></div>
+                        <div class="color-option bg-[#1A936F] rounded-full w-8 h-8 cursor-pointer border-2 border-white hover:ring-2 hover:ring-offset-2 hover:ring-gray-300 transition-all" data-color="#1A936F"></div>
+                    </div>
+                    
+                    <!-- 预设颜色与自定义颜色分割线 -->
+                    <div class="border-l border-gray-300 h-6 mx-1"></div>
+                    
+                    <input type="color" id="custom-color-mobile" class="color-picker w-8 h-8" value="#FF6B6B">
+                </div>
+                
+                <div class="flex items-center gap-3">
+                    <div class="border-l border-gray-300 h-6 mx-2"></div>
+                    <div class="opacity-button relative">
+                        <button id="opacity-toggle-mobile" class="bg-gray-100 hover:bg-gray-200 text-gray-700 w-8 h-8 rounded-md flex items-center justify-center transition-all duration-200">
+                            <i class="fa fa-adjust"></i>
+                        </button>
+                        <div id="opacity-panel-mobile" class="opacity-panel-mobile">
+                            <div class="flex flex-col items-center" style="margin: 0; padding: 0;">
+                                <input type="range" id="opacity-slider-mobile" min="0.1" max="1" step="0.1" value="0.5" class="w-20 bg-gray-200 rounded-lg" style="margin: 0; padding: 0;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 内容区域 -->
+        <div class="flex-1 flex flex-col gap-4">
+            <!-- 图片编辑区域 -->
+            <div class="glass-card overflow-hidden flex-1 flex flex-col">
+                <div class="bg-gray-100 px-4 py-3 border-b border-gray-200 flex justify-between items-center">
+                    <h2 class="font-semibold text-gray-700">图片编辑区域</h2>
+                    <div class="flex space-x-2">
+                        <button id="clear-all" class="text-sm text-gray-600 hover:text-red-500 transition-colors">
+                            <i class="fa fa-trash mr-1"></i>清除全部
+                        </button>
+                    </div>
+                </div>
+                <div id="canvas-container" class="canvas-container w-full mx-auto relative">
+                    <div id="image-container" class="absolute inset-0">
+                        <img id="image" src="" alt="编辑的图片" class="w-full h-full object-cover" style="display: none;">
+                    </div>
+                    <div id="drawing-area" class="absolute inset-0 cursor-crosshair"></div>
+                    <div id="drop-hint" class="absolute inset-0 flex items-center justify-center text-gray-500 text-lg font-medium cursor-pointer hover:bg-gray-100 transition-colors" onclick="document.getElementById('image-upload').click()">
+                        <div class="text-center">
+                            <i class="fa fa-cloud-upload text-4xl mb-4"></i>
+                            <p>拖拽图片到这里或点击上方按钮导入</p>
+                            <p class="text-sm mt-2 text-gray-400">点击此区域选择图片</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- JSON数据显示区域 -->
+            <div class="glass-card overflow-hidden">
+                <div class="bg-gray-100 px-4 py-3 border-b border-gray-200 flex justify-between items-center">
+                    <h2 class="font-semibold text-gray-700">遮挡块数据</h2>
+                    <button id="toggle-json" class="text-sm text-gray-600 hover:text-primary transition-colors lg:hidden">
+                        <i class="fa fa-chevron-down"></i>
+                    </button>
+                </div>
+                <div id="json-container" class="collapsible expanded">
+                    <div class="p-4">
+                        <pre id="json-output" class="bg-gray-50 rounded-md p-3 text-sm font-mono max-h-[200px] overflow-y-auto scrollbar-hide"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 桌面端侧边工具栏 -->
+    <div id="desktop-toolbar" class="hidden lg:block w-16 glass-card p-2 flex flex-col gap-3 fixed top-1/2 transform -translate-y-1/2 z-50">
+        <!-- 颜色选择区域 -->
+        <div class="flex flex-col gap-2">
+            <div id="preset-colors" class="grid grid-cols-1 gap-2">
+                <div class="color-option bg-[#FF6B6B] rounded-full w-10 h-10 cursor-pointer border-2 border-white hover:ring-2 hover:ring-offset-2 hover:ring-gray-300 transition-all" data-color="#FF6B6B"></div>
+                <div class="color-option bg-[#FFD166] rounded-full w-10 h-10 cursor-pointer border-2 border-white hover:ring-2 hover:ring-offset-2 hover:ring-gray-300 transition-all" data-color="#FFD166"></div>
+                <div class="color-option bg-[#06D6A0] rounded-full w-10 h-10 cursor-pointer border-2 border-white hover:ring-2 hover:ring-offset-2 hover:ring-gray-300 transition-all" data-color="#06D6A0"></div>
+                <div class="color-option bg-[#118AB2] rounded-full w-10 h-10 cursor-pointer border-2 border-white hover:ring-2 hover:ring-offset-2 hover:ring-gray-300 transition-all" data-color="#118AB2"></div>
+                <div class="color-option bg-[#073B4C] rounded-full w-10 h-10 cursor-pointer border-2 border-white hover:ring-2 hover:ring-offset-2 hover:ring-gray-300 transition-all" data-color="#073B4C"></div>
+                <div class="color-option bg-[#EF476F] rounded-full w-10 h-10 cursor-pointer border-2 border-white hover:ring-2 hover:ring-offset-2 hover:ring-gray-300 transition-all" data-color="#EF476F"></div>
+                <div class="color-option bg-[#FF9F1C] rounded-full w-10 h-10 cursor-pointer border-2 border-white hover:ring-2 hover:ring-offset-2 hover:ring-gray-300 transition-all" data-color="#FF9F1C"></div>
+                <div class="color-option bg-[#1A936F] rounded-full w-10 h-10 cursor-pointer border-2 border-white hover:ring-2 hover:ring-offset-2 hover:ring-gray-300 transition-all" data-color="#1A936F"></div>
+            </div>
+            
+            <!-- 预设颜色与自定义颜色分割线 -->
+            <div class="border-t border-gray-200 my-1"></div>
+            
+            <input type="color" id="custom-color" class="color-picker w-10 h-10" value="#FF6B6B">
+        </div>
+        
+        <!-- 分割线 -->
+        <div class="border-t border-gray-200 my-2"></div>
+        
+        <!-- 透明度调节 -->
+        <div class="flex flex-col gap-2">
+            <div class="opacity-button relative">
+                <button id="opacity-toggle" class="bg-gray-100 hover:bg-gray-200 text-gray-700 w-10 h-10 rounded-md flex items-center justify-center transition-all duration-200">
+                    <i class="fa fa-adjust"></i>
+                </button>
+                <div id="opacity-panel" class="opacity-panel">
+                    <div class="flex flex-col items-center" style="margin: 0; padding: 0;">
+                        <input type="range" id="opacity-slider" min="0.1" max="1" step="0.1" value="0.5" class="w-32 transform -rotate-90 origin-center bg-gray-200 rounded-lg" style="transform: rotate(-90deg); margin: 0; padding: 0;">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="glass-card border-t border-gray-200 py-4 mt-6">
+        <div class="container mx-auto px-4 text-center text-gray-500 text-sm">
+            <p>使用说明：导入图片后，选择颜色，在图片上拖动鼠标绘制遮挡块，完成后点击复制按钮获取数据</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 状态管理
+            const state = {
+                image: null,
+                rectangles: [],
+                currentColor: '#FF6B6B',
+                opacity: 0.5,
+                isDrawing: false,
+                isDragging: false, // 新增：跟踪是否真正在拖拽
+                startX: 0,
+                startY: 0,
+                currentRectangle: null,
+                imageRect: null,
+                scale: 1,
+                originalImageSize: null,
+                containerRect: null,
+                imageOffset: { x: 0, y: 0 } // 新增：图片在容器中的偏移量
+            };
+
+            // DOM 元素
+            const imageUpload = document.getElementById('image-upload');
+            const imageElement = document.getElementById('image');
+            const canvasContainer = document.getElementById('canvas-container');
+            const drawingArea = document.getElementById('drawing-area');
+            const jsonOutput = document.getElementById('json-output');
+            const copyToClipboard = document.getElementById('copy-to-clipboard');
+            const clearAll = document.getElementById('clear-all');
+            const presetColors = document.getElementById('preset-colors');
+            const customColor = document.getElementById('custom-color');
+            const opacitySlider = document.getElementById('opacity-slider');
+            const opacityToggle = document.getElementById('opacity-toggle');
+            const opacityPanel = document.getElementById('opacity-panel');
+            const opacityValue = document.getElementById('opacity-value');
+            const pasteImageButton = document.getElementById('paste-image');
+            const toggleJson = document.getElementById('toggle-json');
+            const jsonContainer = document.getElementById('json-container');
+            
+            // 移动端DOM元素
+            const presetColorsMobile = document.getElementById('preset-colors-mobile');
+            const customColorMobile = document.getElementById('custom-color-mobile');
+            const opacitySliderMobile = document.getElementById('opacity-slider-mobile');
+            const opacityToggleMobile = document.getElementById('opacity-toggle-mobile');
+            const opacityPanelMobile = document.getElementById('opacity-panel-mobile');
+            const opacityValueMobile = document.getElementById('opacity-value-mobile');
+
+            // 初始化
+            function init() {
+                setupEventListeners();
+                updateJsonOutput();
+                selectColor('#FF6B6B');
+                
+                // 初始化小屏幕折叠状态
+                if (window.innerWidth < 1024) {
+                    jsonContainer.classList.remove('expanded');
+                    jsonContainer.classList.add('collapsed');
+                }
+                
+
+                
+                // 延迟初始化容器高度，确保页面完全加载
+                setTimeout(() => {
+                    resetContainer();
+                    updateToolbarPosition();
+                }, 200);
+                
+                // 检测移动端并显示提示
+                if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+                    setTimeout(() => {
+                        showNotification('移动端用户：触摸拖拽即可绘制遮挡块 | 支持拖拽导入图片', 'info');
+                    }, 1000);
+                }
+            }
+
+            // 设置事件监听器
+            function setupEventListeners() {
+                // 图片上传
+                imageUpload.addEventListener('change', handleImageUpload);
+                
+                // 拖放功能
+                setupDragAndDrop();
+                
+                // 绘制矩形 - 监听mousedown和touchstart
+                drawingArea.addEventListener('mousedown', startDrawing);
+                drawingArea.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    const touch = e.touches[0];
+                    startDrawing({ clientX: touch.clientX, clientY: touch.clientY });
+                });
+                
+                // 监听mousemove和touchmove
+                document.addEventListener('mousemove', draw);
+                document.addEventListener('touchmove', function(e) {
+                    e.preventDefault();
+                    const touch = e.touches[0];
+                    draw({ clientX: touch.clientX, clientY: touch.clientY });
+                });
+                
+                // 监听mouseup和touchend
+                document.addEventListener('mouseup', stopDrawing);
+                document.addEventListener('touchend', stopDrawing);
+                
+                // 移动端特殊处理：防止页面滚动干扰绘制
+                drawingArea.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                }, { passive: false });
+                
+                drawingArea.addEventListener('touchmove', function(e) {
+                    e.preventDefault();
+                }, { passive: false });
+                
+                // 复制到剪切板
+                copyToClipboard.addEventListener('click', copyRectanglesToClipboard);
+                
+                // 清除所有矩形
+                clearAll.addEventListener('click', clearAllRectangles);
+                
+                // 颜色选择
+                presetColors.addEventListener('click', handleColorSelection);
+                customColor.addEventListener('input', handleCustomColorChange);
+                
+                // 移动端颜色选择
+                presetColorsMobile.addEventListener('click', handleColorSelection);
+                customColorMobile.addEventListener('input', handleCustomColorChange);
+                
+                // 不透明度调整
+                opacitySlider.addEventListener('input', handleOpacityChange);
+                
+                // 移动端不透明度调整
+                opacitySliderMobile.addEventListener('input', handleOpacityChange);
+                
+                // 透明度面板切换
+                opacityToggle.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    opacityPanel.classList.toggle('show');
+                });
+                
+                // 移动端透明度面板切换
+                opacityToggleMobile.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    opacityPanelMobile.classList.toggle('show');
+                });
+                
+                // 点击其他地方关闭透明度面板
+                document.addEventListener('click', function(e) {
+                    if (!opacityToggle.contains(e.target) && !opacityPanel.contains(e.target)) {
+                        opacityPanel.classList.remove('show');
+                    }
+                    if (!opacityToggleMobile.contains(e.target) && !opacityPanelMobile.contains(e.target)) {
+                        opacityPanelMobile.classList.remove('show');
+                    }
+                });
+                
+                // 粘贴图片 - 全局监听
+                document.addEventListener('paste', handlePaste);
+                
+                // 确保页面加载后立即可以响应粘贴
+                document.addEventListener('DOMContentLoaded', function() {
+                    // 请求剪贴板权限（可选）
+                    if (navigator.permissions && navigator.permissions.query) {
+                        navigator.permissions.query({ name: 'clipboard-read' }).then(result => {
+                            if (result.state === 'granted') {
+                                console.log('剪贴板权限已授予');
+                            }
+                        });
+                    }
+                });
+                
+                // 图片加载完成后更新尺寸
+                imageElement.addEventListener('load', function() {
+                    updateImageAndContainerRect();
+                    state.originalImageSize = {
+                        width: imageElement.naturalWidth,
+                        height: imageElement.naturalHeight
+                    };
+                    fitImageToContainer();
+                    updateRectangles();
+                    updateToolbarPosition();
+                });
+                
+                // 折叠面板
+                toggleJson.addEventListener('click', function() {
+                    jsonContainer.classList.toggle('collapsed');
+                    jsonContainer.classList.toggle('expanded');
+                });
+                
+                // 窗口大小变化
+                window.addEventListener('resize', function() {
+                    // 延迟处理，确保布局计算完成
+                    setTimeout(() => {
+                        if (state.image) {
+                            updateImageAndContainerRect();
+                            fitImageToContainer();
+                            updateRectangles();
+                        } else {
+                            // 如果没有图片，重新计算容器高度
+                            resetContainer();
+                        }
+                        updateToolbarPosition();
+                    }, 100);
+                });
+            }
+
+            // 更新图片和容器的位置信息
+            function updateImageAndContainerRect() {
+                state.imageRect = imageElement.getBoundingClientRect();
+                state.containerRect = canvasContainer.getBoundingClientRect();
+                
+                // 计算图片在容器中的偏移量
+                state.imageOffset.x = state.imageRect.left - state.containerRect.left;
+                state.imageOffset.y = state.imageRect.top - state.containerRect.top;
+            }
+
+            // 处理图片上传
+            function handleImageUpload(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    loadImage(file);
+                }
+            }
+
+            // 加载图片
+            function loadImage(file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    imageElement.src = event.target.result;
+                    imageElement.style.display = 'block'; // 显示图片
+                    document.getElementById('drop-hint').style.display = 'none'; // 隐藏提示
+                    imageElement.onload = function() {
+                        state.image = imageElement;
+                        updateImageAndContainerRect();
+                        state.originalImageSize = {
+                            width: imageElement.naturalWidth,
+                            height: imageElement.naturalHeight
+                        };
+                        clearAllRectangles();
+                        fitImageToContainer();
+                        updateRectangles();
+                    };
+                };
+                reader.readAsDataURL(file);
+            }
+            
+            // 获取外层容器的可用高度
+            function getAvailableHeight() {
+                const outerContainer = canvasContainer.closest('.flex-1');
+                const titleBarHeight = 60; // 标题栏高度
+                return outerContainer.clientHeight - titleBarHeight;
+            }
+            
+            // 重置容器到默认状态
+            function resetContainer() {
+                // 计算外层容器的可用高度
+                const availableHeight = getAvailableHeight();
+                
+                // 设置画布高度为外层容器的可用高度
+                canvasContainer.style.height = `${availableHeight}px`;
+                
+                imageElement.style.display = 'none'; // 隐藏图片
+                document.getElementById('drop-hint').style.display = 'flex'; // 显示提示
+                state.image = null;
+                state.originalImageSize = null;
+                
+                // 清除所有矩形
+                const rectangles = document.querySelectorAll('.rectangle');
+                rectangles.forEach(rect => rect.remove());
+                state.rectangles = [];
+                updateJsonOutput();
+            }
+
+            // 适应图片到容器
+            function fitImageToContainer() {
+                if (!state.image) return;
+
+                // 先重置高度，避免被前一张撑大
+                canvasContainer.style.height = 'auto';
+
+                updateImageAndContainerRect();
+
+                const containerWidth = canvasContainer.clientWidth;
+                const newWidth = containerWidth;
+                const newHeight = (newWidth / state.originalImageSize.width) * state.originalImageSize.height;
+
+                // 计算外层容器的可用高度作为最小高度
+                const minHeight = getAvailableHeight();
+
+                // 画布高度取图片高度和外层容器高度的较大值
+                const finalHeight = Math.max(newHeight, minHeight);
+
+                state.image.style.width = `${newWidth}px`;
+                state.image.style.height = `${newHeight}px`;
+
+                // 画布高度随图片变化，但至少与外层容器一样大
+                canvasContainer.style.height = `${finalHeight}px`;
+
+                state.scale = newWidth / state.originalImageSize.width;
+            }
+
+            // 设置拖放功能
+            function setupDragAndDrop() {
+                canvasContainer.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                    canvasContainer.classList.add('ring-2', 'ring-primary');
+                });
+                
+                canvasContainer.addEventListener('dragleave', function() {
+                    canvasContainer.classList.remove('ring-2', 'ring-primary');
+                });
+                
+                canvasContainer.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    canvasContainer.classList.remove('ring-2', 'ring-primary');
+                    
+                    const file = e.dataTransfer.files[0];
+                    if (file && file.type.match('image.*')) {
+                        loadImage(file);
+                    }
+                });
+            }
+
+            // 处理粘贴图片
+            function handlePaste(e) {
+                const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+                for (let item of items) {
+                    if (item.kind === 'file' && item.type.startsWith('image/')) {
+                        const file = item.getAsFile();
+                        if (file) {
+                            loadImage(file);
+                            showNotification('图片粘贴成功', 'success');
+                        }
+                        break;
+                    }
+                }
+            }
+
+            // 开始绘制矩形
+            function startDrawing(e) {
+                if (!state.image) return;
+                
+                // 更新图片和容器位置信息
+                updateImageAndContainerRect();
+                
+                // 计算鼠标/触摸在容器内的相对位置
+                const rect = drawingArea.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+                
+                // 检查鼠标/触摸是否在图片范围内
+                if (!isPointInImage(mouseX, mouseY)) {
+                    return;
+                }
+                
+                // 检查是否双击了现有矩形
+                if (e.target.classList.contains('rectangle')) {
+                    return;
+                }
+                
+                state.isDrawing = true;
+                state.isDragging = false; // 开始时设置为false，只有当鼠标移动时才认为是拖拽
+                state.startX = Math.max(mouseX, state.imageOffset.x);
+                state.startY = Math.max(mouseY, state.imageOffset.y);
+                
+                // 移动端：立即开始绘制，不需要拖拽阈值
+                if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+                    state.isDragging = true;
+                    
+                    // 创建新矩形
+                    state.currentRectangle = document.createElement('div');
+                    state.currentRectangle.className = 'rectangle';
+                    state.currentRectangle.style.backgroundColor = state.currentColor + Math.round(state.opacity * 255).toString(16).padStart(2, '0');
+                    state.currentRectangle.style.left = `${state.startX}px`;
+                    state.currentRectangle.style.top = `${state.startY}px`;
+                    state.currentRectangle.style.width = '0px';
+                    state.currentRectangle.style.height = '0px';
+                    
+                    drawingArea.appendChild(state.currentRectangle);
+                }
+            }
+
+            // 检查点是否在图片内
+            function isPointInImage(x, y) {
+                if (!state.imageRect || !state.containerRect) return false;
+                
+                return x >= state.imageOffset.x && 
+                       x <= state.imageOffset.x + state.imageRect.width && 
+                       y >= state.imageOffset.y && 
+                       y <= state.imageOffset.y + state.imageRect.height;
+            }
+
+            // 绘制矩形
+            function draw(e) {
+                if (!state.isDrawing || !state.image) return;
+                
+                // 更新图片和容器位置信息
+                updateImageAndContainerRect();
+                
+                // 计算鼠标在容器内的相对位置
+                const rect = drawingArea.getBoundingClientRect();
+                const currentX = e.clientX - rect.left;
+                const currentY = e.clientY - rect.top;
+                
+                // 桌面端：只有当鼠标移动了一定距离，才认为是真正的拖拽并创建矩形
+                const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+                const dragThreshold = isMobile ? 0 : 5; // 移动端不需要阈值
+                
+                if (!state.isDragging && 
+                    (Math.abs(currentX - state.startX) > dragThreshold || 
+                     Math.abs(currentY - state.startY) > dragThreshold)) {
+                    
+                    state.isDragging = true;
+                    
+                    // 创建新矩形（仅桌面端需要）
+                    if (!isMobile) {
+                        state.currentRectangle = document.createElement('div');
+                        state.currentRectangle.className = 'rectangle';
+                        state.currentRectangle.style.backgroundColor = state.currentColor + Math.round(state.opacity * 255).toString(16).padStart(2, '0');
+                        state.currentRectangle.style.left = `${state.startX}px`;
+                        state.currentRectangle.style.top = `${state.startY}px`;
+                        state.currentRectangle.style.width = '0px';
+                        state.currentRectangle.style.height = '0px';
+                        
+                        drawingArea.appendChild(state.currentRectangle);
+                    }
+                }
+                
+                // 如果已经开始拖拽，更新矩形大小
+                if (state.isDragging) {
+                    let width = currentX - state.startX;
+                    let height = currentY - state.startY;
+                    
+                    // 处理从右到左或从下到上的绘制
+                    if (width < 0) {
+                        state.currentRectangle.style.left = `${Math.max(currentX, state.imageOffset.x)}px`;
+                        width = -width;
+                    } else {
+                        state.currentRectangle.style.left = `${state.startX}px`;
+                    }
+                    
+                    if (height < 0) {
+                        state.currentRectangle.style.top = `${Math.max(currentY, state.imageOffset.y)}px`;
+                        height = -height;
+                    } else {
+                        state.currentRectangle.style.top = `${state.startY}px`;
+                    }
+                    
+                    // 限制矩形不超出图片范围
+                    width = Math.min(width, state.imageOffset.x + state.imageRect.width - state.startX);
+                    height = Math.min(height, state.imageOffset.y + state.imageRect.height - state.startY);
+                    
+                    state.currentRectangle.style.width = `${width}px`;
+                    state.currentRectangle.style.height = `${height}px`;
+                }
+            }
+
+            // 停止绘制矩形
+            function stopDrawing() {
+                if (!state.isDrawing) return;
+                
+                state.isDrawing = false;
+                
+                if (state.isDragging && state.currentRectangle) {
+                    const rect = state.currentRectangle.getBoundingClientRect();
+                    
+                    // 如果矩形太小，则删除（移动端使用更小的阈值）
+                    const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+                    const minSize = isMobile ? 5 : 10; // 移动端使用更小的最小尺寸
+                    
+                    if (rect.width < minSize || rect.height < minSize) {
+                        state.currentRectangle.remove();
+                        state.currentRectangle = null;
+                        state.isDragging = false;
+                        return;
+                    }
+                    
+                    // 更新图片和容器位置信息
+                    updateImageAndContainerRect();
+                    
+                    // 计算相对于图片的百分比位置和大小
+                    const x = (rect.left - state.containerRect.left - state.imageOffset.x) / state.imageRect.width;
+                    const y = (rect.top - state.containerRect.top - state.imageOffset.y) / state.imageRect.height;
+                    const w = rect.width / state.imageRect.width;
+                    const h = rect.height / state.imageRect.height;
+                    
+                    // 存储矩形数据
+                    state.rectangles.push({
+                        x: parseFloat(x.toFixed(4)),
+                        y: parseFloat(y.toFixed(4)),
+                        w: parseFloat(w.toFixed(4)),
+                        h: parseFloat(h.toFixed(4)),
+                        c: state.currentColor
+                    });
+                    
+                    // 为矩形添加双击事件以删除
+                    state.currentRectangle.addEventListener('dblclick', function(e) {
+                        e.stopPropagation(); // 防止事件冒泡
+                        const index = Array.from(drawingArea.children).indexOf(this);
+                        if (index > -1) {
+                            state.rectangles.splice(index, 1);
+                            this.remove();
+                            updateJsonOutput();
+                        }
+                    });
+                    
+                    // 为矩形添加点击事件，防止在矩形上绘制新矩形
+                    state.currentRectangle.addEventListener('mousedown', function(e) {
+                        e.stopPropagation();
+                    });
+                    
+                    updateJsonOutput();
+                }
+                
+                state.currentRectangle = null;
+                state.isDragging = false;
+            }
+
+            // 更新所有矩形位置和大小
+            function updateRectangles() {
+                if (!state.image || !state.imageRect || !state.containerRect) return;
+                
+                const rectangles = document.querySelectorAll('.rectangle');
+                
+                rectangles.forEach((rect, index) => {
+                    if (state.rectangles[index]) {
+                        const rectData = state.rectangles[index];
+                        
+                        // 计算矩形在当前图片上的实际位置和大小
+                        const x = rectData.x * state.imageRect.width;
+                        const y = rectData.y * state.imageRect.height;
+                        const w = rectData.w * state.imageRect.width;
+                        const h = rectData.h * state.imageRect.height;
+                        
+                        // 更新矩形的位置和大小
+                        rect.style.left = `${x + state.imageOffset.x}px`;
+                        rect.style.top = `${y + state.imageOffset.y}px`;
+                        rect.style.width = `${w}px`;
+                        rect.style.height = `${h}px`;
+                    }
+                });
+            }
+
+            // 更新JSON输出
+            function updateJsonOutput() {
+                // 格式化为每行一个对象
+                const jsonArray = state.rectangles.map(rect => 
+                    `  ${JSON.stringify(rect)}`
+                ).join(',\n');
+                
+                jsonOutput.textContent = `[\n${jsonArray}\n]`;
+            }
+
+            // 复制矩形数据到剪切板
+            function copyRectanglesToClipboard() {
+                if (state.rectangles.length === 0) {
+                    showNotification('没有遮挡块数据可复制', 'warning');
+                    return;
+                }
+                
+                const jsonString = JSON.stringify(state.rectangles);
+                navigator.clipboard.writeText(jsonString)
+                    .then(() => {
+                        showNotification('已复制到剪切板', 'success');
+                    })
+                    .catch(err => {
+                        console.error('复制失败: ', err);
+                        showNotification('复制失败，请重试', 'error');
+                    });
+            }
+
+            // 清除所有矩形
+            function clearAllRectangles() {
+                const rectangles = document.querySelectorAll('.rectangle');
+                rectangles.forEach(rect => rect.remove());
+                state.rectangles = [];
+                updateJsonOutput();
+            }
+
+            // 处理颜色选择
+            function handleColorSelection(e) {
+                const colorOption = e.target.closest('.color-option');
+                if (colorOption) {
+                    const color = colorOption.getAttribute('data-color');
+                    selectColor(color);
+                }
+            }
+
+            // 选择颜色
+            function selectColor(color) {
+                // 移除之前的选择
+                document.querySelectorAll('.color-option').forEach(option => {
+                    option.classList.remove('ring-2', 'ring-offset-2', 'ring-primary');
+                });
+                
+                // 设置新的选择
+                const colorOptions = document.querySelectorAll(`.color-option[data-color="${color}"]`);
+                colorOptions.forEach(option => {
+                    option.classList.add('ring-2', 'ring-offset-2', 'ring-primary');
+                });
+                
+                // 更新颜色状态
+                state.currentColor = color;
+                customColor.value = color;
+                customColorMobile.value = color;
+                
+                // 更新当前绘制的矩形颜色（如果正在绘制）
+                if (state.currentRectangle) {
+                    state.currentRectangle.style.backgroundColor = state.currentColor + Math.round(state.opacity * 255).toString(16).padStart(2, '0');
+                }
+            }
+
+            // 处理自定义颜色变化
+            function handleCustomColorChange(e) {
+                const color = e.target.value;
+                selectColor(color);
+            }
+
+            // 处理不透明度变化
+            function handleOpacityChange(e) {
+                // 阻止事件冒泡，防止触发绘制矩形
+                e.stopPropagation();
+                
+                // 获取滑块值（桌面端或移动端）
+                const slider = e.target;
+                state.opacity = parseFloat(slider.value);
+                
+                // 同步两个滑块的值
+                opacitySlider.value = state.opacity;
+                opacitySliderMobile.value = state.opacity;
+                
+                // 更新当前绘制的矩形不透明度
+                if (state.currentRectangle) {
+                    state.currentRectangle.style.backgroundColor = state.currentColor + Math.round(state.opacity * 255).toString(16).padStart(2, '0');
+                }
+                
+                // 更新所有已存在的矩形不透明度
+                const rectangles = document.querySelectorAll('.rectangle');
+                rectangles.forEach(rect => {
+                    const color = rect.style.backgroundColor;
+                    const hexColor = color.startsWith('#') ? color.substring(0, 7) : state.currentColor;
+                    rect.style.backgroundColor = hexColor + Math.round(state.opacity * 255).toString(16).padStart(2, '0');
+                });
+            }
+
+            // 显示通知
+            function showNotification(message, type = 'info') {
+                // 移除现有通知
+                document.querySelectorAll('.notification').forEach(el => el.remove());
+                
+                const notification = document.createElement('div');
+                notification.className = `fixed top-4 right-4 px-4 py-2 rounded-md shadow-lg z-50 transition-all duration-300 transform translate-y-0 opacity-100 notification`;
+                
+                if (type === 'success') {
+                    notification.classList.add('bg-green-500', 'text-white');
+                } else if (type === 'error') {
+                    notification.classList.add('bg-red-500', 'text-white');
+                } else if (type === 'warning') {
+                    notification.classList.add('bg-yellow-500', 'text-white');
+                } else {
+                    notification.classList.add('bg-blue-500', 'text-white');
+                }
+                
+                notification.textContent = message;
+                document.body.appendChild(notification);
+                
+                // 3秒后自动关闭
+                setTimeout(() => {
+                    notification.classList.add('opacity-0', 'translate-y-[-20px]');
+                    setTimeout(() => {
+                        notification.remove();
+                    }, 300);
+                }, 3000);
+            }
+
+            // 更新工具栏位置
+            function updateToolbarPosition() {
+                const desktopToolbar = document.getElementById('desktop-toolbar');
+                const mainContent = document.querySelector('.main-content');
+                
+                if (desktopToolbar && mainContent) {
+                    // 获取主内容区域的位置信息
+                    const mainRect = mainContent.getBoundingClientRect();
+                    const viewportHeight = window.innerHeight;
+                    
+                    // 工具栏贴在工作区域右侧外部，垂直方向在屏幕中间
+                    desktopToolbar.style.position = 'fixed';
+                    desktopToolbar.style.left = `${mainRect.right + 8}px`; // 工作区域右侧 + 8px间距
+                    desktopToolbar.style.top = `${viewportHeight / 2}px`;
+                    desktopToolbar.style.transform = 'translateY(-50%)';
+                }
+            }
+
+            // 初始化应用
+            init();
+            
+            // 监听窗口大小变化，更新工具栏位置
+            window.addEventListener('resize', function() {
+                setTimeout(updateToolbarPosition, 100);
+            });
+            
+            // 监听滚动事件，更新工具栏位置
+            window.addEventListener('scroll', function() {
+                setTimeout(updateToolbarPosition, 100);
+            });
+            
+            // 图片加载完成后更新工具栏位置
+            imageElement.addEventListener('load', function() {
+                setTimeout(updateToolbarPosition, 100);
+            });
+        });
+    </script>
+</body>
+</html>    
