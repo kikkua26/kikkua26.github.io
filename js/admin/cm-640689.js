@@ -45,9 +45,19 @@ function loadData() {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (raw) {
             state.notebooks = JSON.parse(raw);
+            // Migrate old format: array → {notes:[], _chapters:[], _order:{}}
+            for (const k of Object.keys(state.notebooks)) {
+                if (Array.isArray(state.notebooks[k])) {
+                    state.notebooks[k] = { notes: state.notebooks[k], _chapters: [], _order: {} };
+                }
+                const nb = state.notebooks[k];
+                if (!Array.isArray(nb.notes)) nb.notes = [];
+                if (!Array.isArray(nb._chapters)) nb._chapters = [];
+                if (!nb._order || typeof nb._order !== 'object') nb._order = {};
+            }
             const names = Object.keys(state.notebooks);
             if (names.length === 0) {
-                state.notebooks = { '默认笔记本': [] };
+                state.notebooks = createDefaultData();
                 state.activeNotebook = '默认笔记本';
             } else if (!state.notebooks[state.activeNotebook]) {
                 state.activeNotebook = names[0];
@@ -60,24 +70,31 @@ function loadData() {
         state.notebooks = createDefaultData();
         state.activeNotebook = '默认笔记本';
     }
-    // Ensure all values are arrays
-    for (const k of Object.keys(state.notebooks)) {
-        if (!Array.isArray(state.notebooks[k])) state.notebooks[k] = [];
-    }
     flushData();
 }
 
 function createDefaultData() {
     return {
-        '默认笔记本': [
-            { id: genId(), mainField: '变量与数据类型', chapter: '编程::Python::基础',
-              knowledgeAnalysis: '定义::变量是存储数据的容器，Python支持动态类型<br>###常见类型::int、float、str、bool、list、tuple、dict、set',
-              extendedAnalysis: '类型推断::Python在运行时自动推断变量类型<br>###内存管理::变量通过引用计数进行内存管理' },
-            { id: genId(), mainField: '控制流程', chapter: '编程::Python::基础',
-              knowledgeAnalysis: '条件语句::if-elif-else结构<br>###循环::for循环和while循环',
-              extendedAnalysis: '列表推导式::提供简洁的循环写法 [x for x in range(10)]' },
-        ],
+        '默认笔记本': {
+            notes: [
+                { id: genId(), mainField: '变量与数据类型', chapter: '编程::Python::基础',
+                  knowledgeAnalysis: '定义::变量是存储数据的容器，Python支持动态类型<br>###常见类型::int、float、str、bool、list、tuple、dict、set',
+                  extendedAnalysis: '类型推断::Python在运行时自动推断变量类型<br>###内存管理::变量通过引用计数进行内存管理' },
+                { id: genId(), mainField: '控制流程', chapter: '编程::Python::基础',
+                  knowledgeAnalysis: '条件语句::if-elif-else结构<br>###循环::for循环和while循环',
+                  extendedAnalysis: '列表推导式::提供简洁的循环写法 [x for x in range(10)]' },
+            ],
+            _chapters: [],
+            _order: {},
+        },
     };
+}
+
+function nbMeta() {
+    const nb = state.notebooks[state.activeNotebook];
+    if (!nb._chapters) nb._chapters = [];
+    if (!nb._order) nb._order = {};
+    return nb;
 }
 
 function flushData() {
@@ -85,7 +102,7 @@ function flushData() {
     catch { toast('存储空间不足，请导出数据！', 'error'); }
 }
 
-function activeNotes() { return state.notebooks[state.activeNotebook] || []; }
+function activeNotes() { return state.notebooks[state.activeNotebook]?.notes || []; }
 
 // ── Draft Save/Restore ──
 function saveDraft(formData) {
@@ -176,11 +193,7 @@ function downloadCSV(csv, filename) {
 }
 
 // ── Tree ──
-function getChOrder() {
-    const nb = state.notebooks[state.activeNotebook];
-    if (!nb._order) nb._order = {};
-    return nb._order;
-}
+function getChOrder() { return nbMeta()._order; }
 
 function getSortedChildKeys(node, parentPath) {
     const chOrder = getChOrder();
@@ -216,7 +229,7 @@ function buildChapterTree(notes) {
         cur.isEmpty = false;
     }
     // Add empty chapters
-    const emptyChapters = state.notebooks[state.activeNotebook]?._chapters || [];
+    const emptyChapters = nbMeta()._chapters;
     for (const ecp of emptyChapters) {
         const parts = ecp.split('::').map(p => p.trim()).filter(Boolean);
         if (!parts.length) continue;
@@ -235,7 +248,7 @@ function sortTree(node, parentPath) {
     const sorted = {};
     for (const k of keys) sorted[k] = sortTree(node.children[k], node.children[k].fullPath);
     node.children = sorted;
-    node.notes.sort((a, b) => (a.mainField || '').localeCompare(b.mainField || '', 'zh-CN'));
+    // Keep original note order (supports manual reordering)
     return node;
 }
 
@@ -482,7 +495,7 @@ function deleteBatch() {
     if (!state.batchSet.size) return;
     if (!confirm(`确定删除 ${state.batchSet.size} 条笔记吗？此操作不可恢复。`)) return;
     const notes = activeNotes();
-    state.notebooks[state.activeNotebook] = notes.filter(n => !state.batchSet.has(n.id));
+    nbMeta().notes = notes.filter(n => !state.batchSet.has(n.id));
     flushData();
     state.batchSet.clear();
     state.batchMode = false;
@@ -1117,7 +1130,7 @@ function setupEvents() {
             if (!confirm(`删除目录 "${ctxChapterPath}" 及其子目录？${warn}`)) { hideChapterMenu(); return; }
             nb._chapters = nb._chapters.filter(c => c !== ctxChapterPath && !c.startsWith(ctxChapterPath + '::'));
             // Delete notes under this chapter
-            state.notebooks[state.activeNotebook] = notes.filter(n => n.chapter !== ctxChapterPath && !n.chapter?.startsWith(ctxChapterPath + '::'));
+            nbMeta().notes = notes.filter(n => n.chapter !== ctxChapterPath && !n.chapter?.startsWith(ctxChapterPath + '::'));
             flushData(); renderAll();
         }
         hideChapterMenu();
