@@ -209,6 +209,7 @@ function bindEvents() {
     $('#opacity-slider').addEventListener('input', e => { state.opacity = parseFloat(e.target.value); $('#opacity-val').textContent = Math.round(state.opacity*100)+'%'; updateOpacity(); });
 
     imageEl.addEventListener('load', () => {
+        state.image = imageEl;
         state.naturalSize = { w:imageEl.naturalWidth, h:imageEl.naturalHeight };
         imageEl.style.display = 'block'; $('#drop-hint').style.display = 'none';
         updateRects(); updateJSON();
