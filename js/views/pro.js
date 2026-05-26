@@ -4,7 +4,7 @@ import { navigate } from '../navigation.js';
 import { SITE } from '../config.js';
 
 const TOOLS = [
-    { id: 'occlusion', name: '遮挡块工具', icon: '🖼', desc: '在图片上绘制遮挡块，生成Anki图遮挡题数据', url: '/tools/occlusion.html' },
+    { id: 'occlusion', name: '遮挡块工具', icon: '🖼', desc: '在图片上绘制遮挡块，生成Anki图遮挡题数据', url: '/tools/occlusion/index.html' },
 ];
 
 export function renderPro() {

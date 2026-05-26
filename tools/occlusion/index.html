@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>遮挡块工具</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="toolbar">
+    <h1>图片遮挡编辑工具</h1>
+    <div class="toolbar-actions">
+        <label class="btn btn-primary" for="image-upload">📤 导入图片</label>
+        <input type="file" id="image-upload" accept="image/*" hidden>
+        <button id="btn-copy" class="btn btn-accent">📋 复制数据</button>
+    </div>
+</header>
+
+<main class="main-area">
+    <div class="canvas-panel" id="canvas-panel">
+        <div class="canvas-header">
+            <h2>图片编辑区域</h2>
+            <button id="btn-clear" class="btn-text danger">🗑 清除全部</button>
+        </div>
+        <div class="canvas-wrap" id="canvas-wrap">
+            <div class="canvas-inner" id="canvas-inner">
+                <img id="image" src="" alt="编辑图片">
+                <div class="drop-hint" id="drop-hint" onclick="document.getElementById('image-upload').click()">
+                    <div class="hint-icon">📁</div>
+                    <p>拖拽图片到这里或点击上方按钮导入</p>
+                    <p class="hint-sub">支持粘贴剪贴板图片 (Ctrl+V)</p>
+                </div>
+            </div>
+            <div class="drawing-layer" id="drawing-layer"></div>
+        </div>
+    </div>
+
+    <aside class="side-panel">
+        <div class="color-section">
+            <h3>颜色</h3>
+            <div class="color-grid" id="preset-colors"></div>
+            <input type="color" id="custom-color" value="#FF6B6B" class="color-input">
+        </div>
+        <div class="opacity-section">
+            <h3>透明度</h3>
+            <input type="range" id="opacity-slider" min="0.1" max="1" step="0.1" value="0.5">
+            <span class="opacity-val" id="opacity-val">50%</span>
+        </div>
+        <div class="data-section">
+            <h3>数据</h3>
+            <pre id="json-output"></pre>
+        </div>
+    </aside>
+</main>
+
+<div class="toast" id="toast"></div>
+<script src="main.js"></script>
+</body>
+</html>
