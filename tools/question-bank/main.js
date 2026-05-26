@@ -181,7 +181,7 @@ document.addEventListener('contextmenu', e => {
 });
 
 document.addEventListener('click', e => { if (!e.target.closest('.ctx-menu')) hideCtx(); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') hideCtx(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { hideCtx(); closeForm(); } });
 
 function hideCtx() { document.getElementById('ctxMenu').style.display = 'none'; }
 
