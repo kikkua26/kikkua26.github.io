@@ -119,7 +119,7 @@ body {
 .table-wrap::-webkit-scrollbar-track { background: var(--surface-2); border-radius: 3px; }
 .table-wrap::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
 
-table { border-collapse: collapse; width: 100%; table-layout: fixed; font-size: 12.5px; }
+table { border-collapse: collapse; width: 100%; table-layout: fixed; font-size: 12px; }
 th, td {
     border: 1px solid var(--border);
     padding: 0;
