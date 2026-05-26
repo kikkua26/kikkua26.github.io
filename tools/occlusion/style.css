@@ -33,15 +33,15 @@ body {
 /* ── Toolbar ── */
 .toolbar {
     display:flex; align-items:center; justify-content:space-between;
-    padding:10px 20px; background:rgba(252,249,245,.92); backdrop-filter:blur(12px);
-    border-bottom:1px solid var(--border); flex-shrink:0; gap:12px;
+    padding:6px 14px; background:rgba(252,249,245,.92); backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--border); flex-shrink:0; gap:10px;
 }
-.toolbar h1 { font-family:var(--font-display); font-size:16px; font-weight:600; color:var(--text); letter-spacing:-.01em; }
+.toolbar h1 { font-family:var(--font-display); font-size:14px; font-weight:600; color:var(--text); letter-spacing:-.01em; }
 .toolbar-actions { display:flex; gap:8px; }
 
 .btn {
-    display:inline-flex; align-items:center; gap:6px; padding:7px 14px;
-    border-radius:var(--radius-sm); border:none; font-size:12px; cursor:pointer; font-weight:500;
+    display:inline-flex; align-items:center; gap:5px; padding:5px 10px;
+    border-radius:var(--radius-sm); border:none; font-size:11px; cursor:pointer; font-weight:500;
     transition:all .15s; text-decoration:none;
 }
 .btn-primary { background:var(--accent); color:#fff; box-shadow:0 2px 8px rgba(13,148,136,.25); }
@@ -55,9 +55,9 @@ body {
 .main-area { display:flex; flex:1; min-height:0; overflow:hidden; }
 
 /* ── Canvas Panel ── */
-.canvas-panel { flex:1; display:flex; flex-direction:column; min-width:0; padding:16px; }
-.canvas-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
-.canvas-header h2 { font-family:var(--font-display); font-size:14px; font-weight:600; color:var(--text); }
+.canvas-panel { flex:1; display:flex; flex-direction:column; min-width:0; padding:10px 14px; }
+.canvas-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+.canvas-header h2 { font-family:var(--font-display); font-size:12px; font-weight:600; color:var(--text); }
 
 .canvas-wrap {
     flex:1; position:relative; overflow:hidden;
@@ -82,8 +82,8 @@ body {
 
 /* ── Side Panel ── */
 .side-panel {
-    width:200px; flex-shrink:0; background:var(--surface); border-left:1px solid var(--border);
-    padding:16px; overflow-y:auto; display:flex; flex-direction:column; gap:18px;
+    width:180px; flex-shrink:0; background:var(--surface); border-left:1px solid var(--border);
+    padding:12px; overflow-y:auto; display:flex; flex-direction:column; gap:14px;
 }
 .side-panel h3 { font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:var(--text3); margin-bottom:8px; font-weight:600; }
 
