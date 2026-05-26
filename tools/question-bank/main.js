@@ -137,15 +137,19 @@ function openForm(tr) {
     editingTr = tr;
     const data = getRowData(tr);
     const idx = Array.from(tbody.rows).indexOf(tr) + 1;
-    document.getElementById('formTitle').textContent = `编辑第 ${idx} 行`;
+    document.getElementById('formBadge').textContent = '#' + idx;
+    document.getElementById('formTitle').textContent = '编辑行';
     const grid = document.getElementById('formGrid');
     grid.innerHTML = '';
     FORM_FIELDS.forEach(f => {
         const oi = OPT_LETTERS.indexOf(f.key.replace('opt',''));
         if (f.key.startsWith('opt') && oi >= (7 - hiddenOptCols)) return;
-        grid.innerHTML += `<label>${f.label}</label>`;
-        if (f.type === 'textarea') grid.innerHTML += `<div class="form-cell"><textarea data-field="${f.key}">${esc(data[f.key]||'')}</textarea></div>`;
-        else grid.innerHTML += `<div class="form-cell"><input type="text" data-field="${f.key}" value="${esc(data[f.key]||'')}"></div>`;
+        const val = esc(data[f.key]||'');
+        if (f.type === 'textarea') {
+            grid.innerHTML += `<label>${f.label}</label><div class="form-cell"><textarea data-field="${f.key}" placeholder="${f.label}">${val}</textarea></div>`;
+        } else {
+            grid.innerHTML += `<label>${f.label}</label><div class="form-cell"><input type="text" data-field="${f.key}" value="${val}" placeholder="${f.label}"></div>`;
+        }
     });
     document.getElementById('rowFormModal').classList.add('show');
     const first = grid.querySelector('input, textarea'); if (first) first.focus();
@@ -687,6 +691,7 @@ function bindEvents() {
 
     // Row form modal
     document.getElementById('btnCancelForm').addEventListener('click', closeForm);
+    document.getElementById('btnCancelForm2').addEventListener('click', closeForm);
     document.getElementById('btnSaveForm').addEventListener('click', saveForm);
     document.getElementById('formGrid').addEventListener('keydown', e => {
         if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') { e.preventDefault(); saveForm(); }
