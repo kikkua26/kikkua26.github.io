@@ -15,6 +15,7 @@ const COLORS = ['#FF6B6B','#FFD166','#06D6A0','#118AB2','#073B4C','#EF476F','#FF
 const $ = s => document.querySelector(s);
 const imageEl = $('#image');
 const canvasWrap = $('#canvas-wrap');
+const canvasInner = $('#canvas-inner');
 const drawingLayer = $('#drawing-layer');
 const jsonOutput = $('#json-output');
 const toastEl = $('#toast');
@@ -43,14 +44,11 @@ function loadImage(file) {
 function updateRects() {
     state.imageRect = imageEl.getBoundingClientRect();
     state.containerRect = canvasWrap.getBoundingClientRect();
-    state.imageOffset.x = state.imageRect.left - state.containerRect.left;
-    state.imageOffset.y = state.imageRect.top - state.containerRect.top;
 }
 
-function pointInImage(x, y) {
-    if (!state.imageRect) return false;
-    return x >= state.imageOffset.x && x <= state.imageOffset.x + state.imageRect.width
-        && y >= state.imageOffset.y && y <= state.imageOffset.y + state.imageRect.height;
+function pointInImage(mx, my) {
+    const r = drawingLayer.getBoundingClientRect();
+    return mx >= 0 && my >= 0 && mx <= r.width && my <= r.height;
 }
 
 // ── Drawing ──
@@ -63,8 +61,8 @@ function startDraw(e) {
     if (e.target.closest('.rect-block')) return;
 
     state.isDrawing = true; state.isDragging = false;
-    state.startX = Math.max(mx, state.imageOffset.x);
-    state.startY = Math.max(my, state.imageOffset.y);
+    state.startX = mx;
+    state.startY = my;
 }
 
 function draw(e) {
@@ -82,11 +80,14 @@ function draw(e) {
     let left = state.startX, top = state.startY;
     let width = mx - state.startX, height = my - state.startY;
 
-    if (width < 0) { left = Math.max(mx, state.imageOffset.x); width = -width; }
-    if (height < 0) { top = Math.max(my, state.imageOffset.y); height = -height; }
+    if (width < 0) { left = mx; width = -width; }
+    if (height < 0) { top = my; height = -height; }
 
-    width = Math.min(width, state.imageOffset.x + state.imageRect.width - left);
-    height = Math.min(height, state.imageOffset.y + state.imageRect.height - top);
+    // Clamp to drawing layer (image) bounds
+    left = Math.max(0, left);
+    top = Math.max(0, top);
+    width = Math.min(width, rect.width - left);
+    height = Math.min(height, rect.height - top);
 
     state.currentBlock.style.left = left + 'px';
     state.currentBlock.style.top = top + 'px';
@@ -103,11 +104,11 @@ function endDraw() {
     const bw = parseFloat(b.style.width), bh = parseFloat(b.style.height);
     if (bw < 8 || bh < 8) { b.remove(); state.currentBlock = null; state.isDragging = false; return; }
 
-    const ir = state.imageRect, cr = state.containerRect;
+    const ir = state.imageRect;
     const bx = parseFloat(b.style.left), by = parseFloat(b.style.top);
     state.rectangles.push({
-        x: +((bx + cr.left - ir.left) / ir.width).toFixed(4),
-        y: +((by + cr.top - ir.top) / ir.height).toFixed(4),
+        x: +(bx / ir.width).toFixed(4),
+        y: +(by / ir.height).toFixed(4),
         w: +(bw / ir.width).toFixed(4),
         h: +(bh / ir.height).toFixed(4),
         c: state.currentColor,
@@ -132,12 +133,12 @@ function rebuildRects() {
     state.rectangles = [];
     updateRects();
     drawingLayer.querySelectorAll('.rect-block').forEach(b => {
-        const ir = state.imageRect, cr = state.containerRect;
+        const ir = state.imageRect;
         const bx = parseFloat(b.style.left), by = parseFloat(b.style.top);
         const bw = parseFloat(b.style.width), bh = parseFloat(b.style.height);
         state.rectangles.push({
-            x: +((bx + cr.left - ir.left) / ir.width).toFixed(4),
-            y: +((by + cr.top - ir.top) / ir.height).toFixed(4),
+            x: +(bx / ir.width).toFixed(4),
+            y: +(by / ir.height).toFixed(4),
             w: +(bw / ir.width).toFixed(4),
             h: +(bh / ir.height).toFixed(4),
             c: b.style.backgroundColor.slice(0,7).toUpperCase(),
@@ -149,11 +150,8 @@ function redrawBlocks() {
     drawingLayer.querySelectorAll('.rect-block').forEach(b => b.remove());
     updateRects();
     state.rectangles.forEach(r => {
-        const ir = state.imageRect, cr = state.containerRect;
-        const div = createBlock(
-            r.x*ir.width + ir.left - cr.left, r.y*ir.height + ir.top - cr.top,
-            r.w*ir.width, r.h*ir.height
-        );
+        const ir = state.imageRect;
+        const div = createBlock(r.x*ir.width, r.y*ir.height, r.w*ir.width, r.h*ir.height);
         div.style.backgroundColor = r.c + Math.round(state.opacity*255).toString(16).padStart(2,'0');
         div.addEventListener('dblclick', () => removeBlock(div));
     });
