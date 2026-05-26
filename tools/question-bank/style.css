@@ -42,39 +42,7 @@ body {
     min-height: 100vh;
 }
 
-body::before {
-    content: '';
-    position: fixed; top: 0; left: 0; right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, var(--accent), #a78bfa, #6c5ce7);
-    z-index: 999;
-}
-
-.app { padding: 14px 16px; max-width: 100%; }
-
-/* ── header ── */
-.header {
-    display: flex; align-items: center; gap: 10px;
-    margin-bottom: 8px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid var(--border);
-}
-.logo { display: flex; align-items: center; gap: 8px; }
-.logo-icon {
-    width: 24px; height: 24px;
-    background: var(--accent);
-    border-radius: 5px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 11px; font-weight: 700; color: #fff;
-    letter-spacing: .5px;
-    box-shadow: 0 1px 4px rgba(108,92,231,.25);
-}
-.logo-text { font-size: 14px; font-weight: 700; letter-spacing: -.3px; color: var(--text); }
-.logo-sub {
-    font-size: 9px; color: var(--text-3);
-    letter-spacing: 1.5px; text-transform: uppercase;
-}
-.header-right { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+.app { padding: 12px 14px; max-width: 100%; }
 
 /* ── toolbar ── */
 .toolbar {
@@ -87,6 +55,7 @@ body::before {
     box-shadow: var(--shadow-sm);
 }
 .toolbar .sep { width: 1px; height: 20px; background: var(--border); margin: 0 2px; }
+.toolbar-right { margin-left: auto; display: flex; align-items: center; gap: 6px; }
 
 /* ── buttons ── */
 .btn {
