@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>题库编辑器</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app">
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">Ki</div>
+      <div>
+        <div class="logo-text">kikkua</div>
+        <div class="logo-sub">question bank</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <span class="lbl">选项列</span>
+      <select id="optCount">
+        <option value="2">A-B</option>
+        <option value="3">A-C</option>
+        <option value="4">A-D</option>
+        <option value="5" selected>A-E</option>
+        <option value="6">A-F</option>
+        <option value="7">A-G</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <button class="btn primary" id="btnAddRow"><span class="icon">+</span> 添加行</button>
+    <button class="btn" id="btnAddRows">批量添加</button>
+    <div class="sep"></div>
+    <button class="btn" id="btnImport">文件导入</button>
+    <button class="btn" id="btnExportCSV">导出 CSV</button>
+    <button class="btn" id="btnExportXLSX">导出 Excel</button>
+    <button class="btn" id="btnTemplate">模板</button>
+    <div class="sep"></div>
+    <button class="btn ai-btn" id="btnAI">✨ AI 生成</button>
+    <div class="sep"></div>
+    <button class="btn danger" id="btnClear">清空</button>
+  </div>
+
+  <div class="table-wrap">
+    <table id="mainTable">
+      <colgroup>
+        <col style="width:42px">
+        <col style="width:70px">
+        <col style="width:65px">
+        <col style="width:18%">
+        <col style="width:12%">
+        <col style="width:8%"><col style="width:8%"><col style="width:8%"><col style="width:8%"><col style="width:8%"><col style="width:8%"><col style="width:8%">
+        <col style="width:50px">
+        <col style="width:12%">
+        <col style="width:12%">
+        <col style="width:10%">
+        <col style="width:36px">
+      </colgroup>
+      <thead>
+        <tr>
+          <th data-col="idx">#<span class="resizer"></span></th>
+          <th data-col="chapter">Chapter<span class="resizer"></span></th>
+          <th data-col="type">Type<span class="resizer"></span></th>
+          <th data-col="question">Question<span class="resizer"></span></th>
+          <th data-col="clozetext">Cloze<span class="resizer"></span></th>
+          <th data-col="optA">A<span class="resizer"></span></th>
+          <th data-col="optB">B<span class="resizer"></span></th>
+          <th data-col="optC">C<span class="resizer"></span></th>
+          <th data-col="optD">D<span class="resizer"></span></th>
+          <th data-col="optE">E<span class="resizer"></span></th>
+          <th data-col="optF">F<span class="resizer"></span></th>
+          <th data-col="optG">G<span class="resizer"></span></th>
+          <th data-col="answer">Ans<span class="resizer"></span></th>
+          <th data-col="answertext">Answer Text<span class="resizer"></span></th>
+          <th data-col="analysis">Analysis<span class="resizer"></span></th>
+          <th data-col="reference">Ref<span class="resizer"></span></th>
+          <th data-col="actions"></th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+  <div class="status">
+    <span id="statusText">共 <span class="count">0</span> 行</span>
+    <span style="color:var(--border)">·</span>
+    <span class="hint">拖拽表头边缘调列宽 · 双击序号编辑 · 右键菜单 · Ctrl+D 填充</span>
+  </div>
+</div>
+
+<!-- Text import modal -->
+<div class="modal-mask" id="textImportModal">
+  <div class="modal" style="min-width:560px;width:640px">
+    <h3>📋 导入 AI 生成结果</h3>
+    <div class="ai-guide">
+      <div class="ai-guide-title">使用步骤</div>
+      <div>① 提示词已复制到剪切板</div>
+      <div>② 点击下方按钮打开 DeepSeek 网页，将提示词粘贴给 AI</div>
+      <div>③ AI 返回 CSV 格式结果后，复制全部内容粘贴到下方输入框</div>
+      <div class="ai-guide-link">
+        <a href="https://chat.deepseek.com" target="_blank" class="ai-guide-btn" id="deepseekLink">🔗 打开 DeepSeek 对话</a>
+      </div>
+    </div>
+    <textarea id="textInputArea" placeholder="将 AI 返回的 CSV 结果粘贴到这里..."></textarea>
+    <div class="btns">
+      <button class="btn" id="btnCancelTextImport">取消</button>
+      <button class="btn ok" id="btnDoTextImport">导入数据</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="fileInput" accept=".csv,.xlsx,.xls" style="display:none">
+
+<div class="modal-mask" id="csvFormatModal">
+  <div class="modal" style="min-width:300px">
+    <h3>导出 CSV</h3>
+    <label><input type="radio" name="csvFmt" value="standard" checked> 标准格式</label>
+    <label><input type="radio" name="csvFmt" value="kikkua"> kikkua 格式</label>
+    <div class="btns">
+      <button class="btn" id="btnCancelCsvFmt">取消</button>
+      <button class="btn ok" id="btnDoExportCSV">导出</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-mask" id="rowFormModal">
+  <div class="modal">
+    <div class="modal-top">
+      <h3 id="formTitle">编辑行</h3>
+      <div class="btns" style="margin:0">
+        <button class="btn" id="btnCancelForm">取消</button>
+        <button class="btn ok" id="btnSaveForm">保存</button>
+      </div>
+    </div>
+    <div class="form-grid" id="formGrid"></div>
+  </div>
+</div>
+
+<!-- AI modal -->
+<div class="modal-mask" id="aiModal">
+  <div class="modal">
+    <h3 style="display:flex;align-items:center;gap:8px">✨ AI 生成题目</h3>
+
+    <div class="ai-config-toggle" id="aiConfigToggle">⚙ API 配置</div>
+    <div class="ai-config-panel" id="aiConfigPanel">
+      <div class="ai-config-grid">
+        <label>API Key</label>
+        <div class="ai-config-cell"><input type="password" class="ai-input" id="aiApiKey" placeholder="sk-..."></div>
+        <label>Base URL</label>
+        <div class="ai-config-cell"><input type="text" class="ai-input" id="aiBaseUrl" value="https://api.deepseek.com" placeholder="https://api.deepseek.com"></div>
+        <label>模型</label>
+        <div class="ai-config-cell">
+          <select class="ai-input" id="aiModel">
+            <option value="deepseek-v4-flash">deepseek-v4-flash（快速）</option>
+            <option value="deepseek-v4-pro">deepseek-v4-pro（高质量）</option>
+          </select>
+        </div>
+      </div>
+      <div class="ai-hint">
+        没有 API Key？前往 <a href="https://platform.deepseek.com" target="_blank">platform.deepseek.com</a> 注册获取
+      </div>
+    </div>
+
+    <div class="ai-section">
+      <div class="ai-section-title">题型</div>
+      <div class="ai-chips" id="aiTypeChips">
+        <div class="ai-chip active" data-type="choice">选择题</div>
+        <div class="ai-chip" data-type="cloze">填空题</div>
+        <div class="ai-chip" data-type="short">问答题</div>
+      </div>
+    </div>
+
+    <div class="ai-section">
+      <div class="ai-section-title">生成模式</div>
+      <div class="ai-chips" id="aiModeChips">
+        <div class="ai-chip" data-mode="single">单题模式</div>
+        <div class="ai-chip active" data-mode="batch">多题模式</div>
+        <div class="ai-chip" data-mode="organize">整理模式</div>
+      </div>
+    </div>
+
+    <div class="ai-section">
+      <div class="ai-section-title">章节（可选）</div>
+      <input type="text" class="ai-input" id="aiChapter" placeholder="如：Chapter 3、第三章 光合作用">
+    </div>
+
+    <div class="ai-section">
+      <div class="ai-section-title">解析风格</div>
+      <div class="ai-chips" id="aiAnalysisChips">
+        <div class="ai-chip active" data-style="default">默认</div>
+        <div class="ai-chip" data-style="simple">通俗易懂</div>
+        <div class="ai-chip" data-style="detailed">详细深入</div>
+        <div class="ai-chip" data-style="brief">简洁精炼</div>
+        <div class="ai-chip" data-style="example">结合实例</div>
+      </div>
+    </div>
+
+    <div class="ai-section">
+      <div class="ai-section-title">知识内容</div>
+      <textarea class="ai-input" id="aiKnowledgeInput" rows="6" placeholder="在此粘贴知识点、课文段落、笔记等任何内容，AI 会据此生成题目..."></textarea>
+      <div class="ai-hint" id="aiBatchHint">AI 会完整覆盖所有知识点生成题目，确保不遗漏。</div>
+    </div>
+
+    <div class="ai-status" id="aiStatus">
+      <div class="ai-spinner" id="aiSpinner"></div>
+      <span id="aiStatusText"></span>
+    </div>
+
+    <div class="btns">
+      <button class="btn" id="btnCancelAI">取消</button>
+      <button class="btn" id="btnCopyPrompt">📋 复制提示词</button>
+      <button class="btn ok" id="btnGenerateAI">生成</button>
+    </div>
+  </div>
+</div>
+
+<div class="ctx-menu" id="ctxMenu">
+  <div class="ctx-item" data-action="edit">📝 表单编辑</div>
+  <div class="ctx-item" data-action="insertAbove">⬆ 上方插入行</div>
+  <div class="ctx-item" data-action="insertBelow">⬇ 下方插入行</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item" data-action="duplicate">📋 复制此行</div>
+  <div class="ctx-item danger" data-action="delete">🗑 删除此行</div>
+</div>
+
+<div class="signature">kikkua</div>
+
+<script src="lib/xlsx.full.min.js"></script>
+<script src="main.js"></script>
+</body>
+</html>
