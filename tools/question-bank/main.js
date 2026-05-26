@@ -367,7 +367,7 @@ function openAIModal() {
 
     document.getElementById('aiStatus').className = 'ai-status';
     document.getElementById('aiStatusText').textContent = '';
-    document.getElementById('aiGenerateBtn').disabled = false;
+    document.getElementById('btnGenerateAI').disabled = false;
     document.getElementById('aiModal').classList.add('show');
 }
 
@@ -577,7 +577,7 @@ async function generateAI() {
 
     const prompt = buildPrompt();
     setAIStatus('loading', '正在生成，请稍候...');
-    document.getElementById('aiGenerateBtn').disabled = true;
+    document.getElementById('btnGenerateAI').disabled = true;
 
     try {
         const resp = await fetch(baseUrl + '/v1/chat/completions', {
@@ -625,7 +625,7 @@ async function generateAI() {
     } catch (err) {
         setAIStatus('error', err.message);
     } finally {
-        document.getElementById('aiGenerateBtn').disabled = false;
+        document.getElementById('btnGenerateAI').disabled = false;
     }
 }
 
