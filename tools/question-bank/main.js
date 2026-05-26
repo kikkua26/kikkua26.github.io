@@ -138,21 +138,21 @@ function openForm(tr) {
     const data = getRowData(tr);
     const idx = Array.from(tbody.rows).indexOf(tr) + 1;
     document.getElementById('formBadge').textContent = '#' + idx;
-    document.getElementById('formTitle').textContent = '编辑行';
-    const grid = document.getElementById('formGrid');
-    grid.innerHTML = '';
+    const body = document.getElementById('formGrid');
+    body.innerHTML = '';
     FORM_FIELDS.forEach(f => {
         const oi = OPT_LETTERS.indexOf(f.key.replace('opt',''));
         if (f.key.startsWith('opt') && oi >= (7 - hiddenOptCols)) return;
         const val = esc(data[f.key]||'');
-        if (f.type === 'textarea') {
-            grid.innerHTML += `<label>${f.label}</label><div class="form-cell"><textarea data-field="${f.key}" placeholder="${f.label}">${val}</textarea></div>`;
-        } else {
-            grid.innerHTML += `<label>${f.label}</label><div class="form-cell"><input type="text" data-field="${f.key}" value="${val}" placeholder="${f.label}"></div>`;
-        }
+        const isTextarea = f.type === 'textarea';
+        body.innerHTML += `<div class="form-row"><span class="form-label">${f.label}</span>${
+            isTextarea
+            ? `<textarea data-field="${f.key}" rows="1">${val}</textarea>`
+            : `<input type="text" data-field="${f.key}" value="${val}">`
+        }</div>`;
     });
     document.getElementById('rowFormModal').classList.add('show');
-    const first = grid.querySelector('input, textarea'); if (first) first.focus();
+    const first = body.querySelector('input, textarea'); if (first) first.focus();
 }
 
 function closeForm() { document.getElementById('rowFormModal').classList.remove('show'); editingTr = null; }
