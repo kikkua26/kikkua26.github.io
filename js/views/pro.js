@@ -3,9 +3,10 @@ import { ICONS } from '../storage.js';
 import { navigate } from '../navigation.js';
 import { SITE } from '../config.js';
 
+const TV = '?v=2'; // cache buster for tool iframes
 const TOOLS = [
-    { id: 'occlusion', name: '遮挡块工具', icon: '🖼', desc: '在图片上绘制遮挡块，生成Anki图遮挡题数据', url: '/tools/occlusion/index.html' },
-    { id: 'question-bank', name: '题库编辑器', icon: '📋', desc: '表格化题库管理，支持CSV/Excel导入导出、AI生成题目', url: '/tools/question-bank/index.html' },
+    { id: 'occlusion', name: '遮挡块工具', icon: '🖼', desc: '在图片上绘制遮挡块，生成Anki图遮挡题数据', url: '/tools/occlusion/index.html' + TV },
+    { id: 'question-bank', name: '题库编辑器', icon: '📋', desc: '表格化题库管理，支持CSV/Excel导入导出、AI生成题目', url: '/tools/question-bank/index.html' + TV },
 ];
 
 export function renderPro() {
