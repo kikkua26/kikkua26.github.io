@@ -9,7 +9,7 @@ const TOOLS = [
     { id: 'question-bank', name: '题库编辑器', icon: '📋', desc: '表格化题库管理，支持CSV/Excel导入导出、AI生成题目', url: '/tools/question-bank/index.html' + TV },
 ];
 
-export function renderPro() {
+export function renderTools() {
     const app = $('#app');
     let activeTool = TOOLS[0].id;
     const params = new URLSearchParams(location.search);
@@ -21,7 +21,7 @@ export function renderPro() {
                 <div class="header-inner">
                     <div class="header-left">
                         <a href="/" class="back-btn" title="返回首页">${ICONS.back}</a>
-                        <h1 class="header-title" style="margin-left:4px;">kikkua Pro</h1>
+                        <h1 class="header-title" style="margin-left:4px;">工具箱</h1>
                     </div>
                     <div class="header-right">
                         <span style="font-size:11px;color:var(--ink-light);">专业工具集</span>
@@ -47,7 +47,7 @@ export function renderPro() {
     app.querySelectorAll('.pro-tab').forEach(tab => {
         tab.addEventListener('click', () => {
             const toolId = tab.dataset.tool;
-            navigate('/pro?tool=' + toolId);
+            navigate('/tools?tool=' + toolId);
         });
     });
 }

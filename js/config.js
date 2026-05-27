@@ -21,7 +21,7 @@ export const ROUTES = {
     deckDetail: 'deck/',
     study: 'study/',
     about: 'about',
-    pro: 'pro',
+    tools: 'tools',
 };
 
 export const DATA_PATHS = {
