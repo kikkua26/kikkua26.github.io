@@ -417,7 +417,7 @@ function selectAIMode(el) {
     document.getElementById('aiBatchHint').textContent = aiMode === 'single'
         ? 'AI 会从内容中选取最核心的知识点，生成 1 道题。'
         : aiMode === 'batch'
-        ? 'AI 会完整覆盖所有知识点，最多生成 20 道题，按难度分布。'
+        ? 'AI 会完整覆盖所有知识点生成题目，按难度分布。'
         : '整理模式：粘贴格式混乱的题目，AI 会自动整理为标准格式并导入。';
 
     const knowledgeInput = document.getElementById('aiKnowledgeInput');
@@ -446,7 +446,7 @@ function buildPrompt() {
     const analysisRule = ANALYSIS_STYLE_MAP[aiAnalysisStyle] || ANALYSIS_STYLE_MAP.default;
     const countRule = aiMode === 'single'
         ? '只生成 1 道题，从内容中选取最核心的知识点出题'
-        : '完整覆盖内容中的所有知识点生成题目，最多不超过 20 道，每个独立知识点至少对应 1 道题';
+        : '完整覆盖内容中的所有知识点生成题目，数量根据实际知识点数量决定，不遗漏任何知识点';
     const chapterRule = chapter ? `Chapter 字段统一填写「${chapter}」` : 'Chapter 字段根据内容自行归类';
     const diffRule = aiMode === 'batch' ? `- 难度分布：大致按 3:5:2 的比例分配「识记」「理解」「应用」三个层次的题目，不要全部集中在同一层次\n` : '';
 
@@ -627,7 +627,7 @@ async function generateAI() {
                     { role: 'user', content: prompt }
                 ],
                 temperature: 0.4,
-                max_tokens: 8192,
+                max_tokens: 16384,
             })
         });
 
