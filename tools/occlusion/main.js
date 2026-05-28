@@ -9,7 +9,7 @@ const state = {
     isDrawing: false, isDragging: false, startX: 0, startY: 0, currentBlock: null,
     isMoving: false, moveStarted: false, movingBlock: null, moveOffX: 0, moveOffY: 0, moveStartX: 0, moveStartY: 0,
     containerRect: null, imageOffset: { x: 0, y: 0 },
-    zoomLevel: 1, isPanning: false, panLastMidX: 0, panLastMidY: 0,
+    zoomLevel: 1, isPanning: false, panLastMidX: 0, panLastMidY: 0, panLastDist: 0,
 };
 
 const pointers = new Map();
@@ -88,10 +88,15 @@ function startDraw(e) {
 function draw(e) {
     if (pointers.has(e.pointerId)) pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (state.isPanning && pointers.size >= 2) {
-        const mid = getMidpoint();
+        const pts = [...pointers.values()];
+        const mid = { x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2 };
         canvasWrap.scrollLeft -= mid.x - state.panLastMidX;
         canvasWrap.scrollTop -= mid.y - state.panLastMidY;
         state.panLastMidX = mid.x; state.panLastMidY = mid.y;
+        // Pinch zoom
+        const dist = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
+        if (state.panLastDist > 0) { state.zoomLevel = Math.max(0.25, Math.min(5, +(state.zoomLevel * dist / state.panLastDist).toFixed(2))); applyZoom(); }
+        state.panLastDist = dist;
         return;
     }
     if (!e.isPrimary) return;
@@ -275,15 +280,15 @@ function bindEvents() {
     document.addEventListener('pointermove', draw);
     document.addEventListener('pointerup', endDraw);
 
-    // Multi-pointer tracking for two-finger pan
-    const trackPointer = e => { pointers.set(e.pointerId, { x: e.clientX, y: e.clientY }); if (pointers.size >= 2 && !state.isPanning) { cancelCurrentAction(); state.isPanning = true; const mid = getMidpoint(); state.panLastMidX = mid.x; state.panLastMidY = mid.y; } };
-    const untrackPointer = e => { pointers.delete(e.pointerId); if (state.isPanning && pointers.size < 2) state.isPanning = false; };
+    // Multi-pointer tracking for two-finger pan & pinch zoom
+    const trackPointer = e => { pointers.set(e.pointerId, { x: e.clientX, y: e.clientY }); if (pointers.size >= 2 && !state.isPanning) { cancelCurrentAction(); state.isPanning = true; const mid = getMidpoint(); state.panLastMidX = mid.x; state.panLastMidY = mid.y; const pts = [...pointers.values()]; state.panLastDist = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y); } };
+    const untrackPointer = e => { pointers.delete(e.pointerId); if (state.isPanning && pointers.size < 2) { state.isPanning = false; if (pointers.size === 1 && state.image) { const [[id, pos]] = pointers; const rect = drawingLayer.getBoundingClientRect(); const mx = pos.x - rect.left, my = pos.y - rect.top; if (mx >= 0 && my >= 0 && mx <= rect.width && my <= rect.height) { drawingLayer.setPointerCapture(id); state.isDrawing = true; state.isDragging = false; state.startX = mx; state.startY = my; } } } };
     document.addEventListener('pointerdown', trackPointer, true);
     document.addEventListener('pointerup', untrackPointer, true);
     document.addEventListener('pointercancel', untrackPointer, true);
 
-    // Zoom: Ctrl+wheel
-    canvasWrap.addEventListener('wheel', e => { if (e.ctrlKey || e.metaKey) { e.preventDefault(); state.zoomLevel = Math.max(0.25, Math.min(5, +(state.zoomLevel + (e.deltaY > 0 ? -0.1 : 0.1)).toFixed(2))); applyZoom(); } }, { passive: false });
+    // Zoom: Ctrl+wheel (capture phase to intercept before browser zoom)
+    document.addEventListener('wheel', e => { if ((e.ctrlKey || e.metaKey) && canvasWrap.contains(e.target)) { e.preventDefault(); state.zoomLevel = Math.max(0.25, Math.min(5, +(state.zoomLevel + (e.deltaY > 0 ? -0.1 : 0.1)).toFixed(2))); applyZoom(); } }, { passive: false, capture: true });
     $('#btn-zoom-in').addEventListener('click', zoomIn);
     $('#btn-zoom-out').addEventListener('click', zoomOut);
     $('#btn-zoom-reset').addEventListener('click', zoomReset);
