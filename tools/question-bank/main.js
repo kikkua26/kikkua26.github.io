@@ -711,14 +711,6 @@ function handlePaste(e) {
     const rows = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
     const cells = rows.map(r => r.split('\t'));
 
-    // Single cell, no tabs → paste as-is with newlines → <br>
-    if (cells.length === 1 && cells[0].length === 1) {
-        e.preventDefault();
-        input.value = cells[0][0].replace(/\n/g, '<br>');
-        input.dispatchEvent(new Event('input', { bubbles: true }));
-        return;
-    }
-
     e.preventDefault();
 
     const tr = input.closest('tr');
@@ -740,7 +732,7 @@ function handlePaste(e) {
             if (colIdx >= visibleCols.length) break;
             const field = visibleCols[colIdx];
             if (inputs[field]) {
-                inputs[field].value = cells[r][c].replace(/\n/g, '<br>');
+                inputs[field].value = cells[r][c];
                 inputs[field].dispatchEvent(new Event('input', { bubbles: true }));
             }
         }
