@@ -777,7 +777,9 @@ function loadSqlJs() {
 
 function setApkgStatus(el, type, text) {
     el.className = 'apkg-status ' + type;
-    el.textContent = text;
+    el.innerHTML = type === 'loading'
+        ? '<span class="ai-spinner"></span> ' + esc(text)
+        : esc(text);
 }
 
 function openApkgModal() {
@@ -804,32 +806,48 @@ async function parseApkg(file) {
     apkgModel = null;
 
     try {
+        setApkgStatus(statusEl, 'loading', '正在加载依赖...');
         await Promise.all([loadJSZip(), loadSqlJs()]);
-        setApkgStatus(statusEl, 'loading', '正在解析牌组...');
 
+        setApkgStatus(statusEl, 'loading', '正在解压牌组...');
         const zip = await JSZip.loadAsync(file);
         const dbFile = zip.file('collection.anki2') || zip.file('collection.anki21');
         if (!dbFile) throw new Error('无效的 APKG 文件：缺少 collection.anki2');
 
+        setApkgStatus(statusEl, 'loading', '正在读取数据库...');
         const buf = await dbFile.async('arraybuffer');
         const SQL = window._sqlJsReady;
         const db = new SQL.Database(new Uint8Array(buf));
 
         const result = db.exec('SELECT models FROM col WHERE id = 1');
-        if (!result.length || !result[0].values.length) throw new Error('无法读取牌组配置');
+        if (!result.length || !result[0].values.length) throw new Error('牌组数据库损坏：无法读取配置');
 
+        setApkgStatus(statusEl, 'loading', '正在查找模板...');
         const models = JSON.parse(result[0].values[0][0]);
         db.close();
 
         // Find kikkua pro model
         let found = null;
+        const allNames = [];
         for (const key of Object.keys(models)) {
-            if (models[key].name && models[key].name.includes('kikkua pro模板')) {
+            const name = models[key].name || '';
+            allNames.push(name);
+            if (name.includes('kikkua pro模板') || name.includes('kikkua pro')) {
                 found = models[key];
-                break;
             }
         }
-        if (!found) throw new Error('未找到 kikkua pro 模板，请确认上传的是 kikkua 出品的牌组');
+        if (!found) {
+            const names = allNames.filter(n => n).join('、') || '无';
+            throw new Error('未找到 kikkua pro 模板。牌组中包含的模板：' + names);
+        }
+
+        // Validate required fields
+        const requiredFields = ['Question', 'Options', 'Answer', 'ClozeText', 'Chapter', 'Type', 'Analysis'];
+        const templateFields = found.flds.map(f => f.name);
+        const missing = requiredFields.filter(f => !templateFields.includes(f) && !templateFields.includes(f === 'Refrence' ? 'Reference' : f));
+        if (missing.length > 0) {
+            throw new Error('模板字段不完整，缺少：' + missing.join('、') + '。当前字段：' + templateFields.join('、'));
+        }
 
         apkgModel = found;
         const fieldNames = found.flds.map(f => f.name).join('、');
@@ -870,7 +888,7 @@ async function exportApkg() {
     if (!apkgModel) { setApkgStatus(document.getElementById('apkgExportStatus'), 'error', '请先上传模板牌组'); return; }
 
     const statusEl = document.getElementById('apkgExportStatus');
-    setApkgStatus(statusEl, 'loading', '正在生成牌组...');
+    setApkgStatus(statusEl, 'loading', '正在生成牌组，请稍候...');
     document.getElementById('btnDoApkg').disabled = true;
 
     try {
