@@ -334,6 +334,8 @@ td.selected { background: var(--accent-glow-2) !important; }
 .ctx-item:hover { background: var(--accent-glow); color: var(--text); }
 .ctx-item.danger:hover { background: var(--danger-bg); color: var(--danger); }
 .ctx-sep { border-top: 1px solid var(--border); margin: 4px 0; }
+.ctx-menu.compact { min-width: auto; padding: 3px; }
+.ctx-menu.compact .ctx-item { padding: 5px 10px; font-size: 12px; }
 
 /* ── signature ── */
 .signature {

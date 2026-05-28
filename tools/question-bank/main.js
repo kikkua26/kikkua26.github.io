@@ -774,11 +774,11 @@ function bindEvents() {
     document.getElementById('optCount').addEventListener('change', function() { setOptCols(this.value); });
     document.getElementById('btnAddRow').addEventListener('click', () => addRow());
     document.getElementById('btnAddRow').addEventListener('contextmenu', e => {
-        showBtnCtx(e, [{ label: '➕ 批量添加', cb: 'addRows' }]);
+        showBtnCtx(e, [{ label: '批量添加', cb: 'addRows' }]);
     });
     document.getElementById('btnImport').addEventListener('click', () => document.getElementById('fileInput').click());
     document.getElementById('btnImport').addEventListener('contextmenu', e => {
-        showBtnCtx(e, [{ label: '📄 下载模板', cb: 'downloadTemplate' }]);
+        showBtnCtx(e, [{ label: '下载模板', cb: 'downloadTemplate' }]);
     });
     document.getElementById('btnExport').addEventListener('click', () => document.getElementById('exportModal').classList.add('show'));
     document.getElementById('btnAI').addEventListener('click', openAIModal);
