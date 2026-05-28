@@ -184,6 +184,8 @@ function saveForm() {
 let ctxTr = null;
 
 document.addEventListener('contextmenu', e => {
+    // Skip if right-clicking a toolbar button (has its own contextmenu handler)
+    if (e.target.closest('.toolbar .btn')) return;
     const td = e.target.closest('td.idx');
     if (!td) { hideCtx(); return; }
     e.preventDefault();
@@ -195,7 +197,12 @@ document.addEventListener('contextmenu', e => {
 });
 
 document.addEventListener('click', e => { if (!e.target.closest('.ctx-menu')) hideCtx(); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { hideCtx(); closeForm(); } });
+document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    hideCtx();
+    if (editingTr) closeForm();
+    else document.querySelectorAll('.modal-mask.show').forEach(m => m.classList.remove('show'));
+});
 
 function hideCtx() {
     document.getElementById('ctxMenu').style.display = 'none';
