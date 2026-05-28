@@ -161,6 +161,7 @@ function createBlock(x, y, w, h) {
     div.style.left = x + 'px'; div.style.top = y + 'px';
     div.style.width = w + 'px'; div.style.height = h + 'px';
     div.style.backgroundColor = state.currentColor + Math.round(state.opacity*255).toString(16).padStart(2,'0');
+    div.addEventListener('dblclick', () => removeBlock(div));
     drawingLayer.appendChild(div);
     return div;
 }
