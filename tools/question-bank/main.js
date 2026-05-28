@@ -320,9 +320,14 @@ function handleImport(e) {
     e.target.value = '';
 }
 
+function stripCodeBlock(text) {
+    return text.replace(/^```(?:\w+)?\s*\n?/i, '').replace(/\n?```\s*$/i, '').trim();
+}
+
 function doTextImport() {
-    const text = document.getElementById('textInputArea').value.trim();
+    let text = document.getElementById('textInputArea').value.trim();
     if (!text) { alert('请输入 CSV 数据'); return; }
+    text = stripCodeBlock(text);
     document.getElementById('textImportModal').classList.remove('show');
     const lines = text.replace(/^﻿/, '').split(/\r?\n/).filter(l => l.trim());
     const aoa = lines.map(parseCSVLine);
@@ -453,7 +458,7 @@ function buildPrompt() {
     const base = `你是一个专业的题目出题助手。根据用户提供的知识内容生成高质量考题。
 
 硬性规则：
-- 只输出 CSV 格式数据，禁止输出任何解释、说明、markdown 标记（如 \`\`\`csv）
+- 只输出一个 \`\`\`csv 代码块，代码块内为 CSV 格式数据，禁止输出代码块以外的任何文字
 - 第一行是表头，后续每行一道题
 - 字段含逗号或换行时必须用英文双引号包裹，字段内部的双引号用两个双引号转义
 - ${countRule}
@@ -465,7 +470,7 @@ function buildPrompt() {
         const organizeBase = `你是一个专业的题目整理助手。用户会提供格式混乱、不规范的题目内容，你需要将其整理为标准 CSV 格式。
 
 硬性规则：
-- 只输出 CSV 格式数据，禁止输出任何解释、说明、markdown 标记（如 \`\`\`csv）
+- 只输出一个 \`\`\`csv 代码块，代码块内为 CSV 格式数据，禁止输出代码块以外的任何文字
 - 第一行是表头，后续每行一道题
 - 字段含逗号或换行时必须用英文双引号包裹，字段内部的双引号用两个双引号转义
 - 必须完整保留所有题目，不得遗漏任何一道
@@ -637,8 +642,7 @@ async function generateAI() {
         }
 
         const data = await resp.json();
-        let csvText = data.choices?.[0]?.message?.content?.trim() || '';
-        csvText = csvText.replace(/^```(?:csv)?\s*\n?/i, '').replace(/\n?```\s*$/i, '').trim();
+        let csvText = stripCodeBlock(data.choices?.[0]?.message?.content || '');
         if (!csvText) throw new Error('AI 返回内容为空');
 
         const lines = csvText.split(/\r?\n/).filter(l => l.trim());
