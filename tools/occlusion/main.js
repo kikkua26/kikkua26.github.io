@@ -7,6 +7,7 @@ const state = {
     image: null, imageRect: null, naturalSize: null,
     rectangles: [], currentColor: '#FF6B6B', opacity: 0.5,
     isDrawing: false, isDragging: false, startX: 0, startY: 0, currentBlock: null,
+    isMoving: false, moveReady: false, movingBlock: null, moveOffX: 0, moveOffY: 0, moveStartX: 0, moveStartY: 0,
     containerRect: null, imageOffset: { x: 0, y: 0 },
 };
 
@@ -51,14 +52,24 @@ function pointInImage(mx, my) {
     return mx >= 0 && my >= 0 && mx <= r.width && my <= r.height;
 }
 
-// ── Drawing ──
+// ── Drawing & Moving ──
 function startDraw(e) {
     if (!state.image) return;
     updateRects();
     const rect = drawingLayer.getBoundingClientRect();
     const mx = e.clientX - rect.left, my = e.clientY - rect.top;
     if (!pointInImage(mx, my)) return;
-    if (e.target.closest('.rect-block')) return;
+
+    const block = e.target.closest('.rect-block');
+    if (block) {
+        state.moveReady = true;
+        state.movingBlock = block;
+        state.moveStartX = mx;
+        state.moveStartY = my;
+        state.moveOffX = mx - parseFloat(block.style.left);
+        state.moveOffY = my - parseFloat(block.style.top);
+        return;
+    }
 
     state.isDrawing = true; state.isDragging = false;
     state.startX = mx;
@@ -66,10 +77,25 @@ function startDraw(e) {
 }
 
 function draw(e) {
-    if (!state.isDrawing) return;
+    if (!state.moveReady && !state.isMoving && !state.isDrawing) return;
     updateRects();
     const rect = drawingLayer.getBoundingClientRect();
     const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+
+    if ((state.moveReady || state.isMoving) && state.movingBlock) {
+        if (!state.isMoving) {
+            if (Math.abs(mx - state.moveStartX) < 4 && Math.abs(my - state.moveStartY) < 4) return;
+            state.isMoving = true;
+        }
+        const bw = parseFloat(state.movingBlock.style.width);
+        const bh = parseFloat(state.movingBlock.style.height);
+        let left = mx - state.moveOffX, top = my - state.moveOffY;
+        left = Math.max(0, Math.min(left, rect.width - bw));
+        top = Math.max(0, Math.min(top, rect.height - bh));
+        state.movingBlock.style.left = left + 'px';
+        state.movingBlock.style.top = top + 'px';
+        return;
+    }
 
     if (!state.isDragging) {
         if (Math.abs(mx - state.startX) < 4 && Math.abs(my - state.startY) < 4) return;
@@ -83,7 +109,6 @@ function draw(e) {
     if (width < 0) { left = mx; width = -width; }
     if (height < 0) { top = my; height = -height; }
 
-    // Clamp to drawing layer (image) bounds
     left = Math.max(0, left);
     top = Math.max(0, top);
     width = Math.min(width, rect.width - left);
@@ -96,6 +121,19 @@ function draw(e) {
 }
 
 function endDraw() {
+    if (state.isMoving) {
+        state.isMoving = false;
+        state.moveReady = false;
+        state.movingBlock = null;
+        rebuildRects();
+        updateJSON();
+        return;
+    }
+    if (state.moveReady) {
+        state.moveReady = false;
+        state.movingBlock = null;
+        return;
+    }
     if (!state.isDrawing) return;
     state.isDrawing = false;
     if (!state.isDragging || !state.currentBlock) return;
