@@ -7,7 +7,7 @@ const state = {
     image: null, imageRect: null, naturalSize: null,
     rectangles: [], currentColor: '#FF6B6B', opacity: 0.5,
     isDrawing: false, isDragging: false, startX: 0, startY: 0, currentBlock: null,
-    isMoving: false, moveReady: false, movingBlock: null, moveOffX: 0, moveOffY: 0, moveStartX: 0, moveStartY: 0,
+    isMoving: false, moveStarted: false, movingBlock: null, moveOffX: 0, moveOffY: 0, moveStartX: 0, moveStartY: 0,
     containerRect: null, imageOffset: { x: 0, y: 0 },
 };
 
@@ -52,7 +52,7 @@ function pointInImage(mx, my) {
     return mx >= 0 && my >= 0 && mx <= r.width && my <= r.height;
 }
 
-// ── Drawing & Moving ──
+// ── Drawing ──
 function startDraw(e) {
     if (!state.image) return;
     updateRects();
@@ -60,32 +60,21 @@ function startDraw(e) {
     const mx = e.clientX - rect.left, my = e.clientY - rect.top;
     if (!pointInImage(mx, my)) return;
 
-    const block = e.target.closest('.rect-block');
-    if (block) {
-        state.moveReady = true;
-        state.movingBlock = block;
-        state.moveStartX = mx;
-        state.moveStartY = my;
-        state.moveOffX = mx - parseFloat(block.style.left);
-        state.moveOffY = my - parseFloat(block.style.top);
-        return;
-    }
-
     state.isDrawing = true; state.isDragging = false;
     state.startX = mx;
     state.startY = my;
 }
 
 function draw(e) {
-    if (!state.moveReady && !state.isMoving && !state.isDrawing) return;
+    if (!state.isMoving && !state.isDrawing) return;
     updateRects();
     const rect = drawingLayer.getBoundingClientRect();
     const mx = e.clientX - rect.left, my = e.clientY - rect.top;
 
-    if ((state.moveReady || state.isMoving) && state.movingBlock) {
-        if (!state.isMoving) {
-            if (Math.abs(mx - state.moveStartX) < 4 && Math.abs(my - state.moveStartY) < 4) return;
-            state.isMoving = true;
+    if (state.isMoving && state.movingBlock) {
+        if (!state.moveStarted) {
+            if (Math.abs(mx - state.moveStartX) < 8 && Math.abs(my - state.moveStartY) < 8) return;
+            state.moveStarted = true;
         }
         const bw = parseFloat(state.movingBlock.style.width);
         const bh = parseFloat(state.movingBlock.style.height);
@@ -122,15 +111,12 @@ function draw(e) {
 
 function endDraw() {
     if (state.isMoving) {
+        if (state.moveStarted) {
+            rebuildRects();
+            updateJSON();
+        }
         state.isMoving = false;
-        state.moveReady = false;
-        state.movingBlock = null;
-        rebuildRects();
-        updateJSON();
-        return;
-    }
-    if (state.moveReady) {
-        state.moveReady = false;
+        state.moveStarted = false;
         state.movingBlock = null;
         return;
     }
@@ -155,6 +141,22 @@ function endDraw() {
     state.currentBlock = null; state.isDragging = false;
 }
 
+// ── Block Move ──
+function startMoveBlock(e, block) {
+    e.stopPropagation();
+    if (!state.image) return;
+    updateRects();
+    const rect = drawingLayer.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    state.isMoving = true;
+    state.moveStarted = false;
+    state.movingBlock = block;
+    state.moveStartX = mx;
+    state.moveStartY = my;
+    state.moveOffX = mx - parseFloat(block.style.left);
+    state.moveOffY = my - parseFloat(block.style.top);
+}
+
 function createBlock(x, y, w, h) {
     const div = document.createElement('div');
     div.className = 'rect-block';
@@ -162,6 +164,7 @@ function createBlock(x, y, w, h) {
     div.style.width = w + 'px'; div.style.height = h + 'px';
     div.style.backgroundColor = state.currentColor + Math.round(state.opacity*255).toString(16).padStart(2,'0');
     div.addEventListener('dblclick', () => removeBlock(div));
+    div.addEventListener('mousedown', e => startMoveBlock(e, div));
     drawingLayer.appendChild(div);
     return div;
 }
@@ -192,7 +195,6 @@ function redrawBlocks() {
         const ir = state.imageRect;
         const div = createBlock(r.x*ir.width, r.y*ir.height, r.w*ir.width, r.h*ir.height);
         div.style.backgroundColor = r.c + Math.round(state.opacity*255).toString(16).padStart(2,'0');
-        div.addEventListener('dblclick', () => removeBlock(div));
     });
 }
 
