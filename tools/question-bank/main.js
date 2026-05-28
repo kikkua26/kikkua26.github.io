@@ -1,5 +1,19 @@
-// kikkua Pro · 题库编辑器
+// kikkua · 题库编辑器
 // 表格化题库管理，支持 CSV/Excel 导入导出、AI 生成
+
+// Lazy-load xlsx library (862KB) only when import/export/template is triggered
+let _xlsxLoaded = false, _xlsxLoading = false, _xlsxWaiters = [];
+function loadXlsx() {
+    if (_xlsxLoaded) return Promise.resolve();
+    if (_xlsxLoading) return new Promise(r => _xlsxWaiters.push(r));
+    _xlsxLoading = true;
+    return new Promise(resolve => {
+        const s = document.createElement('script');
+        s.src = 'lib/xlsx.full.min.js?v=4';
+        s.onload = () => { _xlsxLoaded = true; _xlsxLoading = false; _xlsxWaiters.forEach(r => r()); _xlsxWaiters = []; resolve(); };
+        document.head.appendChild(s);
+    });
+}
 
 const tbody = document.getElementById('tbody');
 const statusEl = document.getElementById('statusText');
@@ -243,7 +257,8 @@ function exportKikkuaCSV() {
     download('questions_kikkua.csv', csv, 'text/csv');
 }
 
-function exportXLSX() {
+async function exportXLSX() {
+    await loadXlsx();
     const { aoa } = buildExportData(collectData());
     const ws = XLSX.utils.aoa_to_sheet(aoa);
     ws['!cols'] = aoa[0].map((h, ci) => {
@@ -256,7 +271,8 @@ function exportXLSX() {
     XLSX.writeFile(wb, 'questions.xlsx');
 }
 
-function downloadTemplate() {
+async function downloadTemplate() {
+    await loadXlsx();
     const header = ['序号','Chapter','Type','Question','Clozetext','OptionA','OptionB','OptionC','OptionD','OptionE','Answer','AnswerText','Analysis','Reference'];
     const example = ['1','Chapter 1','choice','What is 1+1?','','1','2','3','4','5','B','The answer is 2','Basic math','Math textbook'];
     const ws = XLSX.utils.aoa_to_sheet([header, example]);
@@ -304,12 +320,14 @@ function handleImport(e) {
     const file = e.target.files[0]; if (!file) return;
     const name = file.name.toLowerCase();
     if (name.endsWith('.xlsx') || name.endsWith('.xls')) {
-        const reader = new FileReader();
-        reader.onload = ev => {
-            const wb = XLSX.read(ev.target.result, { type: 'array' });
-            importAOA(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, defval: '' }));
-        };
-        reader.readAsArrayBuffer(file);
+        loadXlsx().then(() => {
+            const reader = new FileReader();
+            reader.onload = ev => {
+                const wb = XLSX.read(ev.target.result, { type: 'array' });
+                importAOA(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, defval: '' }));
+            };
+            reader.readAsArrayBuffer(file);
+        });
     } else if (name.endsWith('.csv')) {
         const reader = new FileReader();
         reader.onload = ev => {
