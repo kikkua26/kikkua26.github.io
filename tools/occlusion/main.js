@@ -54,18 +54,22 @@ function pointInImage(mx, my) {
 
 // ── Drawing ──
 function startDraw(e) {
+    if (!e.isPrimary) return;
     if (!state.image) return;
+    e.preventDefault();
     updateRects();
     const rect = drawingLayer.getBoundingClientRect();
     const mx = e.clientX - rect.left, my = e.clientY - rect.top;
     if (!pointInImage(mx, my)) return;
 
+    drawingLayer.setPointerCapture(e.pointerId);
     state.isDrawing = true; state.isDragging = false;
     state.startX = mx;
     state.startY = my;
 }
 
 function draw(e) {
+    if (!e.isPrimary) return;
     if (!state.isMoving && !state.isDrawing) return;
     updateRects();
     const rect = drawingLayer.getBoundingClientRect();
@@ -114,6 +118,8 @@ function endDraw() {
         if (state.moveStarted) {
             rebuildRects();
             updateJSON();
+        } else if (state.movingBlock && Date.now() - state.pointerDownTime >= 500) {
+            removeBlock(state.movingBlock);
         }
         state.isMoving = false;
         state.moveStarted = false;
@@ -143,14 +149,18 @@ function endDraw() {
 
 // ── Block Move ──
 function startMoveBlock(e, block) {
+    if (!e.isPrimary) return;
     e.stopPropagation();
+    e.preventDefault();
     if (!state.image) return;
     updateRects();
     const rect = drawingLayer.getBoundingClientRect();
     const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    block.setPointerCapture(e.pointerId);
     state.isMoving = true;
     state.moveStarted = false;
     state.movingBlock = block;
+    state.pointerDownTime = Date.now();
     state.moveStartX = mx;
     state.moveStartY = my;
     state.moveOffX = mx - parseFloat(block.style.left);
@@ -164,7 +174,7 @@ function createBlock(x, y, w, h) {
     div.style.width = w + 'px'; div.style.height = h + 'px';
     div.style.backgroundColor = state.currentColor + Math.round(state.opacity*255).toString(16).padStart(2,'0');
     div.addEventListener('dblclick', () => removeBlock(div));
-    div.addEventListener('mousedown', e => startMoveBlock(e, div));
+    div.addEventListener('pointerdown', e => startMoveBlock(e, div));
     drawingLayer.appendChild(div);
     return div;
 }
@@ -234,9 +244,9 @@ function bindEvents() {
     canvasWrap.addEventListener('dragover', e => { e.preventDefault(); });
     canvasWrap.addEventListener('drop', e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f?.type?.startsWith('image/')) loadImage(f); });
 
-    drawingLayer.addEventListener('mousedown', startDraw);
-    document.addEventListener('mousemove', draw);
-    document.addEventListener('mouseup', endDraw);
+    drawingLayer.addEventListener('pointerdown', startDraw);
+    document.addEventListener('pointermove', draw);
+    document.addEventListener('pointerup', endDraw);
 
     $('#btn-copy').addEventListener('click', copyData);
     $('#btn-clear').addEventListener('click', clearAll);

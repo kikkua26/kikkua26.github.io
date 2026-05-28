@@ -27,7 +27,8 @@
 body {
     font-family: -apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;
     background:var(--bg); color:var(--text); height:100vh; display:flex; flex-direction:column;
-    overflow:hidden; user-select:none; -webkit-font-smoothing:antialiased;
+    overflow:hidden; user-select:none; -webkit-user-select:none;
+    -webkit-touch-callout:none; -webkit-font-smoothing:antialiased;
 }
 
 /* ── Toolbar ── */
@@ -71,12 +72,13 @@ body {
 .drop-hint:hover { background:rgba(0,0,0,.03); color:var(--text2); }
 .hint-icon { font-size:48px; margin-bottom:12px; opacity:.3; }
 .hint-sub { font-size:12px; margin-top:6px; opacity:.6; }
-.drawing-layer { position:absolute; inset:0; cursor:crosshair; z-index:2; }
+.drawing-layer { position:absolute; inset:0; cursor:crosshair; z-index:2; touch-action:none; }
 
 /* ── Rectangles ── */
 .rect-block {
     position:absolute; border:1px dashed rgba(0,0,0,.35); border-radius:6px;
     cursor:move; pointer-events:auto; transition:opacity .15s; z-index:20;
+    touch-action:none;
 }
 .rect-block:hover { opacity:.85; border-color:rgba(0,0,0,.6); }
 
