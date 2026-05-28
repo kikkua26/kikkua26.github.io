@@ -149,15 +149,27 @@ const FORM_FIELDS = [
 
 function openForm(tr) {
     editingTr = tr;
+    const rows = Array.from(tbody.rows);
+    const idx = rows.indexOf(tr);
+    document.getElementById('formBadge').textContent = '#' + (idx + 1);
+    document.getElementById('formPrev').disabled = idx <= 0;
+    document.getElementById('formNext').disabled = idx >= rows.length - 1;
+
     const data = getRowData(tr);
-    const idx = Array.from(tbody.rows).indexOf(tr) + 1;
-    document.getElementById('formBadge').textContent = '#' + idx;
+    renderFormFields(data);
+
+    document.getElementById('rowFormModal').classList.add('show');
+    const first = document.getElementById('formGrid').querySelector('input, textarea');
+    if (first) first.focus();
+}
+
+function renderFormFields(data) {
     const body = document.getElementById('formGrid');
     body.innerHTML = '';
     FORM_FIELDS.forEach(f => {
         const oi = OPT_LETTERS.indexOf(f.key.replace('opt',''));
         if (f.key.startsWith('opt') && oi >= (7 - hiddenOptCols)) return;
-        const val = esc(data[f.key]||'');
+        const val = esc((data || {})[f.key] || '');
         const isTextarea = f.type === 'textarea';
         body.innerHTML += `<div class="form-row"><span class="form-label">${f.label}</span>${
             isTextarea
@@ -165,11 +177,23 @@ function openForm(tr) {
             : `<input type="text" data-field="${f.key}" value="${val}">`
         }</div>`;
     });
-    document.getElementById('rowFormModal').classList.add('show');
-    const first = body.querySelector('input, textarea'); if (first) first.focus();
 }
 
 function closeForm() { document.getElementById('rowFormModal').classList.remove('show'); editingTr = null; }
+
+function navForm(dir) {
+    if (!editingTr) return;
+    // Save current form data before navigating
+    const grid = document.getElementById('formGrid');
+    const data = {};
+    grid.querySelectorAll('[data-field]').forEach(el => { data[el.dataset.field] = el.value; });
+    setRowData(editingTr, data);
+
+    const rows = Array.from(tbody.rows);
+    const idx = rows.indexOf(editingTr);
+    const next = rows[idx + dir];
+    if (next) openForm(next);
+}
 
 function saveForm() {
     if (!editingTr) return;
@@ -771,7 +795,11 @@ function handlePaste(e) {
 
 // ═══ Button Events ═══
 function bindEvents() {
-    document.getElementById('optCount').addEventListener('change', function() { setOptCols(this.value); });
+    document.getElementById('optCount').addEventListener('change', function() {
+        setOptCols(this.value);
+        // Update open form if editing
+        if (editingTr) renderFormFields(getRowData(editingTr));
+    });
     document.getElementById('btnAddRow').addEventListener('click', () => addRow());
     document.getElementById('btnAddRow').addEventListener('contextmenu', e => {
         showBtnCtx(e, [{ label: '批量添加', cb: 'addRows' }]);
@@ -807,7 +835,10 @@ function bindEvents() {
     document.getElementById('btnCancelForm').addEventListener('click', closeForm);
     document.getElementById('btnCancelForm2').addEventListener('click', closeForm);
     document.getElementById('btnSaveForm').addEventListener('click', saveForm);
-    document.getElementById('formGrid').addEventListener('keydown', e => {
+    document.getElementById('formPrev').addEventListener('click', () => navForm(-1));
+    document.getElementById('formNext').addEventListener('click', () => navForm(1));
+    document.getElementById('rowFormModal').addEventListener('keydown', e => {
+        if (e.key === 'Escape') { e.stopPropagation(); closeForm(); }
         if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') { e.preventDefault(); saveForm(); }
     });
 

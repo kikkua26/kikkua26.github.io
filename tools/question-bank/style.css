@@ -265,6 +265,14 @@ td.selected { background: var(--accent-glow-2) !important; }
     transition: all var(--transition);
 }
 .rf-close:hover { background: var(--surface-2); color: var(--text); }
+.rf-nav {
+    width: 24px; height: 24px; border: 1px solid var(--border); background: var(--surface);
+    font-size: 16px; color: var(--text-2); cursor: pointer;
+    border-radius: 4px; display: flex; align-items: center; justify-content: center;
+    transition: all var(--transition); line-height: 1;
+}
+.rf-nav:hover { background: var(--surface-2); color: var(--text); border-color: var(--border-light); }
+.rf-nav:disabled { opacity: .35; cursor: default; }
 
 .rf-body { padding: 8px 16px; overflow-y: auto; flex: 1; }
 
