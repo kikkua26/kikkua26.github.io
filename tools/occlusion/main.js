@@ -9,16 +9,14 @@ const state = {
     isDrawing: false, isDragging: false, startX: 0, startY: 0, currentBlock: null,
     isMoving: false, moveStarted: false, movingBlock: null, moveOffX: 0, moveOffY: 0, moveStartX: 0, moveStartY: 0,
     containerRect: null, imageOffset: { x: 0, y: 0 },
-    isPanning: false, panLastMidX: 0, panLastMidY: 0,
 };
-
-const pointers = new Map();
 
 const COLORS = ['#FF6B6B','#FFD166','#06D6A0','#118AB2','#073B4C','#EF476F','#FF9F1C','#1A936F'];
 
 const $ = s => document.querySelector(s);
 const imageEl = $('#image');
 const canvasWrap = $('#canvas-wrap');
+const canvasInner = $('#canvas-inner');
 const drawingLayer = $('#drawing-layer');
 const jsonOutput = $('#json-output');
 const toastEl = $('#toast');
@@ -54,19 +52,9 @@ function pointInImage(mx, my) {
     return mx >= 0 && my >= 0 && mx <= r.width && my <= r.height;
 }
 
-// ── Pan ──
-function getMidpoint() {
-    const pts = [...pointers.values()];
-    return { x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2 };
-}
-function cancelCurrentAction() {
-    if (state.isDrawing) { if (state.currentBlock) state.currentBlock.remove(); state.isDrawing = false; state.isDragging = false; state.currentBlock = null; }
-    if (state.isMoving) { if (state.moveStarted) { rebuildRects(); updateJSON(); } state.isMoving = false; state.moveStarted = false; state.movingBlock = null; }
-}
-
 // ── Drawing ──
 function startDraw(e) {
-    if (!e.isPrimary || state.isPanning) return;
+    if (!e.isPrimary) return;
     if (!state.image) return;
     e.preventDefault();
     updateRects();
@@ -81,14 +69,6 @@ function startDraw(e) {
 }
 
 function draw(e) {
-    if (pointers.has(e.pointerId)) pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    if (state.isPanning && pointers.size >= 2) {
-        const mid = getMidpoint();
-        canvasWrap.scrollLeft -= mid.x - state.panLastMidX;
-        canvasWrap.scrollTop -= mid.y - state.panLastMidY;
-        state.panLastMidX = mid.x; state.panLastMidY = mid.y;
-        return;
-    }
     if (!e.isPrimary) return;
     if (!state.isMoving && !state.isDrawing) return;
     updateRects();
@@ -133,9 +113,7 @@ function draw(e) {
     state.currentBlock.style.height = height + 'px';
 }
 
-function endDraw(e) {
-    pointers.delete(e.pointerId);
-    if (state.isPanning) { if (pointers.size < 2) state.isPanning = false; return; }
+function endDraw() {
     if (state.isMoving) {
         if (state.moveStarted) {
             rebuildRects();
@@ -171,7 +149,7 @@ function endDraw(e) {
 
 // ── Block Move ──
 function startMoveBlock(e, block) {
-    if (!e.isPrimary || state.isPanning) return;
+    if (!e.isPrimary) return;
     e.stopPropagation();
     e.preventDefault();
     if (!state.image) return;
@@ -269,13 +247,6 @@ function bindEvents() {
     drawingLayer.addEventListener('pointerdown', startDraw);
     document.addEventListener('pointermove', draw);
     document.addEventListener('pointerup', endDraw);
-
-    // Multi-pointer tracking for two-finger pan
-    const trackPointer = e => { pointers.set(e.pointerId, { x: e.clientX, y: e.clientY }); if (pointers.size >= 2 && !state.isPanning) { cancelCurrentAction(); state.isPanning = true; const mid = getMidpoint(); state.panLastMidX = mid.x; state.panLastMidY = mid.y; } };
-    const untrackPointer = e => { pointers.delete(e.pointerId); if (state.isPanning && pointers.size < 2) { state.isPanning = false; if (pointers.size === 1 && state.image) { const [[id, pos]] = pointers; const rect = drawingLayer.getBoundingClientRect(); const mx = pos.x - rect.left, my = pos.y - rect.top; if (mx >= 0 && my >= 0 && mx <= rect.width && my <= rect.height) { drawingLayer.setPointerCapture(id); state.isDrawing = true; state.isDragging = false; state.startX = mx; state.startY = my; } } } };
-    document.addEventListener('pointerdown', trackPointer, true);
-    document.addEventListener('pointerup', untrackPointer, true);
-    document.addEventListener('pointercancel', untrackPointer, true);
 
     $('#btn-copy').addEventListener('click', copyData);
     $('#btn-clear').addEventListener('click', clearAll);
