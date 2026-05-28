@@ -115,6 +115,9 @@ body {
 .toast.success { background:var(--accent); color:#fff; }
 .toast.error { background:var(--danger); color:#fff; }
 
+.zoom-controls { display:flex; align-items:center; gap:2px; margin-left:4px; }
+.zoom-label { font-size:11px; color:var(--text3); min-width:36px; text-align:center; font-variant-numeric:tabular-nums; }
+
 @media (max-width:768px) {
     .side-panel { display:none; }
     .toolbar h1 { font-size:14px; }
