@@ -972,8 +972,8 @@ async function exportApkg() {
         }
 
         // Insert col
-        const conf = JSON.stringify({ activeDecks: [1], curDeck: 1, newSpread: 0, collapseTime: 1200, timeLim: 0, estTimes: true, autoplay: true, replayq: true, dayLearnFirst: false, schedVer: 2 });
-        const dconf = JSON.stringify({ '1': { id: 1, name: 'Default', dyn: 0, conf: 1, usn: -1, mod: now, collapsed: false, browserCollapsed: false, new: { bury: true, delays: [1, 10], initialFactor: 2500, ints: [1, 4, 0], order: 0, perDay: 20 }, rev: { bury: true, ease4: 1.3, ivlFct: 1, maxIvl: 36500, perDay: 200, hardFactor: 1.2, fuzz: 0.05 }, lapse: { delays: [10], leechAction: 0, leechFails: 8, minInt: 1, mult: 0 }, autoplay: true, timer: 0, maxTaken: 60 } });
+        const conf = JSON.stringify({ activeDecks: [1], addToCur: true, curDeck: 1, curModel: String(modelId), dueCounts: true, estTimes: true, newBury: true, newSpread: 0, nextPos: 1, sortBackwards: false, sortType: 'noteFld', timeLim: 0, collapseTime: 1200 });
+        const dconf = JSON.stringify({ '1': { id: 1, name: 'Default', dyn: 0, conf: 1, usn: 0, mod: 0, collapsed: false, browserCollapsed: false, new: { bury: true, delays: [1, 10], initialFactor: 2500, ints: [1, 4, 7], order: 1, perDay: 20, separate: true }, rev: { bury: true, ease4: 1.3, ivlFct: 1, maxIvl: 36500, perDay: 100, minSpace: 1, fuzz: 0.05 }, lapse: { delays: [10], leechAction: 0, leechFails: 8, minInt: 1, mult: 0 }, autoplay: true, replayq: true, timer: 0, maxTaken: 60 } });
         const tags = JSON.stringify({});
 
         db.run('INSERT INTO col VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)',
