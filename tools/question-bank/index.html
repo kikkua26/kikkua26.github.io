@@ -12,12 +12,9 @@
 
   <div class="toolbar">
     <button class="btn primary" id="btnAddRow"><span class="icon">+</span> 添加行</button>
-    <button class="btn" id="btnAddRows">批量添加</button>
     <div class="sep"></div>
     <button class="btn" id="btnImport">文件导入</button>
-    <button class="btn" id="btnExportCSV">导出 CSV</button>
-    <button class="btn" id="btnExportXLSX">导出 Excel</button>
-    <button class="btn" id="btnTemplate">模板</button>
+    <button class="btn" id="btnExport">导出</button>
     <div class="sep"></div>
     <button class="btn ai-btn" id="btnAI">✨ AI 生成</button>
     <div class="sep"></div>
@@ -93,14 +90,15 @@
 
 <input type="file" id="fileInput" accept=".csv,.xlsx,.xls" style="display:none">
 
-<div class="modal-mask" id="csvFormatModal">
+<div class="modal-mask" id="exportModal">
   <div class="modal" style="min-width:300px">
-    <h3>导出 CSV</h3>
-    <label><input type="radio" name="csvFmt" value="standard" checked> 标准格式</label>
-    <label><input type="radio" name="csvFmt" value="kikkua"> kikkua 格式</label>
+    <h3>导出</h3>
+    <label><input type="radio" name="exportFmt" value="kikkua" checked> CSV · kikkua 格式</label>
+    <label><input type="radio" name="exportFmt" value="standard"> CSV · 标准格式</label>
+    <label><input type="radio" name="exportFmt" value="xlsx"> Excel (.xlsx)</label>
     <div class="btns">
-      <button class="btn" id="btnCancelCsvFmt">取消</button>
-      <button class="btn ok" id="btnDoExportCSV">导出</button>
+      <button class="btn" id="btnCancelExport">取消</button>
+      <button class="btn ok" id="btnDoExport">导出</button>
     </div>
   </div>
 </div>
@@ -206,6 +204,8 @@
   <div class="ctx-item" data-action="duplicate">📋 复制此行</div>
   <div class="ctx-item danger" data-action="delete">🗑 删除此行</div>
 </div>
+
+<div class="ctx-menu" id="btnCtxMenu"></div>
 
 <div class="signature">kikkua</div>
 

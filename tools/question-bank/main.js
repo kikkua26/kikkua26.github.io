@@ -197,7 +197,10 @@ document.addEventListener('contextmenu', e => {
 document.addEventListener('click', e => { if (!e.target.closest('.ctx-menu')) hideCtx(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') { hideCtx(); closeForm(); } });
 
-function hideCtx() { document.getElementById('ctxMenu').style.display = 'none'; }
+function hideCtx() {
+    document.getElementById('ctxMenu').style.display = 'none';
+    document.getElementById('btnCtxMenu').style.display = 'none';
+}
 
 document.getElementById('ctxMenu').addEventListener('click', e => {
     const item = e.target.closest('.ctx-item');
@@ -210,6 +213,25 @@ document.getElementById('ctxMenu').addEventListener('click', e => {
     else if (action === 'insertBelow') addRow({}, ctxTr.nextElementSibling);
     else if (action === 'duplicate') addRow(getRowData(ctxTr), ctxTr.nextElementSibling);
     else if (action === 'delete') { ctxTr.remove(); renumber(); }
+});
+
+// ═══ Button Context Menu ═══
+function showBtnCtx(e, items) {
+    e.preventDefault();
+    const menu = document.getElementById('btnCtxMenu');
+    menu.innerHTML = items.map(i => `<div class="ctx-item" data-cb="${i.cb}">${i.label}</div>`).join('');
+    menu.style.display = 'block';
+    menu.style.left = Math.min(e.clientX, window.innerWidth - 200) + 'px';
+    menu.style.top = Math.min(e.clientY, window.innerHeight - 120) + 'px';
+}
+
+document.getElementById('btnCtxMenu').addEventListener('click', e => {
+    const item = e.target.closest('.ctx-item');
+    if (!item) return;
+    hideCtx();
+    const cb = item.dataset.cb;
+    if (cb === 'addRows') addRows();
+    else if (cb === 'downloadTemplate') downloadTemplate();
 });
 
 // ═══ Double-click to edit ═══
@@ -744,11 +766,14 @@ function handlePaste(e) {
 function bindEvents() {
     document.getElementById('optCount').addEventListener('change', function() { setOptCols(this.value); });
     document.getElementById('btnAddRow').addEventListener('click', () => addRow());
-    document.getElementById('btnAddRows').addEventListener('click', addRows);
+    document.getElementById('btnAddRow').addEventListener('contextmenu', e => {
+        showBtnCtx(e, [{ label: '➕ 批量添加', cb: 'addRows' }]);
+    });
     document.getElementById('btnImport').addEventListener('click', () => document.getElementById('fileInput').click());
-    document.getElementById('btnExportCSV').addEventListener('click', () => document.getElementById('csvFormatModal').classList.add('show'));
-    document.getElementById('btnExportXLSX').addEventListener('click', exportXLSX);
-    document.getElementById('btnTemplate').addEventListener('click', downloadTemplate);
+    document.getElementById('btnImport').addEventListener('contextmenu', e => {
+        showBtnCtx(e, [{ label: '📄 下载模板', cb: 'downloadTemplate' }]);
+    });
+    document.getElementById('btnExport').addEventListener('click', () => document.getElementById('exportModal').classList.add('show'));
     document.getElementById('btnAI').addEventListener('click', openAIModal);
     document.getElementById('btnClear').addEventListener('click', () => {
         if (confirm('确定清空全部数据？')) { tbody.innerHTML = ''; renumber(); }
@@ -757,12 +782,14 @@ function bindEvents() {
     // File import
     document.getElementById('fileInput').addEventListener('change', handleImport);
 
-    // CSV format modal
-    document.getElementById('btnCancelCsvFmt').addEventListener('click', () => document.getElementById('csvFormatModal').classList.remove('show'));
-    document.getElementById('btnDoExportCSV').addEventListener('click', () => {
-        const fmt = document.querySelector('input[name="csvFmt"]:checked').value;
-        document.getElementById('csvFormatModal').classList.remove('show');
-        if (fmt === 'kikkua') exportKikkuaCSV(); else exportStandardCSV();
+    // Export modal
+    document.getElementById('btnCancelExport').addEventListener('click', () => document.getElementById('exportModal').classList.remove('show'));
+    document.getElementById('btnDoExport').addEventListener('click', () => {
+        const fmt = document.querySelector('input[name="exportFmt"]:checked').value;
+        document.getElementById('exportModal').classList.remove('show');
+        if (fmt === 'kikkua') exportKikkuaCSV();
+        else if (fmt === 'xlsx') exportXLSX();
+        else exportStandardCSV();
     });
 
     // Text import modal
