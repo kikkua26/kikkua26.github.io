@@ -251,7 +251,7 @@ function exportKikkuaCSV() {
         let q = row.question || '';
         if (row.clozetext && row.clozetext.trim()) q = row.clozetext;
         const optParts = visibleOpts.map(o => row['opt'+o] || '').filter(v => v.trim());
-        const TYPE_MAP = { choice:'选择题', cloze:'填空题', short:'问答题' };
+        const TYPE_MAP = { '单选题':'单选题','判断题':'判断题','多选题':'多选题','选择题':'选择题','填空题':'填空题','问答题':'问答题', choice:'选择题', cloze:'填空题', short:'问答题' };
         csv += [i+1, ...fields.map(f => csvVal(({ _chapter: row.chapter||'', _type: TYPE_MAP[row.type]||row.type||'', _question: q, _options: optParts.join('||'), ...row })[f] || ''))].join(',') + '\n';
     });
     download('questions_kikkua.csv', csv, 'text/csv');
@@ -296,7 +296,7 @@ function parseCSVLine(line) {
 function importAOA(aoa) {
     if (aoa.length < 2) { alert('文件无数据行'); return; }
     const hdr = aoa[0].map(h => String(h).trim().toLowerCase());
-    const TYPE_IMPORT_MAP = { '选择题':'choice','填空题':'cloze','问答题':'short','choice':'choice','cloze':'cloze','short':'short','single choice':'choice','multiple choice':'choice','fill-in-the-blank':'cloze','short answer':'short' };
+    const TYPE_IMPORT_MAP = { '选择题':'选择题','单选题':'单选题','判断题':'判断题','多选题':'多选题','填空题':'填空题','问答题':'问答题','choice':'选择题','cloze':'填空题','short':'问答题','single choice':'单选题','multiple choice':'多选题','fill-in-the-blank':'填空题','short answer':'问答题' };
     const fm = { 'chapter':'chapter','type':'type','question':'question','clozetext':'clozetext','optiona':'optA','a':'optA','optionb':'optB','b':'optB','optionc':'optC','c':'optC','optiond':'optD','d':'optD','optione':'optE','e':'optE','optionf':'optF','f':'optF','optiong':'optG','g':'optG','answer':'answer','answertext':'answertext','analysis':'analysis','reference':'reference','options':'_options' };
     for (let i = 1; i < aoa.length; i++) {
         const vals = aoa[i]; if (!vals || vals.every(v => v === '')) continue;
@@ -308,7 +308,7 @@ function importAOA(aoa) {
             if (key && key !== '_options') obj[key] = val;
             if (key === '_options') val.split('||').forEach((p, k) => { if (k < 7) obj['opt'+OPT_LETTERS[k]] = p.trim(); });
         });
-        if (obj.type === 'cloze' && !obj.answer && obj.clozetext) {
+        if ((obj.type === '填空题' || obj.type === 'cloze') && !obj.answer && obj.clozetext) {
             const matches = obj.clozetext.match(/\[\[([^\]]*)\]\]/g);
             if (matches) obj.answer = matches.map(m => m.slice(2, -2)).join('|');
         }
@@ -505,12 +505,12 @@ function buildPrompt() {
 表头：Type,Question,OptionA,OptionB,OptionC,OptionD,OptionE,Answer,Analysis,Reference,Chapter
 
 字段要求：
-- Type：固定填写 choice
+- Type：根据题目性质填写「单选题」「判断题」或「多选题」（判断题指只有对/错或是/否两个选项的题目）
 - Question：题干，表述清晰完整
 - OptionA ~ OptionE：各选项内容，根据题目需要决定选项数量（至少 4 个，最多 6 个，不需要的选项留空）
 - 如果原始题目选项不足 4 个，用相关内容补齐至 4 个
-- Answer：正确选项的大写字母，单选填一个字母（如 B），多选填多个字母（如 AC）
-- 保留原始题目的单选/多选设定；如果原始题目未标明，默认为单选
+- Answer：正确选项的大写字母，单选题和判断题填一个字母（如 B），多选题填多个字母（如 AC）
+- 保留原始题目的单选/多选/判断设定；如果原始题目未标明，默认为单选题
 
 以下是需要整理的题目内容：
 ${content}`;
@@ -521,7 +521,7 @@ ${content}`;
 表头：Type,ClozeText,Analysis,Reference,Chapter
 
 字段要求：
-- Type：固定填写 cloze
+- Type：固定填写 填空题
 - ClozeText：将原始题目中的关键术语用 [[正确答案]] 挖空
 - 每道题可挖 1~3 个空，挖空内容应是理解该知识点必不可少的关键术语
 - 如果原始题目已有下划线或括号标注的填空位置，按原始位置处理
@@ -535,7 +535,7 @@ ${content}`;
 表头：Type,Question,AnswerText,Analysis,Reference,Chapter
 
 字段要求：
-- Type：固定填写 short
+- Type：固定填写 问答题
 - Question：问题，表述清晰
 - AnswerText：完整的标准答案
 
@@ -551,12 +551,11 @@ ${content}`;
 表头：Type,Question,OptionA,OptionB,OptionC,OptionD,OptionE,Answer,Analysis,Reference,Chapter
 
 字段要求：
-- Type：固定填写 choice
+- Type：根据题目性质填写「单选题」「判断题」或「多选题」（判断题指只有对/错或是/否两个选项的题目）
 - Question：题干，表述清晰完整，包含足够的上下文信息
 - OptionA ~ OptionE：各选项内容，根据题目需要决定选项数量（至少 4 个，最多 6 个，不需要的选项留空）
 - 干扰项要求：每个错误选项必须是该知识点中容易混淆的概念或常见误解，不能是明显无关或荒谬的内容
-- Answer：正确选项的大写字母，默认生成单选题（填一个字母如 B）；仅当题目明确考查「以下哪些」「多选」时才填多个字母（如 AC）
-- 大部分题目应为单选题，多选题占比不超过 20%
+- Answer：正确选项的大写字母，单选题和判断题填一个字母（如 B），多选题填多个字母（如 AC）
 
 以下是知识内容：
 ${content}`;
@@ -567,7 +566,7 @@ ${content}`;
 表头：Type,ClozeText,Analysis,Reference,Chapter
 
 字段要求：
-- Type：固定填写 cloze
+- Type：固定填写 填空题
 - ClozeText：在关键位置用 [[正确答案]] 挖空，如「光合作用需要 [[阳光]]、[[水]] 和 [[二氧化碳]]」
 - 每道题可挖 1~3 个空，挖空内容应是理解该知识点必不可少的关键术语，去掉后该句无法靠上下文推断
 - 不要在不重要的修饰词、连接词上挖空
@@ -582,7 +581,7 @@ ${content}`;
 表头：Type,Question,AnswerText,Analysis,Reference,Chapter
 
 字段要求：
-- Type：固定填写 short
+- Type：固定填写 问答题
 - Question：问题，表述清晰，明确指出答题方向（如「简述」「比较」「分析原因」）
 - AnswerText：完整的标准答案，简答题 2~3 句话点明核心要点，论述题需分点展开、逻辑完整
 - 如果知识内容适合拆成多道问答题，可以生成多道
