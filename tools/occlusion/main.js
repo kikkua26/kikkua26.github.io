@@ -63,22 +63,24 @@ function cancelCurrentAction() {
 
 // ── Drawing ──
 function startDraw(e) {
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointers.size >= 2) {
+        cancelCurrentAction();
+        if (!state.isPanning) { state.isPanning = true; const mid = getMidpoint(); state.panLastMidX = mid.x; state.panLastMidY = mid.y; }
+        return;
+    }
     if (!e.isPrimary || state.isPanning) return;
     if (!state.image) return;
     e.preventDefault();
+    state.isDrawing = true; state.isDragging = false;
     updateRects();
     const rect = drawingLayer.getBoundingClientRect();
-    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
-    if (!pointInImage(mx, my)) return;
-
-    drawingLayer.setPointerCapture(e.pointerId);
-    state.isDrawing = true; state.isDragging = false;
-    state.startX = mx;
-    state.startY = my;
+    state.startX = e.clientX - rect.left;
+    state.startY = e.clientY - rect.top;
 }
 
 function draw(e) {
-    if (pointers.has(e.pointerId)) pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (state.isPanning && pointers.size >= 2) {
         const mid = getMidpoint();
         canvasWrap.scrollLeft -= mid.x - state.panLastMidX;
@@ -132,7 +134,18 @@ function draw(e) {
 
 function endDraw(e) {
     pointers.delete(e.pointerId);
-    if (state.isPanning) { if (pointers.size < 2) { state.isPanning = false; if (pointers.size === 1 && state.image) { const [[id, pos]] = pointers; const rect = drawingLayer.getBoundingClientRect(); const mx = pos.x - rect.left, my = pos.y - rect.top; if (mx >= 0 && my >= 0 && mx <= rect.width && my <= rect.height) { drawingLayer.setPointerCapture(id); state.isDrawing = true; state.isDragging = false; state.startX = mx; state.startY = my; } } } return; }
+    if (state.isPanning) {
+        if (pointers.size < 2) {
+            state.isPanning = false;
+            if (pointers.size === 1 && state.image) {
+                const [[, pos]] = pointers;
+                const rect = drawingLayer.getBoundingClientRect();
+                state.isDrawing = true; state.isDragging = false;
+                state.startX = pos.x - rect.left; state.startY = pos.y - rect.top;
+            }
+        }
+        return;
+    }
     if (state.isMoving) {
         if (state.moveStarted) {
             rebuildRects();
@@ -168,6 +181,12 @@ function endDraw(e) {
 
 // ── Block Move ──
 function startMoveBlock(e, block) {
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointers.size >= 2) {
+        cancelCurrentAction();
+        if (!state.isPanning) { state.isPanning = true; const mid = getMidpoint(); state.panLastMidX = mid.x; state.panLastMidY = mid.y; }
+        return;
+    }
     if (!e.isPrimary || state.isPanning) return;
     e.stopPropagation();
     e.preventDefault();
@@ -267,13 +286,7 @@ function bindEvents() {
     drawingLayer.addEventListener('contextmenu', e => e.preventDefault());
     document.addEventListener('pointermove', draw);
     document.addEventListener('pointerup', endDraw);
-
-    // Two-finger pan tracking
-    const trackPointer = e => { pointers.set(e.pointerId, { x: e.clientX, y: e.clientY }); if (pointers.size >= 2 && !state.isPanning) { cancelCurrentAction(); state.isPanning = true; const mid = getMidpoint(); state.panLastMidX = mid.x; state.panLastMidY = mid.y; } };
-    const untrackPointer = e => { pointers.delete(e.pointerId); if (state.isPanning && pointers.size < 2) state.isPanning = false; };
-    document.addEventListener('pointerdown', trackPointer, true);
-    document.addEventListener('pointerup', untrackPointer, true);
-    document.addEventListener('pointercancel', untrackPointer, true);
+    document.addEventListener('pointercancel', e => { pointers.delete(e.pointerId); if (state.isPanning && pointers.size < 2) state.isPanning = false; });
 
     $('#btn-copy').addEventListener('click', copyData);
     $('#btn-clear').addEventListener('click', clearAll);
