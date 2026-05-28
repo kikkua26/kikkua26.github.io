@@ -470,7 +470,9 @@ function buildPrompt() {
     const countRule = aiMode === 'single'
         ? '只生成 1 道题，从内容中选取最核心的知识点出题'
         : '完整覆盖内容中的所有知识点生成题目，数量根据实际知识点数量决定，不遗漏任何知识点';
-    const chapterRule = chapter ? `Chapter 字段统一填写「${chapter}」` : 'Chapter 字段根据内容自行归类';
+    const chapterRule = chapter
+        ? `Chapter 字段统一填写「${chapter}」`
+        : 'Chapter 字段根据内容自行归类，多级标题用 :: 分隔（如「第一章::第一节::心脉的生理功能」）';
     const diffRule = aiMode === 'batch' ? `- 难度分布：大致按 3:5:2 的比例分配「识记」「理解」「应用」三个层次的题目，不要全部集中在同一层次\n` : '';
 
     const base = `你是一个专业的题目出题助手。根据用户提供的知识内容生成高质量考题。
