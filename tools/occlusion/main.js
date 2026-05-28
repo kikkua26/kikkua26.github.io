@@ -245,6 +245,7 @@ function bindEvents() {
     canvasWrap.addEventListener('drop', e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f?.type?.startsWith('image/')) loadImage(f); });
 
     drawingLayer.addEventListener('pointerdown', startDraw);
+    drawingLayer.addEventListener('contextmenu', e => e.preventDefault());
     document.addEventListener('pointermove', draw);
     document.addEventListener('pointerup', endDraw);
 
