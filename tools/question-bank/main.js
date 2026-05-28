@@ -690,6 +690,64 @@ function openTextImport() {
     document.getElementById('textInputArea').focus();
 }
 
+// ═══ Paste Handler (Excel-like) ═══
+const PASTE_COL_ORDER = ['chapter','type','question','clozetext','optA','optB','optC','optD','optE','optF','optG','answer','answertext','analysis','reference'];
+
+function getVisibleCols() {
+    const visible = 7 - hiddenOptCols;
+    return PASTE_COL_ORDER.filter(c => {
+        if (!c.startsWith('opt')) return true;
+        return OPT_LETTERS.indexOf(c.replace('opt', '')) < visible;
+    });
+}
+
+function handlePaste(e) {
+    const input = e.target;
+    if (!input || !input.matches('input[data-field]')) return;
+
+    const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+    if (!text) return;
+
+    const rows = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+    const cells = rows.map(r => r.split('\t'));
+
+    // Single cell, no tabs → paste as-is with newlines → <br>
+    if (cells.length === 1 && cells[0].length === 1) {
+        e.preventDefault();
+        input.value = cells[0][0].replace(/\n/g, '<br>');
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        return;
+    }
+
+    e.preventDefault();
+
+    const tr = input.closest('tr');
+    const startTd = input.closest('td');
+    const visibleCols = getVisibleCols();
+    const startColIdx = visibleCols.indexOf(startTd.dataset.col);
+    if (startColIdx < 0) return;
+
+    let currentTr = tr;
+    for (let r = 0; r < cells.length; r++) {
+        if (!currentTr) {
+            currentTr = addRow();
+        }
+        const inputs = {};
+        currentTr.querySelectorAll('input[data-field]').forEach(el => { inputs[el.dataset.field] = el; });
+
+        for (let c = 0; c < cells[r].length; c++) {
+            const colIdx = startColIdx + c;
+            if (colIdx >= visibleCols.length) break;
+            const field = visibleCols[colIdx];
+            if (inputs[field]) {
+                inputs[field].value = cells[r][c].replace(/\n/g, '<br>');
+                inputs[field].dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        }
+        currentTr = currentTr.nextElementSibling;
+    }
+}
+
 // ═══ Button Events ═══
 function bindEvents() {
     document.getElementById('optCount').addEventListener('change', function() { setOptCols(this.value); });
@@ -759,6 +817,9 @@ function bindEvents() {
         const actionsTd = e.target.closest('td.actions');
         if (actionsTd) delRow(actionsTd);
     });
+
+    // Paste: Excel-like multi-cell paste
+    tbody.addEventListener('paste', handlePaste);
 }
 
 // ═══ Init ═══
