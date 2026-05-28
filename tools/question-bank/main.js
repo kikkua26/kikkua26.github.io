@@ -297,15 +297,13 @@ function exportStandardCSV() {
 function exportKikkuaCSV() {
     const data = collectData();
     const visibleOpts = OPT_LETTERS.slice(0, 7 - hiddenOptCols);
-    const header = ['序号','Chapter','Type','Question','Options','Answer','AnswerText','Analysis','Reference'];
-    const fields = ['_chapter','_type','_question','_options','answer','answertext','analysis','reference'];
+    const header = ['序号','Chapter','Type','Question','ClozeText','Options','Answer','AnswerText','Analysis','Reference'];
+    const fields = ['_chapter','_type','_question','clozetext','_options','answer','answertext','analysis','reference'];
     let csv = '﻿' + header.join(',') + '\n';
     data.forEach((row, i) => {
-        let q = row.question || '';
-        if (row.clozetext && row.clozetext.trim()) q = row.clozetext;
         const optParts = visibleOpts.map(o => row['opt'+o] || '').filter(v => v.trim());
         const TYPE_MAP = { '单选题':'单选题','判断题':'判断题','多选题':'多选题','选择题':'选择题','填空题':'填空题','问答题':'问答题', choice:'选择题', cloze:'填空题', short:'问答题' };
-        csv += [i+1, ...fields.map(f => csvVal(({ _chapter: row.chapter||'', _type: TYPE_MAP[row.type]||row.type||'', _question: q, _options: optParts.join('||'), ...row })[f] || ''))].join(',') + '\n';
+        csv += [i+1, ...fields.map(f => csvVal(({ _chapter: row.chapter||'', _type: TYPE_MAP[row.type]||row.type||'', _question: row.question||'', clozetext: row.clozetext||'', _options: optParts.join('||'), ...row })[f] || ''))].join(',') + '\n';
     });
     download('questions_kikkua.csv', csv, 'text/csv');
 }
