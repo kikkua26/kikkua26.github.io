@@ -1101,7 +1101,7 @@ function bindEvents() {
     document.getElementById('btnExport').addEventListener('click', () => document.getElementById('exportModal').classList.add('show'));
     document.getElementById('btnAI').addEventListener('click', openAIModal);
     document.getElementById('btnClear').addEventListener('click', () => {
-        if (confirm('确定清空全部数据？')) { tbody.innerHTML = ''; renumber(); }
+        if (confirm('确定清空全部数据？')) { tbody.innerHTML = ''; renumber(); localStorage.removeItem(CACHE_KEY); }
     });
 
     // File import
@@ -1179,7 +1179,43 @@ function bindEvents() {
     tbody.addEventListener('paste', handlePaste);
 }
 
+// ═══ Data Cache ═══
+const CACHE_KEY = 'kikkua_qb_data';
+let _cacheTimer = null;
+
+function saveToCache() {
+    clearTimeout(_cacheTimer);
+    _cacheTimer = setTimeout(() => {
+        try {
+            const data = collectData();
+            if (data.length > 0 && data.some(r => Object.values(r).some(v => v.trim()))) {
+                localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+            } else {
+                localStorage.removeItem(CACHE_KEY);
+            }
+        } catch {}
+    }, 500);
+}
+
+function loadFromCache() {
+    try {
+        const raw = localStorage.getItem(CACHE_KEY);
+        if (!raw) return false;
+        const data = JSON.parse(raw);
+        if (!Array.isArray(data) || data.length === 0) return false;
+        data.forEach(row => addRow(row));
+        return true;
+    } catch { return false; }
+}
+
 // ═══ Init ═══
 bindEvents();
 buildColGroup();
-addRow(); addRow(); addRow();
+const hasCache = loadFromCache();
+if (!hasCache) { addRow(); addRow(); addRow(); }
+
+// Auto-save on any input change
+tbody.addEventListener('input', saveToCache);
+// Also save on row delete
+const _origRenumber = renumber;
+renumber = function() { _origRenumber(); saveToCache(); };

@@ -318,6 +318,20 @@ td.selected { background: var(--accent-glow-2) !important; }
 .btn-cancel { background: var(--surface); color: var(--text-2); font-size: 12.5px; padding: 6px 12px; }
 .btn-cancel:hover { background: var(--surface-2); }
 
+/* ── cache notice ── */
+.cache-notice {
+    background: #FFF8E1;
+    color: #795600;
+    font-size: 12px;
+    padding: 6px 14px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid #F0D88D;
+}
+.cache-notice-close {
+    cursor: pointer; font-size: 14px; opacity: .5; margin-left: 12px;
+}
+.cache-notice-close:hover { opacity: 1; }
+
 /* ── apkg modal ── */
 .apkg-modal { min-width: 420px; max-width: 480px; }
 .apkg-section { margin-bottom: 14px; }
