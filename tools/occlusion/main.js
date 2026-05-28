@@ -93,7 +93,6 @@ function draw(e) {
         canvasWrap.scrollLeft -= mid.x - state.panLastMidX;
         canvasWrap.scrollTop -= mid.y - state.panLastMidY;
         state.panLastMidX = mid.x; state.panLastMidY = mid.y;
-        // Pinch zoom
         const dist = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
         if (state.panLastDist > 0) { state.zoomLevel = Math.max(0.25, Math.min(5, +(state.zoomLevel * dist / state.panLastDist).toFixed(2))); applyZoom(); }
         state.panLastDist = dist;
