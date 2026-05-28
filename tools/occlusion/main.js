@@ -196,9 +196,6 @@ function bindEvents() {
     drawingLayer.addEventListener('mousedown', startDraw);
     document.addEventListener('mousemove', draw);
     document.addEventListener('mouseup', endDraw);
-    drawingLayer.addEventListener('touchstart', e => { e.preventDefault(); const t = e.touches[0]; startDraw({ clientX:t.clientX, clientY:t.clientY }); }, {passive:false});
-    document.addEventListener('touchmove', e => { if(!state.isDrawing) return; e.preventDefault(); const t = e.touches[0]; draw({ clientX:t.clientX, clientY:t.clientY }); }, {passive:false});
-    document.addEventListener('touchend', endDraw);
 
     $('#btn-copy').addEventListener('click', copyData);
     $('#btn-clear').addEventListener('click', clearAll);
