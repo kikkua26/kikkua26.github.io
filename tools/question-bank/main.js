@@ -838,7 +838,7 @@ async function parseApkg(file) {
         }
         if (!found) {
             const names = allNames.filter(n => n).join('、') || '无';
-            throw new Error('未找到 kikkua pro 模板。牌组中包含的模板：' + names);
+            throw new Error('未找到 kikkua pro 模板，请购买正版牌组后重试。当前牌组包含的模板：' + names);
         }
 
         // Validate required fields
