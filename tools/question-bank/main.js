@@ -123,6 +123,47 @@ function applyAnswerHighlight(tr) {
         const optTd = tr.querySelector(`[data-col="opt${o}"]`);
         if (optTd) optTd.classList.toggle('answer-hit', letters.includes(o));
     });
+    validateAnswer(tr);
+}
+
+function validateAnswer(tr) {
+    const typeEl = tr.querySelector('[data-field="type"]');
+    const answerEl = tr.querySelector('[data-field="answer"]');
+    if (!answerEl) return;
+    const type = typeEl ? typeEl.value : '';
+    const val = (answerEl.value || '').trim();
+    const td = answerEl.closest('td');
+    let hint = td.querySelector('.ans-hint');
+
+    // Remove old hint
+    if (hint) hint.remove();
+    td.removeAttribute('data-valid');
+
+    if (!type || !val || TYPE_LOCK_MAP[type]?.includes('answer')) return;
+
+    const maxOpt = 7 - hiddenOptCols;
+    const maxLetter = OPT_LETTERS[maxOpt - 1];
+    const letters = val.toUpperCase().split('').filter(c => c >= 'A' && c <= maxLetter);
+    const validLetters = letters.join('') === val.toUpperCase() && letters.length > 0;
+
+    let msg = '';
+    if (type === '单选题') {
+        if (val.length !== 1 || !validLetters) msg = `需 1 个字母 (A-${maxLetter})`;
+    } else if (type === '多选题') {
+        if (!validLetters || letters.length < 2) msg = `需 2+ 个字母 (A-${maxLetter})`;
+    } else if (type === '判断题') {
+        if (!['A', 'B'].includes(val.toUpperCase())) msg = '需 A 或 B';
+    }
+
+    if (msg) {
+        td.setAttribute('data-valid', 'no');
+        hint = document.createElement('span');
+        hint.className = 'ans-hint';
+        hint.textContent = msg;
+        td.appendChild(hint);
+    } else {
+        td.setAttribute('data-valid', 'ok');
+    }
 }
 
 function addRow(data, beforeTr) {
