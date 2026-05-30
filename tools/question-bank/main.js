@@ -96,8 +96,11 @@ function applyTypeLock(tr) {
         if (field === 'type') return;
         const locked = locks.includes(field);
         el.disabled = locked;
-        el.closest('td').classList.toggle('locked', locked);
+        const td = el.closest('td');
+        td.classList.toggle('locked', locked);
         if (locked) el.value = '';
+        const btn = td.querySelector('.preview-btn');
+        if (btn) btn.style.display = locked ? 'none' : '';
     });
     // Warning badge for non-standard types
     const td = typeEl.closest('td');
