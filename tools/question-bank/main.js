@@ -196,6 +196,26 @@ function showPreview(btn) {
     editor.focus();
 }
 
+function wrapCloze() {
+    const sel = window.getSelection();
+    if (!sel.rangeCount) return;
+    const range = sel.getRangeAt(0);
+    const editor = document.getElementById('previewEditor');
+    if (!editor.contains(range.commonAncestorContainer)) return;
+    const text = sel.toString();
+    if (text) {
+        range.deleteContents();
+        range.insertNode(document.createTextNode('[[' + text + ']]'));
+    } else {
+        range.insertNode(document.createTextNode('[[]]'));
+        range.setStart(range.endContainer, range.endOffset - 2);
+        range.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(range);
+    }
+    editor.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
 function syncPreview() {
     const editor = document.getElementById('previewEditor');
     const filtered = sanitizeHtml(editor.innerHTML);
