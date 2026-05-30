@@ -305,6 +305,45 @@ function applyFormTypeLock() {
         if (locked) { row.style.display = 'none'; }
         else { row.style.display = ''; el.disabled = false; }
     });
+    validateFormAnswer();
+}
+
+function validateFormAnswer() {
+    const grid = document.getElementById('formGrid');
+    const typeEl = grid.querySelector('[data-field="type"]');
+    const answerEl = grid.querySelector('[data-field="answer"]');
+    if (!answerEl) return;
+    const type = typeEl ? typeEl.value : '';
+    const val = (answerEl.value || '').trim();
+    const row = answerEl.closest('.form-row');
+    let hint = row.querySelector('.ans-hint');
+    if (hint) hint.remove();
+    row.removeAttribute('data-valid');
+    if (!type || !val || TYPE_LOCK_MAP[type]?.includes('answer')) return;
+
+    const maxOpt = 7 - hiddenOptCols;
+    const maxLetter = OPT_LETTERS[maxOpt - 1];
+    const letters = val.toUpperCase().split('').filter(c => c >= 'A' && c <= maxLetter);
+    const validLetters = letters.join('') === val.toUpperCase() && letters.length > 0;
+
+    let msg = '';
+    if (type === '单选题') {
+        if (val.length !== 1 || !validLetters) msg = `需 1 个字母 (A-${maxLetter})`;
+    } else if (type === '多选题') {
+        if (!validLetters || letters.length < 2) msg = `需 2+ 个字母 (A-${maxLetter})`;
+    } else if (type === '判断题') {
+        if (!['A', 'B'].includes(val.toUpperCase())) msg = '需 A 或 B';
+    }
+
+    if (msg) {
+        row.setAttribute('data-valid', 'no');
+        hint = document.createElement('div');
+        hint.className = 'ans-hint';
+        hint.textContent = msg;
+        row.appendChild(hint);
+    } else {
+        row.setAttribute('data-valid', 'ok');
+    }
 }
 
 function closeForm() { document.getElementById('rowFormModal').classList.remove('show'); editingTr = null; }
@@ -1260,6 +1299,9 @@ function bindEvents() {
     document.getElementById('btnSaveForm').addEventListener('click', saveForm);
     document.getElementById('formGrid').addEventListener('change', e => {
         if (e.target.matches('[data-field="type"]')) applyFormTypeLock();
+    });
+    document.getElementById('formGrid').addEventListener('input', e => {
+        if (e.target.matches('[data-field="answer"]')) validateFormAnswer();
     });
     document.getElementById('formPrev').addEventListener('click', () => navForm(-1));
     document.getElementById('formNext').addEventListener('click', () => navForm(1));

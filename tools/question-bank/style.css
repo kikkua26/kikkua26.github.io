@@ -217,6 +217,17 @@ td[data-valid="ok"] input { border-bottom: 2px solid var(--success); }
     overflow: hidden; text-overflow: ellipsis; pointer-events: none;
 }
 
+/* ── form answer validation ── */
+.form-row[data-valid="no"] { position: relative; }
+.form-row[data-valid="no"] input,
+.form-row[data-valid="no"] textarea { border-color: var(--danger); }
+.form-row[data-valid="ok"] input,
+.form-row[data-valid="ok"] textarea { border-color: var(--success); }
+.form-row .ans-hint {
+    position: static; font-size: 11px; color: var(--danger);
+    padding: 2px 0 0 90px; white-space: normal;
+}
+
 /* ── non-standard type warning ── */
 .type-warn {
     display: inline-block; font-size: 9px; color: var(--warn); font-weight: 700;
