@@ -42,7 +42,10 @@ body {
     min-height: 100vh;
 }
 
-.app { padding: 12px 14px; max-width: 100%; }
+.app {
+    padding: 12px 14px; max-width: 100%;
+    height: 100vh; display: flex; flex-direction: column;
+}
 
 /* ── toolbar ── */
 .toolbar {
@@ -110,6 +113,8 @@ body {
 /* ── table ── */
 .table-wrap {
     overflow-x: auto;
+    overflow-y: auto;
+    flex: 1; min-height: 0;
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius);
