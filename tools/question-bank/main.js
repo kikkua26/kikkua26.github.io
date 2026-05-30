@@ -1269,7 +1269,7 @@ function loadFromCache() {
 
 // ═══ Init ═══
 bindEvents();
-buildColGroup();
+setOptCols(document.getElementById('optCount').value);
 const hasCache = loadFromCache();
 if (!hasCache) { addRow(); addRow(); addRow(); }
 
