@@ -97,6 +97,7 @@ function applyTypeLock(tr) {
         const locked = locks.includes(field);
         el.disabled = locked;
         el.closest('td').classList.toggle('locked', locked);
+        if (locked) el.value = '';
     });
     // 判断题: auto-fill A=正确 B=错误
     if (type === '判断题') {
