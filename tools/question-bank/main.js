@@ -180,11 +180,7 @@ function isRowEmpty(tr) {
 
 function ensureEmptyRows() {
     const rows = Array.from(tbody.rows);
-    let emptyTail = 0;
-    for (let i = rows.length - 1; i >= 0; i--) {
-        if (isRowEmpty(rows[i])) emptyTail++; else break;
-    }
-    for (let i = emptyTail; i < 3; i++) addRow();
+    if (rows.length === 0 || !isRowEmpty(rows[rows.length - 1])) addRow();
 }
 
 function getRowData(tr) {
@@ -1311,6 +1307,7 @@ function loadFromCache() {
 bindEvents();
 setOptCols(document.getElementById('optCount').value);
 const hasCache = loadFromCache();
+if (!hasCache) { for (let i = 0; i < 20; i++) addRow(); }
 ensureEmptyRows();
 
 // Auto-save on any input change
