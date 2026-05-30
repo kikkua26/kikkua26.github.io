@@ -186,9 +186,11 @@ let previewTarget = null;
 
 function showPreview(btn) {
     const td = btn.closest('td');
-    const input = td.querySelector('[data-field="question"]');
+    const input = td.querySelector('[data-field]');
     if (!input) return;
     previewTarget = input;
+    const FIELD_LABELS = { question:'题干', clozetext:'Cloze', answertext:'答案文本', analysis:'解析', reference:'参考' };
+    document.getElementById('previewTitle').textContent = FIELD_LABELS[input.dataset.field] || '编辑';
     const editor = document.getElementById('previewEditor');
     editor.innerHTML = input.value || '';
     document.getElementById('previewCode').textContent = input.value || '';
@@ -249,16 +251,16 @@ function addRow(data, beforeTr) {
     tr.innerHTML = `<td class="idx" data-col="idx" title="双击编辑 · 右键菜单"></td>`;
     tr.innerHTML += `<td data-col="type">${buildTypeSelect(d.type||'')}</td>`;
     tr.innerHTML += `<td data-col="chapter"><input type="text" data-field="chapter" placeholder="章节" value="${esc(d.chapter||'')}"></td>`;
-    tr.innerHTML += `<td data-col="question" class="has-preview"><input type="text" data-field="question" placeholder="题干" value="${esc(d.question||'')}"><button class="preview-btn" onclick="showPreview(this)" title="预览">🔍</button></td>`;
-    tr.innerHTML += `<td data-col="clozetext"><input type="text" data-field="clozetext" placeholder="Cloze" value="${esc(d.clozetext||'')}"></td>`;
+    tr.innerHTML += `<td data-col="question" class="has-preview"><input type="text" data-field="question" placeholder="题干" value="${esc(d.question||'')}"><button class="preview-btn" onclick="showPreview(this)" title="编辑">🔍</button></td>`;
+    tr.innerHTML += `<td data-col="clozetext" class="has-preview"><input type="text" data-field="clozetext" placeholder="Cloze" value="${esc(d.clozetext||'')}"><button class="preview-btn" onclick="showPreview(this)" title="编辑">🔍</button></td>`;
     OPT_LETTERS.forEach((o, i) => {
         const visible = i < (7 - hiddenOptCols);
         tr.innerHTML += `<td data-col="opt${o}" style="${visible?'':'display:none'}"><input type="text" data-field="opt${o}" placeholder="${o}" value="${esc(d['opt'+o]||'')}"></td>`;
     });
     tr.innerHTML += `<td data-col="answer"><input type="text" data-field="answer" maxlength="10" placeholder="A" value="${esc(d.answer||'')}"></td>`;
-    tr.innerHTML += `<td data-col="answertext"><input type="text" data-field="answertext" placeholder="答案文本" value="${esc(d.answertext||'')}"></td>`;
-    tr.innerHTML += `<td data-col="analysis"><input type="text" data-field="analysis" placeholder="解析" value="${esc(d.analysis||'')}"></td>`;
-    tr.innerHTML += `<td data-col="reference"><input type="text" data-field="reference" placeholder="参考" value="${esc(d.reference||'')}"></td>`;
+    tr.innerHTML += `<td data-col="answertext" class="has-preview"><input type="text" data-field="answertext" placeholder="答案文本" value="${esc(d.answertext||'')}"><button class="preview-btn" onclick="showPreview(this)" title="编辑">🔍</button></td>`;
+    tr.innerHTML += `<td data-col="analysis" class="has-preview"><input type="text" data-field="analysis" placeholder="解析" value="${esc(d.analysis||'')}"><button class="preview-btn" onclick="showPreview(this)" title="编辑">🔍</button></td>`;
+    tr.innerHTML += `<td data-col="reference" class="has-preview"><input type="text" data-field="reference" placeholder="参考" value="${esc(d.reference||'')}"><button class="preview-btn" onclick="showPreview(this)" title="编辑">🔍</button></td>`;
     tr.innerHTML += `<td data-col="actions" class="actions" title="删除">✕</td>`;
     if (beforeTr) tbody.insertBefore(tr, beforeTr); else tbody.appendChild(tr);
     applyTypeLock(tr);
