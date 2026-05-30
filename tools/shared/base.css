@@ -1,0 +1,338 @@
+/*
+ * kikkua 工具箱 — 共享基础样式
+ * 所有插件通过 <link rel="stylesheet" href="../shared/base.css"> 引入
+ * 插件可用 :root { --tool-accent: #xxx; } 覆盖令牌实现个性化
+ */
+
+/* ═══════════════════════════════════════
+   Design Tokens — 与主站 variables.css 保持一致
+   ═══════════════════════════════════════ */
+
+:root {
+  /* 文字 */
+  --tool-text:          #1a1a1e;
+  --tool-text-sub:      #5c5c66;
+  --tool-text-muted:    #94949e;
+  --tool-text-inverse:  #ffffff;
+
+  /* 背景 */
+  --tool-bg:            #fcf9f5;
+  --tool-bg-alt:        #f6f1ea;
+  --tool-bg-hover:      #ebe3d8;
+  --tool-bg-overlay:    rgba(0,0,0,.4);
+
+  /* 主题色（Eucalyptus teal） */
+  --tool-accent:        #0d9488;
+  --tool-accent-light:  #99f6e4;
+  --tool-accent-dark:   #0f766e;
+  --tool-accent-bg:     #f0fdfa;
+
+  /* 语义色 */
+  --tool-success:       #059669;
+  --tool-success-bg:    #ecfdf5;
+  --tool-danger:        #dc2626;
+  --tool-danger-bg:     #fef2f2;
+  --tool-warn:          #f59e0b;
+  --tool-warn-bg:       #fffbeb;
+
+  /* 边框 */
+  --tool-border:        #e5e2dd;
+  --tool-border-light:  #f0ede8;
+
+  /* 阴影 */
+  --tool-shadow-sm:     0 1px 3px rgba(0,0,0,.06);
+  --tool-shadow-md:     0 4px 12px rgba(0,0,0,.08);
+  --tool-shadow-lg:     0 8px 24px rgba(0,0,0,.12);
+
+  /* 圆角 */
+  --tool-radius:        8px;
+  --tool-radius-sm:     4px;
+  --tool-radius-lg:     14px;
+
+  /* 动画 */
+  --tool-transition:    200ms ease;
+  --tool-ease-out:      cubic-bezier(.22,1,.36,1);
+
+  /* 字体 */
+  --tool-font:          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans SC', sans-serif;
+  --tool-font-mono:     'SF Mono', 'Cascadia Code', Consolas, monospace;
+}
+
+/* ═══════════════════════════════════════
+   Reset — 工具内基础样式
+   ═══════════════════════════════════════ */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--tool-font);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--tool-text);
+  background: var(--tool-bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--tool-accent-light);
+  color: var(--tool-text);
+}
+
+/* ═══════════════════════════════════════
+   布局
+   ═══════════════════════════════════════ */
+
+.tool-app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.tool-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: var(--tool-bg-alt);
+  border-bottom: 1px solid var(--tool-border);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.tool-toolbar .sep {
+  width: 1px;
+  height: 20px;
+  background: var(--tool-border);
+  margin: 0 4px;
+}
+
+.tool-toolbar-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ═══════════════════════════════════════
+   按钮
+   ═══════════════════════════════════════ */
+
+.tool-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--tool-text);
+  background: var(--tool-bg);
+  border: 1px solid var(--tool-border);
+  border-radius: var(--tool-radius-sm);
+  cursor: pointer;
+  transition: all var(--tool-transition);
+  white-space: nowrap;
+  user-select: none;
+}
+
+.tool-btn:hover {
+  background: var(--tool-bg-hover);
+  border-color: var(--tool-text-muted);
+}
+
+.tool-btn:active { transform: scale(.97); }
+
+.tool-btn.primary {
+  color: var(--tool-text-inverse);
+  background: var(--tool-accent);
+  border-color: var(--tool-accent);
+}
+.tool-btn.primary:hover { background: var(--tool-accent-dark); }
+
+.tool-btn.danger {
+  color: var(--tool-danger);
+  border-color: var(--tool-danger);
+}
+.tool-btn.danger:hover {
+  color: var(--tool-text-inverse);
+  background: var(--tool-danger);
+}
+
+.tool-btn:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.tool-btn .icon { font-size: 15px; }
+
+/* ═══════════════════════════════════════
+   表单控件
+   ═══════════════════════════════════════ */
+
+.tool-input,
+.tool-select,
+.tool-textarea {
+  padding: 6px 10px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--tool-text);
+  background: var(--tool-bg);
+  border: 1px solid var(--tool-border);
+  border-radius: var(--tool-radius-sm);
+  outline: none;
+  transition: border-color var(--tool-transition);
+}
+
+.tool-input:focus,
+.tool-select:focus,
+.tool-textarea:focus {
+  border-color: var(--tool-accent);
+  box-shadow: 0 0 0 3px var(--tool-accent-bg);
+}
+
+.tool-select { cursor: pointer; }
+
+.tool-textarea { resize: vertical; min-height: 60px; }
+
+/* ═══════════════════════════════════════
+   表格
+   ═══════════════════════════════════════ */
+
+.tool-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.tool-table th,
+.tool-table td {
+  padding: 6px 8px;
+  border: 1px solid var(--tool-border-light);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.tool-table th {
+  position: sticky;
+  top: 0;
+  background: var(--tool-bg-alt);
+  font-weight: 600;
+  z-index: 1;
+}
+
+.tool-table tr:hover td {
+  background: var(--tool-accent-bg);
+}
+
+.tool-table input,
+.tool-table select {
+  width: 100%;
+  padding: 4px 6px;
+  font-size: 13px;
+  font-family: inherit;
+  border: 1px solid transparent;
+  border-radius: var(--tool-radius-sm);
+  background: transparent;
+  outline: none;
+}
+
+.tool-table input:focus,
+.tool-table select:focus {
+  border-color: var(--tool-accent);
+  background: var(--tool-bg);
+}
+
+/* ═══════════════════════════════════════
+   模态框
+   ═══════════════════════════════════════ */
+
+.tool-modal-mask {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: var(--tool-bg-overlay);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+  animation: toolFadeIn .2s var(--tool-ease-out);
+}
+
+.tool-modal-mask.show {
+  display: flex;
+}
+
+.tool-modal {
+  background: var(--tool-bg);
+  border-radius: var(--tool-radius-lg);
+  box-shadow: var(--tool-shadow-lg);
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 24px;
+  min-width: 320px;
+}
+
+.tool-modal h3 {
+  font-size: 16px;
+  margin-bottom: 16px;
+}
+
+.tool-modal .btns {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+@keyframes toolFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ═══════════════════════════════════════
+   徽章 / 状态
+   ═══════════════════════════════════════ */
+
+.tool-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 99px;
+  line-height: 1.4;
+}
+
+.tool-badge.success { background: var(--tool-success-bg); color: var(--tool-success); }
+.tool-badge.danger  { background: var(--tool-danger-bg);  color: var(--tool-danger); }
+.tool-badge.warn    { background: var(--tool-warn-bg);    color: var(--tool-warn); }
+
+/* ═══════════════════════════════════════
+   状态栏
+   ═══════════════════════════════════════ */
+
+.tool-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  color: var(--tool-text-muted);
+  background: var(--tool-bg-alt);
+  border-top: 1px solid var(--tool-border);
+  flex-shrink: 0;
+}
+
+/* ═══════════════════════════════════════
+   签名水印
+   ═══════════════════════════════════════ */
+
+.tool-signature {
+  position: fixed;
+  bottom: 6px;
+  right: 12px;
+  font-size: 11px;
+  color: var(--tool-text-muted);
+  opacity: .4;
+  pointer-events: none;
+  user-select: none;
+}
