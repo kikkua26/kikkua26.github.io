@@ -159,6 +159,51 @@ function validateAnswer(tr) {
     }
 }
 
+function htmlToMd(html) {
+    if (!html) return '';
+    let s = html;
+    // Block elements first
+    s = s.replace(/<br\s*\/?>/gi, '\n');
+    s = s.replace(/<\/p>/gi, '\n\n');
+    s = s.replace(/<\/div>/gi, '\n');
+    s = s.replace(/<\/li>/gi, '\n');
+    s = s.replace(/<\/h[1-6]>/gi, '\n\n');
+    s = s.replace(/<h1[^>]*>(.*?)<\/h1>/gi, '# $1');
+    s = s.replace(/<h2[^>]*>(.*?)<\/h2>/gi, '## $1');
+    s = s.replace(/<h3[^>]*>(.*?)<\/h3>/gi, '### $1');
+    s = s.replace(/<li[^>]*>(.*?)<\/li>/gi, '- $1');
+    s = s.replace(/<\/?(ul|ol|blockquote)[^>]*>/gi, '');
+    s = s.replace(/<blockquote[^>]*>(.*?)<\/blockquote>/gis, (m, c) => c.split('\n').map(l => '> ' + l).join('\n'));
+    s = s.replace(/<pre[^>]*><code[^>]*>(.*?)<\/code><\/pre>/gis, '```\n$1\n```');
+    s = s.replace(/<img[^>]*src="([^"]*)"[^>]*alt="([^"]*)"[^>]*\/?>/gi, '![$2]($1)');
+    s = s.replace(/<a[^>]*href="([^"]*)"[^>]*>(.*?)<\/a>/gi, '[$2]($1)');
+    s = s.replace(/<strong[^>]*>(.*?)<\/strong>/gi, '**$1**');
+    s = s.replace(/<b[^>]*>(.*?)<\/b>/gi, '**$1**');
+    s = s.replace(/<em[^>]*>(.*?)<\/em>/gi, '*$1*');
+    s = s.replace(/<i[^>]*>(.*?)<\/i>/gi, '*$1*');
+    s = s.replace(/<code[^>]*>(.*?)<\/code>/gi, '`$1`');
+    // Strip remaining tags
+    s = s.replace(/<[^>]+>/g, '');
+    // Decode entities
+    s = s.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+    // Clean up excessive newlines
+    s = s.replace(/\n{3,}/g, '\n\n').trim();
+    return s;
+}
+
+function handlePreviewPaste(e) {
+    const html = e.clipboardData.getData('text/html');
+    if (html) {
+        e.preventDefault();
+        const md = htmlToMd(html);
+        const ta = e.target;
+        const start = ta.selectionStart;
+        ta.value = ta.value.slice(0, start) + md + ta.value.slice(ta.selectionEnd);
+        ta.selectionStart = ta.selectionEnd = start + md.length;
+        ta.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+}
+
 function mdToHtml(text) {
     if (!text) return '';
     // If already HTML, return as-is
@@ -1323,6 +1368,20 @@ function handlePaste(e) {
     const input = e.target;
     if (!input || !input.matches('input[data-field]')) return;
 
+    // Question field: convert HTML paste to markdown
+    if (input.dataset.field === 'question') {
+        const html = (e.clipboardData || window.clipboardData).getData('text/html');
+        if (html) {
+            e.preventDefault();
+            const md = htmlToMd(html);
+            const start = input.selectionStart;
+            input.value = input.value.slice(0, start) + md + input.value.slice(input.selectionEnd);
+            input.selectionStart = input.selectionEnd = start + md.length;
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            return;
+        }
+    }
+
     const text = (e.clipboardData || window.clipboardData).getData('text/plain');
     if (!text) return;
 
@@ -1444,6 +1503,7 @@ function bindEvents() {
     document.getElementById('previewTextarea').addEventListener('input', e => {
         document.getElementById('previewPane').innerHTML = mdToHtml(e.target.value) || '<span style="color:var(--text-3)">（空）</span>';
     });
+    document.getElementById('previewTextarea').addEventListener('paste', handlePreviewPaste);
 
     // APKG modal
     document.getElementById('btnApkg').addEventListener('click', openApkgModal);
