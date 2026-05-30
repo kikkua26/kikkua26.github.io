@@ -194,7 +194,7 @@ tr:not(:last-child) td { border-bottom-color: rgba(224,224,234,.6); }
 
 td.selected { background: var(--accent-glow-2) !important; }
 td.active-cell { box-shadow: inset 0 0 0 2px var(--accent); position: relative; }
-td.active-cell input, td.active-cell textarea { position: relative; z-index: 1; }
+td.active-cell input, td.active-cell textarea, td.active-cell select { position: relative; z-index: 1; }
 td.active-cell.fill-col::after {
     content: ''; position: absolute; right: -3px; bottom: -3px;
     width: 8px; height: 8px; background: var(--accent);
