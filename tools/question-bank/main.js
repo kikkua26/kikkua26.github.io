@@ -515,6 +515,13 @@ function importAOA(aoa) {
     const hdr = aoa[0].map(h => String(h).trim().toLowerCase());
     const TYPE_IMPORT_MAP = { '选择题':'单选题','单选题':'单选题','判断题':'判断题','多选题':'多选题','填空题':'挖空题','挖空题':'挖空题','问答题':'问答题','choice':'单选题','cloze':'挖空题','short':'问答题','single choice':'单选题','multiple choice':'多选题','fill-in-the-blank':'挖空题','short answer':'问答题' };
     const fm = { 'chapter':'chapter','type':'type','question':'question','clozetext':'clozetext','optiona':'optA','a':'optA','optionb':'optB','b':'optB','optionc':'optC','c':'optC','optiond':'optD','d':'optD','optione':'optE','e':'optE','optionf':'optF','f':'optF','optiong':'optG','g':'optG','answer':'answer','answertext':'answertext','analysis':'analysis','reference':'reference','options':'_options' };
+    // Find insertion point: before first trailing empty row
+    const rows = Array.from(tbody.rows);
+    let insertBefore = null;
+    for (let i = rows.length - 1; i >= 0; i--) {
+        if (!isRowEmpty(rows[i])) break;
+        insertBefore = rows[i];
+    }
     for (let i = 1; i < aoa.length; i++) {
         const vals = aoa[i]; if (!vals || vals.every(v => v === '')) continue;
         const obj = {};
@@ -529,7 +536,7 @@ function importAOA(aoa) {
             const matches = obj.clozetext.match(/\[\[([^\]]*)\]\]/g);
             if (matches) obj.answer = matches.map(m => m.slice(2, -2)).join('|');
         }
-        addRow(obj);
+        addRow(obj, insertBefore);
     }
     ensureEmptyRows();
 }
