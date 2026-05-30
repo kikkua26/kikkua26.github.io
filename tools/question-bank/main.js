@@ -585,12 +585,28 @@ function getColName(td) { return td ? td.dataset.col : null; }
 function getRowIndex(td) { return td ? td.parentElement.rowIndex : -1; }
 function getInputValue(td) { const i = td.querySelector('input, textarea'); return i ? i.value : ''; }
 function setInputValue(td, v) { const i = td.querySelector('input, textarea'); if (i) { i.value = v; i.dispatchEvent(new Event('input', { bubbles: true })); } }
-function clearSelection() { selection.forEach(t => t.classList.remove('selected', 'fill-range', 'active-cell')); selection = []; activeTd = null; }
-function setActiveCell(td) { clearSelection(); if (!td) return; activeTd = td; td.classList.add('active-cell'); selection = [td]; }
+function clearSelection() {
+    selection.forEach(t => t.classList.remove('selected', 'fill-range', 'active-cell'));
+    document.querySelectorAll('.fill-handle').forEach(h => h.remove());
+    selection = []; activeTd = null;
+}
+function setActiveCell(td) {
+    clearSelection();
+    if (!td) return;
+    activeTd = td; td.classList.add('active-cell'); selection = [td];
+    const handle = document.createElement('div');
+    handle.className = 'fill-handle';
+    td.style.position = 'relative';
+    td.appendChild(handle);
+}
 
 document.addEventListener('focusin', e => {
     const td = getTdFromInput(e.target);
     if (td && td.dataset.col !== 'idx' && td.dataset.col !== 'actions') setActiveCell(td);
+});
+
+document.addEventListener('mousedown', e => {
+    if (!e.target.closest('table') && !e.target.closest('.modal-mask')) clearSelection();
 });
 
 document.addEventListener('click', e => {
@@ -617,6 +633,37 @@ document.addEventListener('keydown', e => {
         const sv = getInputValue(sorted[0]);
         for (let i = 1; i < sorted.length; i++) setInputValue(sorted[i], sv);
     }
+});
+
+// ═══ Fill Handle Drag ═══
+let filling = false, fillCol = null, fillStartRow = -1;
+document.addEventListener('mousedown', e => {
+    if (!e.target.classList.contains('fill-handle')) return;
+    e.preventDefault();
+    filling = true;
+    fillCol = getColName(activeTd);
+    fillStartRow = getRowIndex(activeTd);
+});
+document.addEventListener('mousemove', e => {
+    if (!filling) return;
+    const td = e.target.closest('td[data-col="' + fillCol + '"]');
+    document.querySelectorAll('td[data-col="' + fillCol + '"].fill-range').forEach(c => c.classList.remove('fill-range'));
+    if (!td) return;
+    const endRow = getRowIndex(td);
+    const lo = Math.min(fillStartRow, endRow);
+    const hi = Math.max(fillStartRow, endRow);
+    document.querySelectorAll('td[data-col="' + fillCol + '"]').forEach(c => {
+        const ri = c.parentElement.rowIndex;
+        if (ri >= lo && ri <= hi) c.classList.add('fill-range');
+    });
+});
+document.addEventListener('mouseup', () => {
+    if (!filling) return;
+    filling = false;
+    const targets = document.querySelectorAll('td[data-col="' + fillCol + '"].fill-range');
+    const sv = getInputValue(activeTd);
+    targets.forEach(c => { if (c !== activeTd) setInputValue(c, sv); });
+    targets.forEach(c => c.classList.remove('fill-range'));
 });
 
 // ═══ AI Generation ═══
