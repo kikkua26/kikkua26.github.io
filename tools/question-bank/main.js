@@ -62,8 +62,8 @@ function buildColGroup(optCount) {
     // idx=3%, actions=2.5%, remaining 94.5% split equally among flex columns
     const flexPct = (94.5 / flexCols).toFixed(3);
     let html = '<col style="width:3%">';
-    html += '<col style="width:' + flexPct + '%">'; // chapter
     html += '<col style="width:' + flexPct + '%">'; // type
+    html += '<col style="width:' + flexPct + '%">'; // chapter
     html += '<col style="width:' + flexPct + '%">'; // question
     html += '<col style="width:' + flexPct + '%">'; // clozetext
     for (let i = 0; i < visibleOpts; i++) html += '<col style="width:' + flexPct + '%">';
@@ -98,20 +98,38 @@ function applyTypeLock(tr) {
         el.disabled = locked;
         el.closest('td').classList.toggle('locked', locked);
     });
+    // 判断题: auto-fill A=正确 B=错误
+    if (type === '判断题') {
+        const optA = tr.querySelector('[data-field="optA"]');
+        const optB = tr.querySelector('[data-field="optB"]');
+        if (optA && !optA.value) optA.value = '正确';
+        if (optB && !optB.value) optB.value = '错误';
+    }
     // Warning badge for non-standard types
     const td = typeEl.closest('td');
     let warn = td.querySelector('.type-warn');
     if (type && !VALID_TYPES.includes(type)) {
         if (!warn) { warn = document.createElement('span'); warn.className = 'type-warn'; warn.textContent = '!'; td.appendChild(warn); }
     } else if (warn) { warn.remove(); }
+    applyAnswerHighlight(tr);
+}
+
+function applyAnswerHighlight(tr) {
+    const answerEl = tr.querySelector('[data-field="answer"]');
+    if (!answerEl) return;
+    const letters = (answerEl.value || '').toUpperCase().replace(/[^A-G]/g, '');
+    OPT_LETTERS.forEach(o => {
+        const optTd = tr.querySelector(`[data-col="opt${o}"]`);
+        if (optTd) optTd.classList.toggle('answer-hit', letters.includes(o));
+    });
 }
 
 function addRow(data, beforeTr) {
     const tr = document.createElement('tr');
     const d = data || {};
     tr.innerHTML = `<td class="idx" data-col="idx" title="双击编辑 · 右键菜单"></td>`;
-    tr.innerHTML += `<td data-col="chapter"><input type="text" data-field="chapter" placeholder="章节" value="${esc(d.chapter||'')}"></td>`;
     tr.innerHTML += `<td data-col="type">${buildTypeSelect(d.type||'')}</td>`;
+    tr.innerHTML += `<td data-col="chapter"><input type="text" data-field="chapter" placeholder="章节" value="${esc(d.chapter||'')}"></td>`;
     tr.innerHTML += `<td data-col="question"><input type="text" data-field="question" placeholder="题干" value="${esc(d.question||'')}"></td>`;
     tr.innerHTML += `<td data-col="clozetext"><input type="text" data-field="clozetext" placeholder="Cloze" value="${esc(d.clozetext||'')}"></td>`;
     OPT_LETTERS.forEach((o, i) => {
@@ -168,8 +186,8 @@ function setRowData(tr, data) {
 
 // ═══ Row Edit Form ═══
 const FORM_FIELDS = [
+    { key: 'type', label: 'Type', type: 'select' },
     { key: 'chapter', label: 'Chapter', type: 'text' },
-    { key: 'type', label: 'Type', type: 'text' },
     { key: 'question', label: 'Question', type: 'textarea' },
     { key: 'clozetext', label: 'Clozetext', type: 'textarea' },
     { key: 'optA', label: 'Option A', type: 'textarea' },
@@ -230,21 +248,29 @@ function applyFormTypeLock() {
     grid.querySelectorAll('[data-field]').forEach(el => {
         const field = el.dataset.field;
         if (field === 'type') return;
+        const row = el.closest('.form-row');
         const locked = locks.includes(field);
-        el.disabled = locked;
-        el.closest('.form-row').classList.toggle('locked', locked);
+        if (locked) { row.style.display = 'none'; }
+        else { row.style.display = ''; el.disabled = false; }
     });
 }
 
 function closeForm() { document.getElementById('rowFormModal').classList.remove('show'); editingTr = null; }
 
+function collectVisibleFormData(grid) {
+    const data = {};
+    grid.querySelectorAll('[data-field]').forEach(el => {
+        const row = el.closest('.form-row');
+        if (row && row.style.display === 'none') return;
+        data[el.dataset.field] = el.value;
+    });
+    return data;
+}
+
 function navForm(dir) {
     if (!editingTr) return;
-    // Save current form data before navigating
     const grid = document.getElementById('formGrid');
-    const data = {};
-    grid.querySelectorAll('[data-field]').forEach(el => { data[el.dataset.field] = el.value; });
-    setRowData(editingTr, data);
+    setRowData(editingTr, collectVisibleFormData(grid));
 
     const rows = Array.from(tbody.rows);
     const idx = rows.indexOf(editingTr);
@@ -255,9 +281,7 @@ function navForm(dir) {
 function saveForm() {
     if (!editingTr) return;
     const grid = document.getElementById('formGrid');
-    const data = {};
-    grid.querySelectorAll('[data-field]').forEach(el => { data[el.dataset.field] = el.value; });
-    setRowData(editingTr, data);
+    setRowData(editingTr, collectVisibleFormData(grid));
     applyTypeLock(editingTr);
     closeForm();
 }
@@ -1280,6 +1304,9 @@ tbody.addEventListener('change', e => {
         applyTypeLock(e.target.closest('tr'));
         saveToCache();
     }
+});
+tbody.addEventListener('input', e => {
+    if (e.target.matches('[data-field="answer"]')) applyAnswerHighlight(e.target.closest('tr'));
 });
 // Also save on row delete
 const _origRenumber = renumber;
