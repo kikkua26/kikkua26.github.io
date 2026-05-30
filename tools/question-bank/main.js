@@ -99,13 +99,6 @@ function applyTypeLock(tr) {
         el.closest('td').classList.toggle('locked', locked);
         if (locked) el.value = '';
     });
-    // 判断题: auto-fill A=正确 B=错误
-    if (type === '判断题') {
-        const optA = tr.querySelector('[data-field="optA"]');
-        const optB = tr.querySelector('[data-field="optB"]');
-        if (optA && !optA.value) optA.value = '正确';
-        if (optB && !optB.value) optB.value = '错误';
-    }
     // Warning badge for non-standard types
     const td = typeEl.closest('td');
     let warn = td.querySelector('.type-warn');
@@ -152,7 +145,7 @@ function validateAnswer(tr) {
     } else if (type === '多选题') {
         if (!validLetters || letters.length < 2) msg = `需 2+ 个字母 (A-${maxLetter})`;
     } else if (type === '判断题') {
-        if (!['A', 'B'].includes(val.toUpperCase())) msg = '需 A 或 B';
+        if (!['正确', '错误'].includes(val)) msg = '需填「正确」或「错误」';
     }
 
     if (msg) {
@@ -332,7 +325,7 @@ function validateFormAnswer() {
     } else if (type === '多选题') {
         if (!validLetters || letters.length < 2) msg = `需 2+ 个字母 (A-${maxLetter})`;
     } else if (type === '判断题') {
-        if (!['A', 'B'].includes(val.toUpperCase())) msg = '需 A 或 B';
+        if (!['正确', '错误'].includes(val)) msg = '需填「正确」或「错误」';
     }
 
     if (msg) {
@@ -788,7 +781,7 @@ function buildPrompt() {
 - Question：题干，表述清晰完整
 - OptionA ~ OptionE：各选项内容，根据题目需要决定选项数量（至少 4 个，最多 6 个，不需要的选项留空）
 - 如果原始题目选项不足 4 个，用相关内容补齐至 4 个
-- Answer：正确选项的大写字母，单选题和判断题填一个字母（如 B），多选题填多个字母（如 AC）
+- Answer：单选题填一个大写字母（如 B），多选题填多个大写字母（如 AC），判断题填「正确」或「错误」
 - 保留原始题目的单选/多选/判断设定；如果原始题目未标明，默认为单选题
 
 以下是需要整理的题目内容：
@@ -834,7 +827,7 @@ ${content}`;
 - Question：题干，表述清晰完整，包含足够的上下文信息
 - OptionA ~ OptionE：各选项内容，根据题目需要决定选项数量（至少 4 个，最多 6 个，不需要的选项留空）
 - 干扰项要求：每个错误选项必须是该知识点中容易混淆的概念或常见误解，不能是明显无关或荒谬的内容
-- Answer：正确选项的大写字母，单选题和判断题填一个字母（如 B），多选题填多个字母（如 AC）
+- Answer：单选题填一个大写字母（如 B），多选题填多个大写字母（如 AC），判断题填「正确」或「错误」
 
 以下是知识内容：
 ${content}`;
@@ -1083,9 +1076,16 @@ async function parseApkg(file) {
 }
 
 function buildApkgNoteFields(row, fieldDefs) {
-    // Map table row to Anki field values in template field order
     const visibleOpts = OPT_LETTERS.slice(0, 7 - hiddenOptCols);
-    const options = visibleOpts.map(o => row['opt' + o] || '').filter(v => v.trim()).join('||');
+    let options, answer;
+
+    if (row.type === '判断题') {
+        options = '正确||错误';
+        answer = row.answer === '正确' ? 'A' : row.answer === '错误' ? 'B' : (row.answer || '');
+    } else {
+        options = visibleOpts.map(o => row['opt' + o] || '').filter(v => v.trim()).join('||');
+        answer = row.answer || '';
+    }
 
     const valueMap = {
         'Chapter': row.chapter || '',
@@ -1093,14 +1093,13 @@ function buildApkgNoteFields(row, fieldDefs) {
         'Question': row.question || '',
         'ClozeText': row.clozetext || '',
         'Options': options,
-        'Answer': row.answer || '',
+        'Answer': answer,
         'AnswerText': row.answertext || '',
         'Analysis': row.analysis || '',
         'Refrence': row.reference || '',
         'ImageCloze': '',
     };
 
-    // Also try common alternate spellings
     if (valueMap['Refrence'] === '' && row.reference) valueMap['Refrence'] = row.reference;
 
     return fieldDefs.map(f => valueMap[f.name] !== undefined ? valueMap[f.name] : '');
