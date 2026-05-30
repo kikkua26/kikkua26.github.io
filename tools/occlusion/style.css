@@ -67,7 +67,7 @@ body {
     min-height:300px;
 }
 .canvas-inner { position:relative; display:inline-block; min-width:100%; }
-.canvas-inner img { display:block; max-width:100%; height:auto; border-radius:4px; }
+.canvas-inner img { display:block; width:100%; height:auto; border-radius:4px; }
 .drop-hint { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; color:var(--text3); cursor:pointer; transition:all .15s; border-radius:var(--radius); z-index:5; background:var(--bg2); }
 .drop-hint:hover { background:rgba(0,0,0,.03); color:var(--text2); }
 .hint-icon { font-size:48px; margin-bottom:12px; opacity:.3; }
