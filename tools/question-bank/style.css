@@ -252,18 +252,25 @@ td.has-preview:hover .preview-btn { opacity: .5; }
 .preview-btn:hover { opacity: 1 !important; background: var(--accent-glow); }
 
 /* ── preview modal ── */
-.preview-modal { width: 560px; max-width: 92vw; max-height: 70vh; padding: 0; overflow: hidden; display: flex; flex-direction: column; }
-.preview-body {
-    padding: 16px 20px; overflow-y: auto; flex: 1;
+.preview-modal { width: 860px; max-width: 95vw; height: 70vh; padding: 0; overflow: hidden; display: flex; flex-direction: column; }
+.preview-editor { display: flex; flex: 1; min-height: 0; overflow: hidden; }
+.preview-textarea {
+    flex: 1; border: none; outline: none; resize: none;
+    padding: 14px 16px; font-size: 13px; font-family: var(--mono);
+    background: var(--surface-2); color: var(--text); line-height: 1.7;
+    border-right: 1px solid var(--border);
+}
+.preview-pane {
+    flex: 1; padding: 14px 16px; overflow-y: auto;
     font-size: 14px; line-height: 1.8; color: var(--text);
 }
-.preview-body h1, .preview-body h2, .preview-body h3 { margin: 12px 0 6px; font-weight: 600; }
-.preview-body h1 { font-size: 18px; } .preview-body h2 { font-size: 16px; } .preview-body h3 { font-size: 14px; }
-.preview-body strong { font-weight: 600; }
-.preview-body code { background: var(--surface-2); padding: 1px 5px; border-radius: 3px; font-family: var(--mono); font-size: 12.5px; }
-.preview-body a { color: var(--accent); text-decoration: none; } .preview-body a:hover { text-decoration: underline; }
-.preview-body ul, .preview-body ol { padding-left: 20px; margin: 6px 0; }
-.preview-body blockquote { border-left: 3px solid var(--accent); padding: 4px 12px; margin: 6px 0; color: var(--text-2); background: var(--accent-glow); border-radius: 0 4px 4px 0; }
+.preview-pane h1, .preview-pane h2, .preview-pane h3 { margin: 12px 0 6px; font-weight: 600; }
+.preview-pane h1 { font-size: 18px; } .preview-pane h2 { font-size: 16px; } .preview-pane h3 { font-size: 14px; }
+.preview-pane strong { font-weight: 600; }
+.preview-pane code { background: var(--surface-2); padding: 1px 5px; border-radius: 3px; font-family: var(--mono); font-size: 12.5px; }
+.preview-pane a { color: var(--accent); text-decoration: none; } .preview-pane a:hover { text-decoration: underline; }
+.preview-pane ul, .preview-pane ol { padding-left: 20px; margin: 6px 0; }
+.preview-pane blockquote { border-left: 3px solid var(--accent); padding: 4px 12px; margin: 6px 0; color: var(--text-2); background: var(--accent-glow); border-radius: 0 4px 4px 0; }
 
 /* ── non-standard type warning ── */
 .type-warn {

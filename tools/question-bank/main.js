@@ -177,12 +177,31 @@ function mdToHtml(text) {
         .replace(/\n/g, '<br>');
 }
 
+let previewTarget = null;
+
 function showPreview(btn) {
     const td = btn.closest('td');
     const input = td.querySelector('[data-field="question"]');
-    const raw = input ? input.value : '';
-    document.getElementById('previewBody').innerHTML = mdToHtml(raw) || '<span style="color:var(--text-3)">（空）</span>';
+    if (!input) return;
+    previewTarget = input;
+    const ta = document.getElementById('previewTextarea');
+    ta.value = input.value;
+    document.getElementById('previewPane').innerHTML = mdToHtml(input.value) || '<span style="color:var(--text-3)">（空）</span>';
     document.getElementById('previewModal').classList.add('show');
+    ta.focus();
+}
+
+function closePreviewModal() {
+    document.getElementById('previewModal').classList.remove('show');
+    previewTarget = null;
+}
+
+function savePreviewModal() {
+    if (previewTarget) {
+        previewTarget.value = document.getElementById('previewTextarea').value;
+        previewTarget.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    closePreviewModal();
 }
 
 function addRow(data, beforeTr) {
@@ -1421,7 +1440,10 @@ function bindEvents() {
     // Close modals on mask click
     document.getElementById('aiModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeAIModal(); });
     document.getElementById('apkgModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeApkgModal(); });
-    document.getElementById('previewModal').addEventListener('click', e => { if (e.target === e.currentTarget) document.getElementById('previewModal').classList.remove('show'); });
+    document.getElementById('previewModal').addEventListener('click', e => { if (e.target === e.currentTarget) closePreviewModal(); });
+    document.getElementById('previewTextarea').addEventListener('input', e => {
+        document.getElementById('previewPane').innerHTML = mdToHtml(e.target.value) || '<span style="color:var(--text-3)">（空）</span>';
+    });
 
     // APKG modal
     document.getElementById('btnApkg').addEventListener('click', openApkgModal);

@@ -255,10 +255,17 @@
 <div class="modal-mask" id="previewModal">
   <div class="modal preview-modal">
     <div class="rf-header">
-      <span class="rf-title">题干预览</span>
-      <button class="rf-close" onclick="document.getElementById('previewModal').classList.remove('show')">&times;</button>
+      <span class="rf-title">题干编辑</span>
+      <button class="rf-close" onclick="closePreviewModal()">&times;</button>
     </div>
-    <div class="preview-body" id="previewBody"></div>
+    <div class="preview-editor">
+      <textarea class="preview-textarea" id="previewTextarea" placeholder="输入题干内容，支持 Markdown 和 HTML 格式..."></textarea>
+      <div class="preview-pane" id="previewPane"></div>
+    </div>
+    <div class="rf-footer">
+      <button class="btn btn-cancel" onclick="closePreviewModal()">取消</button>
+      <button class="btn btn-save" onclick="savePreviewModal()">保存</button>
+    </div>
   </div>
 </div>
 
