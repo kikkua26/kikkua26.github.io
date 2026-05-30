@@ -252,25 +252,38 @@ td.has-preview:hover .preview-btn { opacity: .5; }
 .preview-btn:hover { opacity: 1 !important; background: var(--accent-glow); }
 
 /* ── preview modal ── */
-.preview-modal { width: 860px; max-width: 95vw; height: 70vh; padding: 0; overflow: hidden; display: flex; flex-direction: column; }
-.preview-editor { display: flex; flex: 1; min-height: 0; overflow: hidden; }
-.preview-textarea {
-    flex: 1; border: none; outline: none; resize: none;
-    padding: 14px 16px; font-size: 13px; font-family: var(--mono);
-    background: var(--surface-2); color: var(--text); line-height: 1.7;
-    border-right: 1px solid var(--border);
+.preview-modal { width: 860px; max-width: 95vw; height: 75vh; padding: 0; overflow: hidden; display: flex; flex-direction: column; }
+.preview-toolbar {
+    display: flex; gap: 4px; align-items: center; padding: 6px 12px;
+    border-bottom: 1px solid var(--border); background: var(--surface-2); flex-shrink: 0;
 }
-.preview-pane {
+.preview-toolbar .btn { padding: 3px 8px; font-size: 11.5px; }
+.preview-body { display: flex; flex: 1; min-height: 0; overflow: hidden; }
+.preview-editor {
     flex: 1; padding: 14px 16px; overflow-y: auto;
     font-size: 14px; line-height: 1.8; color: var(--text);
+    outline: none; border-right: 1px solid var(--border);
 }
-.preview-pane h1, .preview-pane h2, .preview-pane h3 { margin: 12px 0 6px; font-weight: 600; }
-.preview-pane h1 { font-size: 18px; } .preview-pane h2 { font-size: 16px; } .preview-pane h3 { font-size: 14px; }
-.preview-pane strong { font-weight: 600; }
-.preview-pane code { background: var(--surface-2); padding: 1px 5px; border-radius: 3px; font-family: var(--mono); font-size: 12.5px; }
-.preview-pane a { color: var(--accent); text-decoration: none; } .preview-pane a:hover { text-decoration: underline; }
-.preview-pane ul, .preview-pane ol { padding-left: 20px; margin: 6px 0; }
-.preview-pane blockquote { border-left: 3px solid var(--accent); padding: 4px 12px; margin: 6px 0; color: var(--text-2); background: var(--accent-glow); border-radius: 0 4px 4px 0; }
+.preview-editor:empty::before { content: '在此编辑题干，支持从网页/Word/Markdown 编辑器粘贴带格式内容...'; color: var(--text-3); }
+.preview-editor h1, .preview-editor h2, .preview-editor h3 { margin: 12px 0 6px; font-weight: 600; }
+.preview-editor h1 { font-size: 18px; } .preview-editor h2 { font-size: 16px; } .preview-editor h3 { font-size: 14px; }
+.preview-editor strong { font-weight: 600; }
+.preview-editor code { background: var(--surface-2); padding: 1px 5px; border-radius: 3px; font-family: var(--mono); font-size: 12.5px; }
+.preview-editor a { color: var(--accent); }
+.preview-editor ul, .preview-editor ol { padding-left: 20px; margin: 6px 0; }
+.preview-editor blockquote { border-left: 3px solid var(--accent); padding: 4px 12px; margin: 6px 0; color: var(--text-2); background: var(--accent-glow); border-radius: 0 4px 4px 0; }
+.preview-code {
+    flex: 1; display: flex; flex-direction: column; min-width: 0; background: var(--surface-2);
+}
+.preview-code-title {
+    padding: 6px 12px; font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .5px; color: var(--text-3); border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.preview-code pre {
+    flex: 1; margin: 0; padding: 12px; overflow: auto;
+    font-family: var(--mono); font-size: 12px; line-height: 1.6;
+    color: var(--text-2); white-space: pre-wrap; word-break: break-all;
+}
 
 /* ── non-standard type warning ── */
 .type-warn {

@@ -159,67 +159,27 @@ function validateAnswer(tr) {
     }
 }
 
-function htmlToMd(html) {
-    if (!html) return '';
-    let s = html;
-    // Block elements first
-    s = s.replace(/<br\s*\/?>/gi, '\n');
-    s = s.replace(/<\/p>/gi, '\n\n');
-    s = s.replace(/<\/div>/gi, '\n');
-    s = s.replace(/<\/li>/gi, '\n');
-    s = s.replace(/<\/h[1-6]>/gi, '\n\n');
-    s = s.replace(/<h1[^>]*>(.*?)<\/h1>/gi, '# $1');
-    s = s.replace(/<h2[^>]*>(.*?)<\/h2>/gi, '## $1');
-    s = s.replace(/<h3[^>]*>(.*?)<\/h3>/gi, '### $1');
-    s = s.replace(/<li[^>]*>(.*?)<\/li>/gi, '- $1');
-    s = s.replace(/<\/?(ul|ol|blockquote)[^>]*>/gi, '');
-    s = s.replace(/<blockquote[^>]*>(.*?)<\/blockquote>/gis, (m, c) => c.split('\n').map(l => '> ' + l).join('\n'));
-    s = s.replace(/<pre[^>]*><code[^>]*>(.*?)<\/code><\/pre>/gis, '```\n$1\n```');
-    s = s.replace(/<img[^>]*src="([^"]*)"[^>]*alt="([^"]*)"[^>]*\/?>/gi, '![$2]($1)');
-    s = s.replace(/<a[^>]*href="([^"]*)"[^>]*>(.*?)<\/a>/gi, '[$2]($1)');
-    s = s.replace(/<strong[^>]*>(.*?)<\/strong>/gi, '**$1**');
-    s = s.replace(/<b[^>]*>(.*?)<\/b>/gi, '**$1**');
-    s = s.replace(/<em[^>]*>(.*?)<\/em>/gi, '*$1*');
-    s = s.replace(/<i[^>]*>(.*?)<\/i>/gi, '*$1*');
-    s = s.replace(/<code[^>]*>(.*?)<\/code>/gi, '`$1`');
-    // Strip remaining tags
-    s = s.replace(/<[^>]+>/g, '');
-    // Decode entities
-    s = s.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
-    // Clean up excessive newlines
-    s = s.replace(/\n{3,}/g, '\n\n').trim();
-    return s;
-}
-
-function handlePreviewPaste(e) {
-    const html = e.clipboardData.getData('text/html');
-    if (html) {
-        e.preventDefault();
-        const md = htmlToMd(html);
-        const ta = e.target;
-        const start = ta.selectionStart;
-        ta.value = ta.value.slice(0, start) + md + ta.value.slice(ta.selectionEnd);
-        ta.selectionStart = ta.selectionEnd = start + md.length;
-        ta.dispatchEvent(new Event('input', { bubbles: true }));
+function sanitizeHtml(html) {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    const DANGEROUS = /script|iframe|object|embed|form|input|textarea|button|select|style|link|meta|base|applet|marquee/i;
+    const EVIL_ATTR = /^on|^xmlns/i;
+    const EVIL_VAL = /javascript\s*:/i;
+    function clean(node) {
+        const children = [...node.childNodes];
+        for (const child of children) {
+            if (child.nodeType === 1) {
+                if (DANGEROUS.test(child.tagName)) { child.remove(); continue; }
+                [...child.attributes].forEach(a => {
+                    if (EVIL_ATTR.test(a.name) || EVIL_VAL.test(a.value)) child.removeAttribute(a.name);
+                    if (a.name === 'style' && /expression\s*\(|url\s*\(/i.test(a.value)) child.removeAttribute('style');
+                });
+                clean(child);
+            }
+        }
     }
-}
-
-function mdToHtml(text) {
-    if (!text) return '';
-    // If already HTML, return as-is
-    if (/<[a-z][\s\S]*>/i.test(text)) return text;
-    return text
-        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-        .replace(/\*(.+?)\*/g, '<em>$1</em>')
-        .replace(/`([^`]+)`/g, '<code>$1</code>')
-        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>')
-        .replace(/^### (.+)$/gm, '<h3>$1</h3>')
-        .replace(/^## (.+)$/gm, '<h2>$1</h2>')
-        .replace(/^# (.+)$/gm, '<h1>$1</h1>')
-        .replace(/^- (.+)$/gm, '<li>$1</li>')
-        .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
-        .replace(/\n/g, '<br>');
+    clean(tmp);
+    return tmp.innerHTML;
 }
 
 let previewTarget = null;
@@ -229,11 +189,17 @@ function showPreview(btn) {
     const input = td.querySelector('[data-field="question"]');
     if (!input) return;
     previewTarget = input;
-    const ta = document.getElementById('previewTextarea');
-    ta.value = input.value;
-    document.getElementById('previewPane').innerHTML = mdToHtml(input.value) || '<span style="color:var(--text-3)">（空）</span>';
+    const editor = document.getElementById('previewEditor');
+    editor.innerHTML = input.value || '';
+    document.getElementById('previewCode').textContent = input.value || '';
     document.getElementById('previewModal').classList.add('show');
-    ta.focus();
+    editor.focus();
+}
+
+function syncPreview() {
+    const editor = document.getElementById('previewEditor');
+    const filtered = sanitizeHtml(editor.innerHTML);
+    document.getElementById('previewCode').textContent = filtered;
 }
 
 function closePreviewModal() {
@@ -243,7 +209,8 @@ function closePreviewModal() {
 
 function savePreviewModal() {
     if (previewTarget) {
-        previewTarget.value = document.getElementById('previewTextarea').value;
+        const filtered = sanitizeHtml(document.getElementById('previewEditor').innerHTML);
+        previewTarget.value = filtered;
         previewTarget.dispatchEvent(new Event('input', { bubbles: true }));
     }
     closePreviewModal();
@@ -1368,20 +1335,6 @@ function handlePaste(e) {
     const input = e.target;
     if (!input || !input.matches('input[data-field]')) return;
 
-    // Question field: convert HTML paste to markdown
-    if (input.dataset.field === 'question') {
-        const html = (e.clipboardData || window.clipboardData).getData('text/html');
-        if (html) {
-            e.preventDefault();
-            const md = htmlToMd(html);
-            const start = input.selectionStart;
-            input.value = input.value.slice(0, start) + md + input.value.slice(input.selectionEnd);
-            input.selectionStart = input.selectionEnd = start + md.length;
-            input.dispatchEvent(new Event('input', { bubbles: true }));
-            return;
-        }
-    }
-
     const text = (e.clipboardData || window.clipboardData).getData('text/plain');
     if (!text) return;
 
@@ -1500,10 +1453,7 @@ function bindEvents() {
     document.getElementById('aiModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeAIModal(); });
     document.getElementById('apkgModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeApkgModal(); });
     document.getElementById('previewModal').addEventListener('click', e => { if (e.target === e.currentTarget) closePreviewModal(); });
-    document.getElementById('previewTextarea').addEventListener('input', e => {
-        document.getElementById('previewPane').innerHTML = mdToHtml(e.target.value) || '<span style="color:var(--text-3)">（空）</span>';
-    });
-    document.getElementById('previewTextarea').addEventListener('paste', handlePreviewPaste);
+    document.getElementById('previewEditor').addEventListener('input', syncPreview);
 
     // APKG modal
     document.getElementById('btnApkg').addEventListener('click', openApkgModal);

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>题库编辑器</title>
-<link rel="stylesheet" href="style.css?v=8">
+<link rel="stylesheet" href="style.css?v=9">
 </head>
 <body>
 
@@ -258,9 +258,23 @@
       <span class="rf-title">题干编辑</span>
       <button class="rf-close" onclick="closePreviewModal()">&times;</button>
     </div>
-    <div class="preview-editor">
-      <textarea class="preview-textarea" id="previewTextarea" placeholder="输入题干内容，支持 Markdown 和 HTML 格式..."></textarea>
-      <div class="preview-pane" id="previewPane"></div>
+    <div class="preview-toolbar">
+      <button class="btn" onclick="document.execCommand('bold')" title="加粗"><b>B</b></button>
+      <button class="btn" onclick="document.execCommand('italic')" title="斜体"><i>I</i></button>
+      <button class="btn" onclick="document.execCommand('underline')" title="下划线"><u>U</u></button>
+      <button class="btn" onclick="document.execCommand('strikeThrough')" title="删除线"><s>S</s></button>
+      <div class="sep"></div>
+      <button class="btn" onclick="document.execCommand('insertUnorderedList')" title="无序列表">• 列表</button>
+      <button class="btn" onclick="document.execCommand('insertOrderedList')" title="有序列表">1. 列表</button>
+      <div class="sep"></div>
+      <button class="btn" onclick="document.execCommand('removeFormat')" title="清除格式">清除</button>
+    </div>
+    <div class="preview-body">
+      <div class="preview-editor" id="previewEditor" contenteditable="true"></div>
+      <div class="preview-code">
+        <div class="preview-code-title">HTML 源码</div>
+        <pre id="previewCode"></pre>
+      </div>
     </div>
     <div class="rf-footer">
       <button class="btn btn-cancel" onclick="closePreviewModal()">取消</button>
@@ -271,6 +285,6 @@
 
 <div class="signature">kikkua</div>
 
-<script src="main.js?v=9"></script>
+<script src="main.js?v=10"></script>
 </body>
 </html>
