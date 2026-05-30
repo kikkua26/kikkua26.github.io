@@ -594,10 +594,12 @@ function setActiveCell(td) {
     clearSelection();
     if (!td) return;
     activeTd = td; td.classList.add('active-cell'); selection = [td];
-    const handle = document.createElement('div');
-    handle.className = 'fill-handle';
-    td.style.position = 'relative';
-    td.appendChild(handle);
+    if (FILL_COLS.includes(td.dataset.col)) {
+        const handle = document.createElement('div');
+        handle.className = 'fill-handle';
+        td.style.position = 'relative';
+        td.appendChild(handle);
+    }
 }
 
 document.addEventListener('focusin', e => {
@@ -636,6 +638,7 @@ document.addEventListener('keydown', e => {
 });
 
 // ═══ Fill Handle Drag ═══
+const FILL_COLS = ['type', 'chapter'];
 let filling = false, fillCol = null, fillStartRow = -1;
 document.addEventListener('mousedown', e => {
     if (!e.target.classList.contains('fill-handle')) return;
