@@ -21,6 +21,15 @@ const OPT_LETTERS = ['A','B','C','D','E','F','G'];
 let hiddenOptCols = 0;
 let editingTr = null;
 
+const VALID_TYPES = ['单选题','多选题','判断题','问答题','挖空题'];
+const TYPE_LOCK_MAP = {
+    '单选题':  ['clozetext','answertext'],
+    '多选题':  ['clozetext','answertext'],
+    '判断题':  ['clozetext','answertext','optA','optB','optC','optD','optE','optF','optG'],
+    '问答题':  ['clozetext','optA','optB','optC','optD','optE','optF','optG','answer'],
+    '挖空题':  ['optA','optB','optC','optD','optE','optF','optG','answer','answertext','question'],
+};
+
 // ═══ Column Resize ═══
 document.addEventListener('mousedown', e => {
     if (!e.target.classList.contains('resizer')) return;
@@ -69,12 +78,40 @@ function buildColGroup(optCount) {
 // ═══ Row CRUD ═══
 function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
+function buildTypeSelect(val) {
+    let html = '<select data-field="type">';
+    html += '<option value="">—</option>';
+    VALID_TYPES.forEach(t => { html += `<option value="${t}"${val===t?' selected':''}>${t}</option>`; });
+    if (val && !VALID_TYPES.includes(val)) html += `<option value="${esc(val)}" selected>${esc(val)}</option>`;
+    html += '</select>';
+    return html;
+}
+
+function applyTypeLock(tr) {
+    const typeEl = tr.querySelector('[data-field="type"]');
+    const type = typeEl ? typeEl.value : '';
+    const locks = TYPE_LOCK_MAP[type] || [];
+    tr.querySelectorAll('[data-field]').forEach(el => {
+        const field = el.dataset.field;
+        if (field === 'type') return;
+        const locked = locks.includes(field);
+        el.disabled = locked;
+        el.closest('td').classList.toggle('locked', locked);
+    });
+    // Warning badge for non-standard types
+    const td = typeEl.closest('td');
+    let warn = td.querySelector('.type-warn');
+    if (type && !VALID_TYPES.includes(type)) {
+        if (!warn) { warn = document.createElement('span'); warn.className = 'type-warn'; warn.textContent = '!'; td.appendChild(warn); }
+    } else if (warn) { warn.remove(); }
+}
+
 function addRow(data, beforeTr) {
     const tr = document.createElement('tr');
     const d = data || {};
     tr.innerHTML = `<td class="idx" data-col="idx" title="双击编辑 · 右键菜单"></td>`;
     tr.innerHTML += `<td data-col="chapter"><input type="text" data-field="chapter" placeholder="章节" value="${esc(d.chapter||'')}"></td>`;
-    tr.innerHTML += `<td data-col="type"><input type="text" data-field="type" placeholder="Type" value="${esc(d.type||'')}"></td>`;
+    tr.innerHTML += `<td data-col="type">${buildTypeSelect(d.type||'')}</td>`;
     tr.innerHTML += `<td data-col="question"><input type="text" data-field="question" placeholder="题干" value="${esc(d.question||'')}"></td>`;
     tr.innerHTML += `<td data-col="clozetext"><input type="text" data-field="clozetext" placeholder="Cloze" value="${esc(d.clozetext||'')}"></td>`;
     OPT_LETTERS.forEach((o, i) => {
@@ -87,6 +124,7 @@ function addRow(data, beforeTr) {
     tr.innerHTML += `<td data-col="reference"><input type="text" data-field="reference" placeholder="参考" value="${esc(d.reference||'')}"></td>`;
     tr.innerHTML += `<td data-col="actions" class="actions" title="删除">✕</td>`;
     if (beforeTr) tbody.insertBefore(tr, beforeTr); else tbody.appendChild(tr);
+    applyTypeLock(tr);
     renumber();
     return tr;
 }
@@ -169,13 +207,32 @@ function renderFormFields(data) {
     FORM_FIELDS.forEach(f => {
         const oi = OPT_LETTERS.indexOf(f.key.replace('opt',''));
         if (f.key.startsWith('opt') && oi >= (7 - hiddenOptCols)) return;
-        const val = esc((data || {})[f.key] || '');
-        const isTextarea = f.type === 'textarea';
-        body.innerHTML += `<div class="form-row"><span class="form-label">${f.label}</span>${
-            isTextarea
-            ? `<textarea data-field="${f.key}" rows="1">${val}</textarea>`
-            : `<input type="text" data-field="${f.key}" value="${val}">`
-        }</div>`;
+        const val = (data || {})[f.key] || '';
+        let input;
+        if (f.key === 'type') {
+            input = buildTypeSelect(val);
+        } else {
+            const isTextarea = f.type === 'textarea';
+            input = isTextarea
+                ? `<textarea data-field="${f.key}" rows="1">${esc(val)}</textarea>`
+                : `<input type="text" data-field="${f.key}" value="${esc(val)}">`;
+        }
+        body.innerHTML += `<div class="form-row"><span class="form-label">${f.label}</span>${input}</div>`;
+    });
+    applyFormTypeLock();
+}
+
+function applyFormTypeLock() {
+    const grid = document.getElementById('formGrid');
+    const typeEl = grid.querySelector('[data-field="type"]');
+    const type = typeEl ? typeEl.value : '';
+    const locks = TYPE_LOCK_MAP[type] || [];
+    grid.querySelectorAll('[data-field]').forEach(el => {
+        const field = el.dataset.field;
+        if (field === 'type') return;
+        const locked = locks.includes(field);
+        el.disabled = locked;
+        el.closest('.form-row').classList.toggle('locked', locked);
     });
 }
 
@@ -201,6 +258,7 @@ function saveForm() {
     const data = {};
     grid.querySelectorAll('[data-field]').forEach(el => { data[el.dataset.field] = el.value; });
     setRowData(editingTr, data);
+    applyTypeLock(editingTr);
     closeForm();
 }
 
@@ -302,7 +360,7 @@ function exportKikkuaCSV() {
     let csv = '﻿' + header.join(',') + '\n';
     data.forEach((row, i) => {
         const optParts = visibleOpts.map(o => row['opt'+o] || '').filter(v => v.trim());
-        const TYPE_MAP = { '单选题':'单选题','判断题':'判断题','多选题':'多选题','选择题':'选择题','填空题':'填空题','问答题':'问答题', choice:'选择题', cloze:'填空题', short:'问答题' };
+        const TYPE_MAP = { '单选题':'单选题','判断题':'判断题','多选题':'多选题','选择题':'单选题','填空题':'挖空题','挖空题':'挖空题','问答题':'问答题', choice:'单选题', cloze:'挖空题', short:'问答题' };
         csv += [i+1, ...fields.map(f => csvVal(({ _chapter: row.chapter||'', _type: TYPE_MAP[row.type]||row.type||'', _question: row.question||'', clozetext: row.clozetext||'', _options: optParts.join('||'), ...row })[f] || ''))].join(',') + '\n';
     });
     download('questions_kikkua.csv', csv, 'text/csv');
@@ -347,7 +405,7 @@ function parseCSVLine(line) {
 function importAOA(aoa) {
     if (aoa.length < 2) { alert('文件无数据行'); return; }
     const hdr = aoa[0].map(h => String(h).trim().toLowerCase());
-    const TYPE_IMPORT_MAP = { '选择题':'选择题','单选题':'单选题','判断题':'判断题','多选题':'多选题','填空题':'填空题','问答题':'问答题','choice':'选择题','cloze':'填空题','short':'问答题','single choice':'单选题','multiple choice':'多选题','fill-in-the-blank':'填空题','short answer':'问答题' };
+    const TYPE_IMPORT_MAP = { '选择题':'单选题','单选题':'单选题','判断题':'判断题','多选题':'多选题','填空题':'挖空题','挖空题':'挖空题','问答题':'问答题','choice':'单选题','cloze':'挖空题','short':'问答题','single choice':'单选题','multiple choice':'多选题','fill-in-the-blank':'挖空题','short answer':'问答题' };
     const fm = { 'chapter':'chapter','type':'type','question':'question','clozetext':'clozetext','optiona':'optA','a':'optA','optionb':'optB','b':'optB','optionc':'optC','c':'optC','optiond':'optD','d':'optD','optione':'optE','e':'optE','optionf':'optF','f':'optF','optiong':'optG','g':'optG','answer':'answer','answertext':'answertext','analysis':'analysis','reference':'reference','options':'_options' };
     for (let i = 1; i < aoa.length; i++) {
         const vals = aoa[i]; if (!vals || vals.every(v => v === '')) continue;
@@ -359,7 +417,7 @@ function importAOA(aoa) {
             if (key && key !== '_options') obj[key] = val;
             if (key === '_options') val.split('||').forEach((p, k) => { if (k < 7) obj['opt'+OPT_LETTERS[k]] = p.trim(); });
         });
-        if ((obj.type === '填空题' || obj.type === 'cloze') && !obj.answer && obj.clozetext) {
+        if ((obj.type === '挖空题' || obj.type === '填空题' || obj.type === 'cloze') && !obj.answer && obj.clozetext) {
             const matches = obj.clozetext.match(/\[\[([^\]]*)\]\]/g);
             if (matches) obj.answer = matches.map(m => m.slice(2, -2)).join('|');
         }
@@ -492,7 +550,7 @@ function selectAIMode(el) {
         ? 'AI 会从内容中选取最核心的知识点，生成 1 道题。'
         : aiMode === 'batch'
         ? 'AI 会完整覆盖所有知识点生成题目，按难度分布。'
-        : '整理模式：粘贴格式混乱的题目，AI 会自动整理为标准格式并导入。';
+        : '整理模式：粘贴格式混乱的题目，AI 会自动整理为标准格式并导入。建议每次控制在 50 题以内，效果最佳。';
 
     const knowledgeInput = document.getElementById('aiKnowledgeInput');
     if (aiMode === 'organize') {
@@ -558,7 +616,7 @@ function buildPrompt() {
 表头：Type,Question,OptionA,OptionB,OptionC,OptionD,OptionE,Answer,Analysis,Reference,Chapter
 
 字段要求：
-- Type：根据题目性质填写「单选题」「判断题」或「多选题」（判断题指只有对/错或是/否两个选项的题目）
+- Type：根据题目性质填写「单选题」「判断题」或「多选题」（判断题指只有对/错或是/否两个选项的题目），只能使用这三种，不得使用其他值
 - Question：题干，表述清晰完整
 - OptionA ~ OptionE：各选项内容，根据题目需要决定选项数量（至少 4 个，最多 6 个，不需要的选项留空）
 - 如果原始题目选项不足 4 个，用相关内容补齐至 4 个
@@ -570,11 +628,11 @@ ${content}`;
         } else if (aiType === 'cloze') {
             return `${organizeBase}
 
-将题目整理为填空题格式。
+将题目整理为挖空题格式。
 表头：Type,ClozeText,Analysis,Reference,Chapter
 
 字段要求：
-- Type：固定填写 填空题
+- Type：固定填写「挖空题」
 - ClozeText：将原始题目中的关键术语用 [[正确答案]] 挖空
 - 每道题可挖 1~3 个空，挖空内容应是理解该知识点必不可少的关键术语
 - 如果原始题目已有下划线或括号标注的填空位置，按原始位置处理
@@ -604,7 +662,7 @@ ${content}`;
 表头：Type,Question,OptionA,OptionB,OptionC,OptionD,OptionE,Answer,Analysis,Reference,Chapter
 
 字段要求：
-- Type：根据题目性质填写「单选题」「判断题」或「多选题」（判断题指只有对/错或是/否两个选项的题目）
+- Type：根据题目性质填写「单选题」「判断题」或「多选题」（判断题指只有对/错或是/否两个选项的题目），只能使用这三种，不得使用其他值
 - Question：题干，表述清晰完整，包含足够的上下文信息
 - OptionA ~ OptionE：各选项内容，根据题目需要决定选项数量（至少 4 个，最多 6 个，不需要的选项留空）
 - 干扰项要求：每个错误选项必须是该知识点中容易混淆的概念或常见误解，不能是明显无关或荒谬的内容
@@ -615,11 +673,11 @@ ${content}`;
     } else if (aiType === 'cloze') {
         return `${base}
 
-生成填空题。
+生成挖空题。
 表头：Type,ClozeText,Analysis,Reference,Chapter
 
 字段要求：
-- Type：固定填写 填空题
+- Type：固定填写「挖空题」
 - ClozeText：在关键位置用 [[正确答案]] 挖空，如「光合作用需要 [[阳光]]、[[水]] 和 [[二氧化碳]]」
 - 每道题可挖 1~3 个空，挖空内容应是理解该知识点必不可少的关键术语，去掉后该句无法靠上下文推断
 - 不要在不重要的修饰词、连接词上挖空
@@ -1123,6 +1181,9 @@ function bindEvents() {
     document.getElementById('btnCancelForm').addEventListener('click', closeForm);
     document.getElementById('btnCancelForm2').addEventListener('click', closeForm);
     document.getElementById('btnSaveForm').addEventListener('click', saveForm);
+    document.getElementById('formGrid').addEventListener('change', e => {
+        if (e.target.matches('[data-field="type"]')) applyFormTypeLock();
+    });
     document.getElementById('formPrev').addEventListener('click', () => navForm(-1));
     document.getElementById('formNext').addEventListener('click', () => navForm(1));
     document.getElementById('rowFormModal').addEventListener('keydown', e => {
@@ -1214,6 +1275,12 @@ if (!hasCache) { addRow(); addRow(); addRow(); }
 
 // Auto-save on any input change
 tbody.addEventListener('input', saveToCache);
+tbody.addEventListener('change', e => {
+    if (e.target.matches('[data-field="type"]')) {
+        applyTypeLock(e.target.closest('tr'));
+        saveToCache();
+    }
+});
 // Also save on row delete
 const _origRenumber = renumber;
 renumber = function() { _origRenumber(); saveToCache(); };

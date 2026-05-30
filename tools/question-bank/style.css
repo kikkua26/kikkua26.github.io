@@ -188,6 +188,25 @@ tr:not(:last-child) td { border-bottom-color: rgba(224,224,234,.6); }
 
 td.selected { background: var(--accent-glow-2) !important; }
 
+/* ── locked fields ── */
+td.locked { background: var(--surface-2) !important; opacity: .45; }
+td.locked input, td.locked textarea { cursor: not-allowed; }
+td.locked input::placeholder { color: transparent; }
+tr:hover td.locked { background: var(--surface-2) !important; }
+
+/* ── non-standard type warning ── */
+td[data-col="type"] select option[data-nonstd] { color: var(--warn); }
+.type-warn {
+    display: inline-block; font-size: 9px; color: var(--warn); font-weight: 700;
+    background: rgba(240,160,48,.12); border-radius: 3px; padding: 0 4px; margin-left: 3px;
+    vertical-align: middle; line-height: 16px;
+}
+
+/* ── form locked fields ── */
+.form-row.locked { opacity: .4; }
+.form-row.locked input, .form-row.locked textarea { cursor: not-allowed; background: var(--surface-2); }
+.form-row.locked input::placeholder, .form-row.locked textarea::placeholder { color: transparent; }
+
 /* ── status bar ── */
 .status {
     margin-top: 10px;
