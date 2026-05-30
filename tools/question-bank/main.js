@@ -586,20 +586,14 @@ function getRowIndex(td) { return td ? td.parentElement.rowIndex : -1; }
 function getInputValue(td) { const i = td.querySelector('input, textarea'); return i ? i.value : ''; }
 function setInputValue(td, v) { const i = td.querySelector('input, textarea'); if (i) { i.value = v; i.dispatchEvent(new Event('input', { bubbles: true })); } }
 function clearSelection() {
-    selection.forEach(t => t.classList.remove('selected', 'fill-range', 'active-cell'));
-    document.querySelectorAll('.fill-handle').forEach(h => h.remove());
+    selection.forEach(t => t.classList.remove('selected', 'fill-range', 'active-cell', 'fill-col'));
     selection = []; activeTd = null;
 }
 function setActiveCell(td) {
     clearSelection();
     if (!td) return;
     activeTd = td; td.classList.add('active-cell'); selection = [td];
-    if (FILL_COLS.includes(td.dataset.col)) {
-        const handle = document.createElement('div');
-        handle.className = 'fill-handle';
-        td.style.position = 'relative';
-        td.appendChild(handle);
-    }
+    if (FILL_COLS.includes(td.dataset.col)) td.classList.add('fill-col');
 }
 
 document.addEventListener('focusin', e => {
@@ -638,14 +632,17 @@ document.addEventListener('keydown', e => {
 });
 
 // ═══ Fill Handle Drag ═══
-const FILL_COLS = ['chapter'];
+const FILL_COLS = ['type', 'chapter'];
 let filling = false, fillCol = null, fillStartRow = -1;
 document.addEventListener('mousedown', e => {
-    if (!e.target.classList.contains('fill-handle')) return;
+    const td = e.target.closest('td.fill-col');
+    if (!td) return;
+    const rect = td.getBoundingClientRect();
+    if (e.clientX < rect.right - 12 || e.clientY < rect.bottom - 12) return;
     e.preventDefault();
     filling = true;
-    fillCol = getColName(activeTd);
-    fillStartRow = getRowIndex(activeTd);
+    fillCol = td.dataset.col;
+    fillStartRow = getRowIndex(td);
 });
 document.addEventListener('mousemove', e => {
     if (!filling) return;
