@@ -583,8 +583,11 @@ let activeTd = null, selection = [];
 function getTdFromInput(el) { return el ? el.closest('td[data-col]') : null; }
 function getColName(td) { return td ? td.dataset.col : null; }
 function getRowIndex(td) { return td ? td.parentElement.rowIndex : -1; }
-function getInputValue(td) { const i = td.querySelector('input, textarea'); return i ? i.value : ''; }
-function setInputValue(td, v) { const i = td.querySelector('input, textarea'); if (i) { i.value = v; i.dispatchEvent(new Event('input', { bubbles: true })); } }
+function getInputValue(td) { const i = td.querySelector('input, textarea, select'); return i ? i.value : ''; }
+function setInputValue(td, v) {
+    const i = td.querySelector('input, textarea, select');
+    if (i) { i.value = v; i.dispatchEvent(new Event('change', { bubbles: true })); }
+}
 function clearSelection() {
     selection.forEach(t => t.classList.remove('selected', 'fill-range', 'active-cell', 'fill-col'));
     selection = []; activeTd = null;
