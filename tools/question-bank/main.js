@@ -159,7 +159,8 @@ function delRow(el) {
 
 function renumber() {
     Array.from(tbody.rows).forEach((tr, i) => { tr.querySelector('.idx').textContent = i + 1; });
-    statusEl.innerHTML = `共 <span class="count">${tbody.rows.length}</span> 行`;
+    const filled = Array.from(tbody.rows).filter(tr => !isRowEmpty(tr)).length;
+    statusEl.innerHTML = `共 <span class="count">${filled}</span> 行`;
 }
 
 function collectData() {
@@ -170,6 +171,19 @@ function collectData() {
         rows.push(obj);
     });
     return rows;
+}
+
+function isRowEmpty(tr) {
+    return ![...tr.querySelectorAll('[data-field]')].some(el => el.value.trim());
+}
+
+function ensureEmptyRows() {
+    const rows = Array.from(tbody.rows);
+    let emptyTail = 0;
+    for (let i = rows.length - 1; i >= 0; i--) {
+        if (isRowEmpty(rows[i])) emptyTail++; else break;
+    }
+    for (let i = emptyTail; i < 3; i++) addRow();
 }
 
 function getRowData(tr) {
@@ -447,6 +461,7 @@ function importAOA(aoa) {
         }
         addRow(obj);
     }
+    ensureEmptyRows();
 }
 
 function handleImport(e) {
@@ -1181,7 +1196,7 @@ function bindEvents() {
     document.getElementById('btnExport').addEventListener('click', () => document.getElementById('exportModal').classList.add('show'));
     document.getElementById('btnAI').addEventListener('click', openAIModal);
     document.getElementById('btnClear').addEventListener('click', () => {
-        if (confirm('确定清空全部数据？')) { tbody.innerHTML = ''; renumber(); localStorage.removeItem(CACHE_KEY); }
+        if (confirm('确定清空全部数据？')) { tbody.innerHTML = ''; renumber(); localStorage.removeItem(CACHE_KEY); ensureEmptyRows(); }
     });
 
     // File import
@@ -1295,18 +1310,21 @@ function loadFromCache() {
 bindEvents();
 setOptCols(document.getElementById('optCount').value);
 const hasCache = loadFromCache();
-if (!hasCache) { addRow(); addRow(); addRow(); }
+ensureEmptyRows();
 
 // Auto-save on any input change
-tbody.addEventListener('input', saveToCache);
+let _ensureTimer;
+tbody.addEventListener('input', e => {
+    saveToCache();
+    if (e.target.matches('[data-field="answer"]')) applyAnswerHighlight(e.target.closest('tr'));
+    clearTimeout(_ensureTimer);
+    _ensureTimer = setTimeout(ensureEmptyRows, 300);
+});
 tbody.addEventListener('change', e => {
     if (e.target.matches('[data-field="type"]')) {
         applyTypeLock(e.target.closest('tr'));
         saveToCache();
     }
-});
-tbody.addEventListener('input', e => {
-    if (e.target.matches('[data-field="answer"]')) applyAnswerHighlight(e.target.closest('tr'));
 });
 // Also save on row delete
 const _origRenumber = renumber;
