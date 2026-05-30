@@ -638,10 +638,11 @@ document.addEventListener('keydown', e => {
 const FILL_COLS = ['type', 'chapter'];
 let filling = false, fillCol = null, fillStartRow = -1;
 document.addEventListener('mousedown', e => {
-    const td = e.target.closest('td.fill-col');
-    if (!td) return;
-    const rect = td.getBoundingClientRect();
-    if (e.clientX < rect.right - 12 || e.clientY < rect.bottom - 12) return;
+    if (filling) return;
+    const td = e.target.closest('td[data-col]');
+    if (!td || !FILL_COLS.includes(td.dataset.col)) return;
+    const r = td.getBoundingClientRect();
+    if (e.clientX < r.right - 14 || e.clientY < r.bottom - 14) return;
     e.preventDefault();
     filling = true;
     fillCol = td.dataset.col;
