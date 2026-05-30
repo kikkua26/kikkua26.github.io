@@ -638,7 +638,7 @@ document.addEventListener('keydown', e => {
 });
 
 // ═══ Fill Handle Drag ═══
-const FILL_COLS = ['type', 'chapter'];
+const FILL_COLS = ['chapter'];
 let filling = false, fillCol = null, fillStartRow = -1;
 document.addEventListener('mousedown', e => {
     if (!e.target.classList.contains('fill-handle')) return;
