@@ -196,6 +196,13 @@ function showPreview(btn) {
     editor.focus();
 }
 
+function clearEditor() {
+    const editor = document.getElementById('previewEditor');
+    editor.innerHTML = '';
+    editor.focus();
+    syncPreview();
+}
+
 function wrapCloze() {
     const sel = window.getSelection();
     if (!sel.rangeCount) return;
