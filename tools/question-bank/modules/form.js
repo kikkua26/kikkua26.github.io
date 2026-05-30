@@ -2,8 +2,8 @@
 
 import { OPT_LETTERS, FORM_FIELDS } from './constants.js';
 import { esc } from './utils.js';
-import { buildTypeSelect, applyFormTypeLock, validateFormAnswer } from './type-system.js';
-import { getTbody, getRowData, setRowData, applyTypeLock, getHiddenOptCols } from './table.js';
+import { buildTypeSelect, applyTypeLock, applyFormTypeLock, validateFormAnswer } from './type-system.js';
+import { getTbody, getRowData, setRowData, getHiddenOptCols } from './table.js';
 
 let editingTr = null;
 
