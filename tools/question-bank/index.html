@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>题库编辑器</title>
-<link rel="stylesheet" href="style.css?v=7">
+<link rel="stylesheet" href="style.css?v=8">
 </head>
 <body>
 
@@ -252,8 +252,18 @@
 
 <div class="ctx-menu compact" id="btnCtxMenu"></div>
 
+<div class="modal-mask" id="previewModal">
+  <div class="modal preview-modal">
+    <div class="rf-header">
+      <span class="rf-title">题干预览</span>
+      <button class="rf-close" onclick="document.getElementById('previewModal').classList.remove('show')">&times;</button>
+    </div>
+    <div class="preview-body" id="previewBody"></div>
+  </div>
+</div>
+
 <div class="signature">kikkua</div>
 
-<script src="main.js?v=8"></script>
+<script src="main.js?v=9"></script>
 </body>
 </html>

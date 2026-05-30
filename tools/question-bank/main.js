@@ -159,13 +159,39 @@ function validateAnswer(tr) {
     }
 }
 
+function mdToHtml(text) {
+    if (!text) return '';
+    // If already HTML, return as-is
+    if (/<[a-z][\s\S]*>/i.test(text)) return text;
+    return text
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.+?)\*/g, '<em>$1</em>')
+        .replace(/`([^`]+)`/g, '<code>$1</code>')
+        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>')
+        .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+        .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+        .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+        .replace(/^- (.+)$/gm, '<li>$1</li>')
+        .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
+        .replace(/\n/g, '<br>');
+}
+
+function showPreview(btn) {
+    const td = btn.closest('td');
+    const input = td.querySelector('[data-field="question"]');
+    const raw = input ? input.value : '';
+    document.getElementById('previewBody').innerHTML = mdToHtml(raw) || '<span style="color:var(--text-3)">（空）</span>';
+    document.getElementById('previewModal').classList.add('show');
+}
+
 function addRow(data, beforeTr) {
     const tr = document.createElement('tr');
     const d = data || {};
     tr.innerHTML = `<td class="idx" data-col="idx" title="双击编辑 · 右键菜单"></td>`;
     tr.innerHTML += `<td data-col="type">${buildTypeSelect(d.type||'')}</td>`;
     tr.innerHTML += `<td data-col="chapter"><input type="text" data-field="chapter" placeholder="章节" value="${esc(d.chapter||'')}"></td>`;
-    tr.innerHTML += `<td data-col="question"><input type="text" data-field="question" placeholder="题干" value="${esc(d.question||'')}"></td>`;
+    tr.innerHTML += `<td data-col="question" class="has-preview"><input type="text" data-field="question" placeholder="题干" value="${esc(d.question||'')}"><button class="preview-btn" onclick="showPreview(this)" title="预览">🔍</button></td>`;
     tr.innerHTML += `<td data-col="clozetext"><input type="text" data-field="clozetext" placeholder="Cloze" value="${esc(d.clozetext||'')}"></td>`;
     OPT_LETTERS.forEach((o, i) => {
         const visible = i < (7 - hiddenOptCols);
@@ -1395,6 +1421,7 @@ function bindEvents() {
     // Close modals on mask click
     document.getElementById('aiModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeAIModal(); });
     document.getElementById('apkgModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeApkgModal(); });
+    document.getElementById('previewModal').addEventListener('click', e => { if (e.target === e.currentTarget) document.getElementById('previewModal').classList.remove('show'); });
 
     // APKG modal
     document.getElementById('btnApkg').addEventListener('click', openApkgModal);
