@@ -1898,6 +1898,7 @@
     padding: 24px 0 24px 16px;
     overscroll-behavior: contain;
     border-left: 1px solid var(--paper-warm);
+    min-width: 200px;
 }
 
 .doc-toc-title {
