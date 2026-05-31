@@ -98,7 +98,7 @@ export function bindAllEvents() {
             else if (act === 'close-csv-preview') $('#csvPreviewOverlay').classList.remove('show');
             else if (act === 'close-tag-selector') closeTagSelector();
             else if (act === 'confirm-tag-selector') confirmTagSelector();
-            else if (act === 'cm-quick-paste') { const { initCardMaker } = await import('./cardmaker-loader.js'); if (window._cmQuickPaste) window._cmQuickPaste(); }
+            else if (act === 'cm-quick-paste') { import('./cardmaker-loader.js').then(m => { if (window._cmQuickPaste) window._cmQuickPaste(); }); }
             return;
         }
 
