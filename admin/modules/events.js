@@ -2,9 +2,9 @@
 
 import { connect, disconnect } from './auth.js';
 import { switchSection, openSidebar, closeSidebar } from './ui.js';
-import { decks, renderDeckList, showDeckList, selectDeck, saveDecks, delDeck, addDeck, previewCsv, downloadCsv, uploadCsv, removeDeckTag } from './decks.js';
+import { decks, renderDeckList, showDeckList, selectDeck, saveDecks, delDeck, addDeck, previewCsv, downloadCsv, uploadCsv } from './decks.js';
 import { renderTplGrid, selectTpl, switchTplFile, saveTplFile, createTpl } from './templates.js';
-import { renderTagTree, saveTags, addRootTag, renameTagDesc, renameTag, addSubTag, delTagNode, openTagSelector, closeTagSelector, confirmTagSelector, tagToggle } from './tags.js';
+import { renderTagTree, saveTags, addRootTag, renameTagDesc, renameTag, addSubTag, delTagNode, openTagSelector, closeTagSelector, confirmTagSelector, tagToggle, removeDeckTag } from './tags.js';
 import { renderPageList, showPageList, selectPage, savePages, addPage, importMdFile, previewMd, delPage, currentPageIdx } from './pages.js';
 import { loadMedia, navigateMedia, createMediaFolder, uploadMediaFile, showMediaMenu, closeMediaMenu, copyMediaUrl, promptRenameMedia, replaceMediaFile, delMediaItem } from './media.js';
 
