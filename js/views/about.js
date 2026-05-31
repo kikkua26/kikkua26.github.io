@@ -59,7 +59,8 @@ export async function renderAbout() {
 
     renderFull(page, pages);
 
-    app.querySelector('.back-btn').addEventListener('click', e => {
+    const backBtn = app.querySelector('.back-btn');
+    if (backBtn) backBtn.addEventListener('click', e => {
         e.preventDefault();
         navigate('/');
     });
