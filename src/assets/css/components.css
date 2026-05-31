@@ -1999,7 +1999,7 @@
 @media (max-width: 767px) {
     .pro-tabs { width:110px; }
     .pro-tab { padding:6px 10px; font-size:11px; }
-}
+    .docs-layout {
         grid-template-columns: 1fr;
     }
     .docs-menu-btn {
