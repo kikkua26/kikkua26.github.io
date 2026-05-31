@@ -5,7 +5,7 @@ export async function initCardMaker() {
     if (_inited) return;
     const root = document.getElementById('cardMakerRoot');
     if (!root) return;
-    const { initCardMaker } = await import('../../js/admin/cm-798887.js');
+    const { initCardMaker } = await import('../../js/admin/card-maker/main.js');
     initCardMaker(root);
     _inited = true;
 }
