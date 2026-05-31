@@ -1,6 +1,6 @@
 // kikkua · admin — 媒体文件管理
 
-import { readRepo, writeRepo, listRepo } from './api.js';
+import { readRepo, writeRepo, listRepo, getToken } from './api.js';
 import { toast, confirmModal, inputModal } from './ui.js';
 import { pages, savePagesSilent } from './pages.js';
 
@@ -11,12 +11,12 @@ export let currentMediaPath = 'data/media';
 export let mediaItems = [];
 
 export async function loadMedia() {
+    if (!getToken()) return;
     const grid = $('#mediaGrid');
     if (!grid) return;
     grid.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text3);width:100%;">加载中…</div>';
     renderBreadcrumb();
     try {
-        try { await readRepo('data/media/.gitkeep'); } catch { try { await writeRepo('data/media/.gitkeep', '', null, 'Init media folder'); } catch {} }
         const items = await listRepo(currentMediaPath);
         mediaItems = items.filter(i => i.type === 'dir' || i.type === 'file');
         renderMediaGrid();
