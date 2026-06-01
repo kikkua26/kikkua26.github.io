@@ -11,25 +11,40 @@ export function toast(text, type = 'success') {
 
 export function confirmModal(title, text) {
     return new Promise(r => {
-        $('#modalTitle').textContent = title; $('#modalText').textContent = text;
-        $('#modalOverlay').classList.add('show');
-        $('#modalConfirm').onclick = () => { $('#modalOverlay').classList.remove('show'); r(true); };
-        $('#modalCancel').onclick = () => { $('#modalOverlay').classList.remove('show'); r(false); };
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        overlay.innerHTML = `<div class="modal">
+            <h3>${title}</h3><p>${text}</p>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" data-action="cancel">取消</button>
+                <button class="btn btn-primary" data-action="ok">确定</button>
+            </div></div>`;
+        overlay.addEventListener('click', e => {
+            if (e.target.dataset.action === 'ok') { overlay.remove(); r(true); }
+            else if (e.target.dataset.action === 'cancel' || e.target === overlay) { overlay.remove(); r(false); }
+        });
+        document.body.appendChild(overlay);
     });
 }
 
 export function inputModal(title, label, placeholder = '') {
     return new Promise(r => {
-        $('#modalTitle').textContent = title;
-        document.querySelectorAll('#modalBody .field').forEach(e => e.remove());
-        const f = document.createElement('div'); f.className = 'field';
-        f.innerHTML = `<input id="modalInput" placeholder="${placeholder}">`;
-        $('#modalText').after(f);
-        $('#modalOverlay').classList.add('show');
-        $('#modalConfirm').textContent = '确定';
-        $('#modalConfirm').onclick = () => { const v = $('#modalInput').value.trim(); $('#modalOverlay').classList.remove('show'); r(v); };
-        $('#modalCancel').onclick = () => { $('#modalOverlay').classList.remove('show'); r(null); };
-        setTimeout(() => $('#modalInput').focus(), 100);
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        overlay.innerHTML = `<div class="modal">
+            <h3>${title}</h3>
+            <div class="field"><label>${label}</label><input placeholder="${placeholder}"></div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" data-action="cancel">取消</button>
+                <button class="btn btn-primary" data-action="ok">确定</button>
+            </div></div>`;
+        const input = overlay.querySelector('input');
+        overlay.addEventListener('click', e => {
+            if (e.target.dataset.action === 'ok') { overlay.remove(); r(input.value.trim()); }
+            else if (e.target.dataset.action === 'cancel' || e.target === overlay) { overlay.remove(); r(null); }
+        });
+        document.body.appendChild(overlay);
+        setTimeout(() => input.focus(), 100);
     });
 }
 
@@ -43,15 +58,12 @@ export function switchSection(name) {
     $$('.page-section').forEach(s => s.classList.toggle('active', s.id === 'sec' + name.charAt(0).toUpperCase() + name.slice(1)));
     const titles = { dashboard: '📊 仪表盘', decks: '📋 牌组', templates: '🎨 模板', tags: '🏷 标签', pages: '📄 页面', media: '🖼 媒体', cardmaker: '🃏 制卡' };
     $('#pageTitle').textContent = titles[name] || name;
-    $('#saveBtn').style.display = (name === 'decks') ? 'inline-flex' : 'none';
-    $('#saveTagsBtn').style.display = (name === 'tags') ? 'inline-flex' : 'none';
-    $('#savePagesBtn').style.display = (name === 'pages') ? 'inline-flex' : 'none';
     if (window.innerWidth <= 767) closeSidebar();
     // Trigger section-specific loaders (imported lazily)
     if (switchSection._handlers[name]) switchSection._handlers[name]();
     // Card Maker special handling
-    if (name === 'cardmaker') { $('.page-content').style.padding = '0'; $('.page-content').style.overflow = 'hidden'; }
-    else { $('.page-content').style.padding = ''; $('.page-content').style.overflow = ''; }
+    if (name === 'cardmaker') { const pc = $('.page-content'); if (pc) { pc.style.padding = '0'; pc.style.overflow = 'hidden'; } }
+    else { const pc = $('.page-content'); if (pc) { pc.style.padding = ''; pc.style.overflow = ''; } }
 }
 switchSection._handlers = {};
 
