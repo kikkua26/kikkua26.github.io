@@ -22,13 +22,14 @@ export function bindAllEvents() {
     });
 
     // Register section loaders
+    const TV = '?v=3'; // cache buster for plugin iframes
     switchSection._handlers = {
-        decks: () => { loadPlugin('deck-manager', '/tools/deck-manager/index.html', 'deckManagerPluginContainer'); },
-        templates: () => { loadPlugin('template-editor', '/tools/template-editor/index.html', 'templateEditorPluginContainer'); },
-        tags: () => { loadPlugin('tag-editor', '/tools/tag-editor/index.html', 'tagEditorPluginContainer'); },
-        pages: () => { loadPlugin('page-editor', '/tools/page-editor/index.html', 'pageEditorPluginContainer'); },
-        media: () => { loadPlugin('media-browser', '/tools/media-browser/index.html', 'mediaBrowserPluginContainer'); },
-        cardmaker: () => { loadPlugin('card-maker', '/tools/card-maker/index.html', 'cardmakerPluginContainer'); },
+        decks: () => { loadPlugin('deck-manager', '/tools/deck-manager/index.html' + TV, 'deckManagerPluginContainer'); },
+        templates: () => { loadPlugin('template-editor', '/tools/template-editor/index.html' + TV, 'templateEditorPluginContainer'); },
+        tags: () => { loadPlugin('tag-editor', '/tools/tag-editor/index.html' + TV, 'tagEditorPluginContainer'); },
+        pages: () => { loadPlugin('page-editor', '/tools/page-editor/index.html' + TV, 'pageEditorPluginContainer'); },
+        media: () => { loadPlugin('media-browser', '/tools/media-browser/index.html' + TV, 'mediaBrowserPluginContainer'); },
+        cardmaker: () => { loadPlugin('card-maker', '/tools/card-maker/index.html' + TV, 'cardmakerPluginContainer'); },
     };
 
     // ── Event delegation for dynamic content ──
