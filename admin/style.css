@@ -226,13 +226,9 @@ body {
     .main { margin-left: 0; }
     .page-header { padding: 14px 16px; }
     .page-content { padding: 16px; }
+    .page-content.no-padding { padding: 0; }
     .hamburger { display: inline-flex; align-items: center; }
-    .deck-layout { grid-template-columns: 1fr; }
-    .deck-list-panel { max-height: 250px; }
     .stat-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
-    .tpl-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
-    .deck-list-view, .deck-detail-view { display: none !important; }
-    .deck-list-view.mob-show, .deck-detail-view.mob-show { display: block !important; }
     .mob-back { display: inline-flex; }
 }
 
