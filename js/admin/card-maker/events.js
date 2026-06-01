@@ -1,7 +1,8 @@
 // kikkua · 制卡工具 — 事件绑定
 
 import { state, rootEl, $ } from './constants.js';
-import { activeNotes, nbMeta, flushData, saveDraft, loadDraft, clearDraft, genId } from './data.js';
+import { activeNotes, nbMeta, flushData, saveDraft, loadDraft, clearDraft } from './data.js';
+import { genId } from './utils.js';
 import { buildChapterTree } from './tree.js';
 import { renderAll } from './render.js';
 import { clearForm, loadForm, getFormData, addSubfield, removeSubfield } from './form.js';
