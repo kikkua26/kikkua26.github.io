@@ -56,10 +56,11 @@ body {
 .page-content { flex: 1; overflow-y: auto; padding: 24px 28px; }
 .page-section { display: none; }
 .page-section.active { display: block; }
-/* Card maker iframe needs full height */
-#secCardmaker.active { display: flex; flex-direction: column; height: 100%; }
-#secCardmaker.active ~ .page-content,
-.page-content:has(#secCardmaker.active) { padding: 0; overflow: hidden; }
+/* All iframe plugin sections need full height */
+.page-section.active { display: flex; flex-direction: column; }
+.page-section.active .plugin-frame { flex: 1; min-height: 0; }
+/* Remove padding when showing iframe plugins */
+.page-content:has(.page-section.active .plugin-frame) { padding: 0; overflow: hidden; }
 .plugin-frame { width: 100%; height: 100%; border: none; display: block; }
 
 /* ── Dashboard ── */
