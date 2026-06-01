@@ -6,7 +6,7 @@ import { setStatus, toast } from './ui.js';
 const $ = s => document.querySelector(s);
 
 // Loading steps tracking
-const steps = { decks: false, templates: false, tags: false, dashboard: false };
+const steps = { decks: false, templates: false, tags: false, pages: false, media: false, dashboard: false };
 
 function updateStep(step, done) {
     steps[step] = done;
@@ -50,21 +50,32 @@ export async function connect() {
         // Show loading progress
         if (loading) loading.classList.remove('hidden');
 
-        // Load data sequentially with step updates
+        // Load data and pre-load all plugins
         const { loadDecks } = await import('./decks.js');
         await loadDecks();
         updateStep('decks', true);
+        await new Promise(r => setTimeout(r, 150));
 
-        // Small delay for visual feedback
-        await new Promise(r => setTimeout(r, 200));
-
-        // Templates are now loaded by plugin, just mark as done
+        // Pre-load templates plugin
+        const { loadPlugin } = await import('./plugin-host.js');
+        loadPlugin('template-editor', '/tools/template-editor/index.html?v=3', 'templateEditorPluginContainer');
         updateStep('templates', true);
-        await new Promise(r => setTimeout(r, 200));
+        await new Promise(r => setTimeout(r, 150));
 
-        // Tags are now loaded by plugin, just mark as done
+        // Pre-load tags plugin
+        loadPlugin('tag-editor', '/tools/tag-editor/index.html?v=3', 'tagEditorPluginContainer');
         updateStep('tags', true);
-        await new Promise(r => setTimeout(r, 200));
+        await new Promise(r => setTimeout(r, 150));
+
+        // Pre-load pages plugin
+        loadPlugin('page-editor', '/tools/page-editor/index.html?v=3', 'pageEditorPluginContainer');
+        updateStep('pages', true);
+        await new Promise(r => setTimeout(r, 150));
+
+        // Pre-load media plugin
+        loadPlugin('media-browser', '/tools/media-browser/index.html?v=3', 'mediaBrowserPluginContainer');
+        updateStep('media', true);
+        await new Promise(r => setTimeout(r, 150));
 
         // Update dashboard
         const { updateDashboard } = await import('./dashboard.js');
@@ -117,7 +128,7 @@ export function disconnect() {
 
     // Reset steps
     Object.keys(steps).forEach(k => steps[k] = false);
-    ['decks', 'templates', 'tags', 'dashboard'].forEach(k => {
+    ['decks', 'templates', 'tags', 'pages', 'media', 'dashboard'].forEach(k => {
         const el = $(`#step${k.charAt(0).toUpperCase() + k.slice(1)}`);
         if (el) { el.textContent = '⏳ ' + k; el.classList.remove('done'); }
     });
