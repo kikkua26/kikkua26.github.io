@@ -1,0 +1,57 @@
+/* ═══════════════════════════════════════
+   PRO PAGE — tool host
+   ═══════════════════════════════════════ */
+
+.pro-page { display:flex; flex-direction:column; height:calc(100vh - 56px); overflow:hidden; background:var(--bg-primary); }
+.pro-layout { display:flex; flex:1; min-height:0; }
+.pro-tabs { width:140px; flex-shrink:0; background:var(--bg-secondary); border-right:1px solid var(--border); padding:8px 0; overflow-y:auto; }
+.pro-tab { display:flex; align-items:center; gap:6px; padding:8px 12px; cursor:pointer; font-size:12px; color:var(--text-secondary); border-left:3px solid transparent; transition:all var(--transition-fast); border-radius:0 var(--radius-sm) var(--radius-sm) 0; }
+.pro-tab:hover { background:var(--bg-hover); color:var(--text-primary); }
+.pro-tab.active { background:var(--accent-glow); border-left-color:var(--accent); color:var(--accent-dark); font-weight:600; }
+.pro-tab-icon { font-size:14px; flex-shrink:0; }
+.pro-tab-name { white-space:nowrap; }
+.pro-content { flex:1; min-width:0; background:var(--bg-primary); }
+.pro-frame { width:100%; height:100%; border:none; background:#fff; }
+
+@media (max-width: 767px) {
+    .pro-tabs { width:110px; }
+    .pro-tab { padding:6px 10px; font-size:11px; }
+    .docs-layout {
+        grid-template-columns: 1fr;
+    }
+    .docs-menu-btn {
+        display: flex;
+    }
+    .docs-sidebar-left {
+        position: fixed;
+        top: 0;
+        left: -280px;
+        width: 280px;
+        height: 100vh;
+        height: 100dvh;
+        z-index: 999;
+        transition: left 0.3s var(--ease-out);
+        box-shadow: 4px 0 28px rgba(44, 33, 22, 0.12);
+        padding-top: 20px;
+    }
+    .docs-sidebar-left.open {
+        left: 0;
+    }
+    .docs-main {
+        padding: 24px 20px 48px;
+    }
+    .docs-title {
+        font-size: 22px;
+    }
+    .docs-pager {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    .docs-pager a {
+        grid-column: 1 !important;
+    }
+    .header-about-link {
+        font-size: 12px;
+        padding: 4px 8px;
+    }
+}

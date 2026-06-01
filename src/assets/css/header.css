@@ -1,0 +1,182 @@
+/* ═══════════════════════════════════════
+   HEADER
+   ═══════════════════════════════════════ */
+
+.header {
+    border-bottom: 1px solid var(--paper-warm);
+    background: rgba(252, 249, 245, 0.92);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.header-inner {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 20px;
+    height: 56px;
+    gap: 12px;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.back-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    color: var(--ink-light);
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-fast);
+}
+
+.back-btn:hover {
+    color: var(--terracotta);
+    background: var(--terracotta-glow);
+}
+
+.back-btn:active {
+    transform: scale(0.94);
+}
+
+.back-btn svg { width: 20px; height: 20px; }
+
+.header-title {
+    font-family: var(--font-display);
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--ink-dark);
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.header-purchase {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--accent);
+    white-space: nowrap;
+    transition: color var(--transition-fast);
+    text-decoration: none;
+}
+
+.header-purchase:hover {
+    color: var(--accent-dark);
+}
+
+
+/* ═══════════════════════════════════════
+   LOGO — HOMEPAGE BRAND
+   ═══════════════════════════════════════ */
+
+.logo-wrap {
+    padding: 48px 0 32px;
+    text-align: center;
+    position: relative;
+}
+
+.logo-wrap::after {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 3px;
+    background: var(--terracotta);
+    border-radius: 2px;
+    margin: 20px auto 0;
+    opacity: 0.4;
+}
+
+.logo {
+    font-family: var(--font-display);
+    font-size: 34px;
+    font-weight: 600;
+    color: var(--ink-dark);
+    letter-spacing: -0.01em;
+    line-height: 1.15;
+}
+
+.logo-accent {
+    color: var(--terracotta);
+}
+
+.logo-subtitle {
+    font-family: var(--font-body);
+    font-size: 12px;
+    color: var(--ink-light);
+    letter-spacing: 0.18em;
+    margin-top: 8px;
+    text-transform: uppercase;
+    font-weight: 500;
+}
+
+
+/* ═══════════════════════════════════════
+   HEADER: BRAND & ABOUT LINK (homepage)
+   ═══════════════════════════════════════ */
+
+.header-brand {
+    font-family: var(--font-display);
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--ink-dark);
+    letter-spacing: -0.01em;
+    cursor: default;
+    user-select: none;
+}
+
+.header-brand .accent {
+    color: var(--terracotta);
+}
+
+.header-about-link {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink-light);
+    text-decoration: none;
+    padding: 5px 10px;
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-fast);
+}
+
+.header-about-link:hover {
+    color: var(--terracotta);
+    background: var(--terracotta-glow);
+}
+
+.footer-about-link {
+    display: inline-block;
+    font-size: 12px;
+    color: var(--ink-muted);
+    text-decoration: none;
+    padding: 4px 10px;
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-fast);
+    margin-bottom: 12px;
+}
+
+.footer-about-link:hover {
+    color: var(--terracotta);
+    background: var(--terracotta-glow);
+}
+
