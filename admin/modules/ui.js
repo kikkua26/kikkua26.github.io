@@ -61,9 +61,15 @@ export function switchSection(name) {
     if (window.innerWidth <= 767) closeSidebar();
     // Trigger section-specific loaders (imported lazily)
     if (switchSection._handlers[name]) switchSection._handlers[name]();
-    // Card Maker special handling
-    if (name === 'cardmaker') { const pc = $('.page-content'); if (pc) { pc.style.padding = '0'; pc.style.overflow = 'hidden'; } }
-    else { const pc = $('.page-content'); if (pc) { pc.style.padding = ''; pc.style.overflow = ''; } }
+    // All sections except dashboard use iframe plugins - remove padding
+    const pc = $('.page-content');
+    if (pc) {
+        if (name === 'dashboard') {
+            pc.classList.remove('no-padding');
+        } else {
+            pc.classList.add('no-padding');
+        }
+    }
 }
 switchSection._handlers = {};
 
