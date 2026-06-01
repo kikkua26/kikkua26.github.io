@@ -8,6 +8,33 @@
 </head>
 <body>
 
+<!-- Connection Modal -->
+<div class="connect-overlay" id="connectOverlay">
+    <div class="connect-dialog">
+        <h2>kikkua<span>·</span> 管理</h2>
+        <p>后台配置面板</p>
+        <div class="connect-form">
+            <input type="password" id="connectTokenInput" placeholder="GitHub Token (ghp_xxx)" class="connect-input">
+            <button class="btn btn-primary connect-btn" id="connectSubmitBtn">连接</button>
+        </div>
+        <div class="connect-status" id="connectStatus">请输入 Token 连接</div>
+        <div class="connect-hint"><a href="https://github.com/settings/tokens" target="_blank" rel="noopener">生成 Token →</a></div>
+        <!-- Loading progress -->
+        <div class="connect-loading hidden" id="connectLoading">
+            <div class="loading-bar">
+                <div class="loading-progress" id="loadingProgress"></div>
+            </div>
+            <div class="loading-text" id="loadingText">加载中…</div>
+            <div class="loading-steps">
+                <div class="loading-step" id="stepDecks">⏳ 牌组</div>
+                <div class="loading-step" id="stepTemplates">⏳ 模板</div>
+                <div class="loading-step" id="stepTags">⏳ 标签</div>
+                <div class="loading-step" id="stepDashboard">⏳ 仪表盘</div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Sidebar overlay (mobile) -->
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
@@ -26,19 +53,14 @@
         <div class="nav-item" data-section="media">🖼 媒体</div>
     </nav>
     <div class="sidebar-footer">
-        <div class="token-row">
-            <input type="password" id="tokenInput" placeholder="Token (ghp_xxx)">
-            <button class="btn btn-primary btn-sm" id="connectBtn">连接</button>
-            <button class="btn btn-secondary btn-sm hidden" id="disconnectBtn">✕</button>
-        </div>
-        <div class="status" id="statusBadge">⚪ 未连接</div>
-        <div class="sidebar-token-hint"><a href="https://github.com/settings/tokens" target="_blank" rel="noopener">生成 Token →</a></div>
+        <div class="status" id="statusBadge">✅ 已连接</div>
+        <button class="btn btn-secondary btn-sm" id="disconnectBtn">断开连接</button>
         <div class="stat" id="footerStats"></div>
     </div>
 </aside>
 
 <!-- Main -->
-<div class="main">
+<div class="main hidden" id="mainContent">
     <div class="page-header">
         <button class="hamburger" id="menuBtn">☰</button>
         <h2 id="pageTitle">📊 仪表盘</h2>
@@ -68,7 +90,7 @@
             <div id="deckManagerPluginContainer" style="width:100%;height:100%;"></div>
         </div>
 
-                <!-- Tags (iframe plugin) -->
+        <!-- Tags (iframe plugin) -->
         <div class="page-section" id="secTags">
             <div id="tagEditorPluginContainer" style="width:100%;height:100%;"></div>
         </div>
@@ -83,7 +105,7 @@
             <div id="mediaBrowserPluginContainer" style="width:100%;height:100%;"></div>
         </div>
 
-<!-- Templates (iframe plugin) -->
+        <!-- Templates (iframe plugin) -->
         <div class="page-section" id="secTemplates">
             <div id="templateEditorPluginContainer" style="width:100%;height:100%;"></div>
         </div>
@@ -94,7 +116,6 @@
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
-
-<script type="module" src="admin/main.js?v=2"></script>
+<script type="module" src="admin/main.js?v=3"></script>
 </body>
 </html>

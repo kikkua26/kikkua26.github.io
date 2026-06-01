@@ -5,41 +5,131 @@ import { setStatus, toast } from './ui.js';
 
 const $ = s => document.querySelector(s);
 
+// Loading steps tracking
+const steps = { decks: false, templates: false, tags: false, dashboard: false };
+
+function updateStep(step, done) {
+    steps[step] = done;
+    const el = $(`#step${step.charAt(0).toUpperCase() + step.slice(1)}`);
+    if (el) {
+        el.textContent = done ? '✅ ' + el.textContent.slice(2) : el.textContent;
+        if (done) el.classList.add('done');
+    }
+    // Update progress bar
+    const total = Object.keys(steps).length;
+    const completed = Object.values(steps).filter(Boolean).length;
+    const progress = $('#loadingProgress');
+    if (progress) progress.style.width = (completed / total * 100) + '%';
+    const text = $('#loadingText');
+    if (text) text.textContent = `加载中… (${completed}/${total})`;
+    return completed === total;
+}
+
 export async function connect() {
-    const token = $('#tokenInput').value.trim();
-    if (!token) { setStatus('⚠️ 请输入 Token', 'err'); return; }
+    const token = $('#connectTokenInput')?.value?.trim();
+    if (!token) {
+        const status = $('#connectStatus');
+        if (status) { status.textContent = '⚠️ 请输入 Token'; status.className = 'connect-status error'; }
+        return;
+    }
+
     setToken(token);
     sessionStorage.setItem('admin_token', token);
-    setStatus('⏳ 连接中…');
+
+    const status = $('#connectStatus');
+    const submitBtn = $('#connectSubmitBtn');
+    const loading = $('#connectLoading');
+
+    if (status) { status.textContent = '⏳ 验证中…'; status.className = 'connect-status'; }
+    if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '连接中…'; }
+
     try {
         const user = await gh('/user');
-        setStatus(`✅ ${user.login}`, 'ok');
-        $('#connectBtn').textContent = '已连';
-        $('#connectBtn').disabled = true;
-        $('#disconnectBtn').style.display = 'inline-flex';
-        $('#tokenInput').disabled = true;
-        // Update dashboard (lazy import to avoid circular)
+        if (status) { status.textContent = `✅ ${user.login}，加载数据中…`; status.className = 'connect-status success'; }
+
+        // Show loading progress
+        if (loading) loading.classList.remove('hidden');
+
+        // Load data sequentially with step updates
+        const { loadDecks } = await import('./decks.js');
+        await loadDecks();
+        updateStep('decks', true);
+
+        // Small delay for visual feedback
+        await new Promise(r => setTimeout(r, 200));
+
+        // Templates are now loaded by plugin, just mark as done
+        updateStep('templates', true);
+        await new Promise(r => setTimeout(r, 200));
+
+        // Tags are now loaded by plugin, just mark as done
+        updateStep('tags', true);
+        await new Promise(r => setTimeout(r, 200));
+
+        // Update dashboard
         const { updateDashboard } = await import('./dashboard.js');
         await updateDashboard();
+        updateStep('dashboard', true);
+
+        // All done - hide modal and show main content
+        await new Promise(r => setTimeout(r, 500));
+
+        const overlay = $('#connectOverlay');
+        const main = $('#mainContent');
+        if (overlay) overlay.classList.add('hidden');
+        if (main) main.classList.remove('hidden');
+
+        // Update sidebar status
+        const statusBadge = $('#statusBadge');
+        if (statusBadge) statusBadge.textContent = `✅ ${user.login}`;
+
+        const footerStats = $('#footerStats');
+        if (footerStats) footerStats.textContent = `📋 加载完成`;
+
     } catch (e) {
-        const msg = e.name === 'AbortError' ? '连接超时（已离线模式，可本地制卡）' : e.message;
-        setStatus('⚠ ' + msg, 'err');
-        $('#connectBtn').textContent = '重试';
+        const msg = e.name === 'AbortError' ? '连接超时' : e.message;
+        if (status) { status.textContent = '❌ ' + msg; status.className = 'connect-status error'; }
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '重试'; }
+        if (loading) loading.classList.add('hidden');
     }
 }
 
 export function disconnect() {
     sessionStorage.removeItem('admin_token');
     setToken('');
-    $('#tokenInput').value = ''; $('#tokenInput').disabled = false;
-    $('#connectBtn').textContent = '连接'; $('#connectBtn').disabled = false;
-    $('#disconnectBtn').style.display = 'none';
-    setStatus('⚪ 已断开');
-    $('#footerStats').textContent = '';
-    import('./dashboard.js').then(m => m.updateDashboard());
+
+    // Show connection modal again
+    const overlay = $('#connectOverlay');
+    const main = $('#mainContent');
+    if (overlay) overlay.classList.remove('hidden');
+    if (main) main.classList.add('hidden');
+
+    // Reset form
+    const input = $('#connectTokenInput');
+    const submitBtn = $('#connectSubmitBtn');
+    const status = $('#connectStatus');
+    const loading = $('#connectLoading');
+
+    if (input) input.value = '';
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '连接'; }
+    if (status) { status.textContent = '请输入 Token 连接'; status.className = 'connect-status'; }
+    if (loading) loading.classList.add('hidden');
+
+    // Reset steps
+    Object.keys(steps).forEach(k => steps[k] = false);
+    ['decks', 'templates', 'tags', 'dashboard'].forEach(k => {
+        const el = $(`#step${k.charAt(0).toUpperCase() + k.slice(1)}`);
+        if (el) { el.textContent = '⏳ ' + k; el.classList.remove('done'); }
+    });
+    const progress = $('#loadingProgress');
+    if (progress) progress.style.width = '0%';
 }
 
 export function autoConnect() {
     const saved = sessionStorage.getItem('admin_token');
-    if (saved) { $('#tokenInput').value = saved; connect(); }
+    if (saved) {
+        const input = $('#connectTokenInput');
+        if (input) input.value = saved;
+        connect();
+    }
 }

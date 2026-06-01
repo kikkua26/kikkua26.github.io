@@ -1,20 +1,14 @@
 // kikkua · admin — 统一事件绑定
 
-import { connect, disconnect } from './auth.js';
 import { switchSection, openSidebar, closeSidebar } from './ui.js';
 import { loadPlugin, sendToPlugin } from './plugin-host.js';
 
 const $ = s => document.querySelector(s);
 
 export function bindAllEvents() {
-    // ── Auth ──
-    $('#connectBtn').addEventListener('click', connect);
-    $('#disconnectBtn').addEventListener('click', disconnect);
-    $('#tokenInput').addEventListener('keydown', e => { if (e.key === 'Enter') connect(); });
-
     // ── Sidebar ──
-    $('#menuBtn').addEventListener('click', openSidebar);
-    $('#sidebarOverlay').addEventListener('click', closeSidebar);
+    $('#menuBtn')?.addEventListener('click', openSidebar);
+    $('#sidebarOverlay')?.addEventListener('click', closeSidebar);
 
     // ── Nav ──
     document.querySelectorAll('.nav-item').forEach(n => {
@@ -34,14 +28,6 @@ export function bindAllEvents() {
     // ── Event delegation for dynamic content ──
     document.addEventListener('click', e => {
         const target = e.target;
-
-        // Actions
-        const action = target.closest('[data-action]');
-        if (action) {
-            const act = action.dataset.action;
-            if (act === 'cm-quick-paste') { sendToPlugin('card-maker', 'quick-paste', {}); }
-            return;
-        }
 
         // Dashboard actions
         if (target.closest('[data-dashboard-action]')) {
