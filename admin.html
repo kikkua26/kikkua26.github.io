@@ -34,7 +34,7 @@
             <button class="btn btn-secondary btn-sm hidden" id="disconnectBtn">✕</button>
         </div>
         <div class="status" id="statusBadge">⚪ 未连接</div>
-        <div style="font-size:11px;margin-top:2px;"><a href="https://github.com/settings/tokens" target="_blank" rel="noopener" class="no-underline" style="color:var(--accent);">生成 Token →</a></div>
+        <div class="sidebar-token-hint"><a href="https://github.com/settings/tokens" target="_blank" rel="noopener">生成 Token →</a></div>
         <div class="stat" id="footerStats"></div>
     </div>
 </aside>
@@ -63,7 +63,7 @@
             <div id="dashboardActions" class="flex-wrap">
                 <button class="btn btn-primary btn-sm" data-dashboard-action="decks">📋 管理牌组</button>
                 <button class="btn btn-secondary btn-sm" data-dashboard-action="templates">🎨 管理模板</button>
-                <a href="https://kikkua.goatcounter.com" target="_blank" rel="noopener" class="btn btn-secondary btn-sm" style="text-decoration:none;">📈 访问统计</a>
+                <a href="https://kikkua.goatcounter.com" target="_blank" rel="noopener" class="btn btn-secondary btn-sm no-underline">📈 访问统计</a>
             </div>
         </div>
 
@@ -118,7 +118,7 @@
 
         <!-- Media -->
         <div class="page-section" id="secMedia">
-            <div class="flex-between" style="margin-bottom:10px;">
+            <div class="admin-section-header">
                 <div class="flex-row" id="mediaBreadcrumb"></div>
                 <div class="flex-row gap-sm">
                     <button class="btn btn-secondary btn-sm" data-action="create-media-folder">📁 新建文件夹</button>
@@ -126,7 +126,7 @@
                 </div>
             </div>
             <div class="flex-wrap gap-md" id="mediaGrid">
-                <div style="padding:40px;text-align:center;color:var(--text3);width:100%;">加载中…</div>
+                <div class="empty-loading">加载中…</div>
             </div>
             <input type="file" id="mediaFileInput" accept="image/*" multiple class="hidden">
             <input type="file" id="mediaReplaceInput" accept="image/*" class="hidden">
@@ -170,7 +170,7 @@
                             </div>
                         </div>
                         <!-- Chapter context menu -->
-                        <div class="cm-ctx-menu" id="cmChapterMenu" style="display:none;"></div>
+                        <div class="cm-ctx-menu hidden" id="cmChapterMenu"></div>
                         <div class="cm-tree" id="cmTree"></div>
                     </div>
 
@@ -179,19 +179,19 @@
                         <div class="cm-content-split">
                             <div class="cm-content-scroll" id="cmContentScroll">
                                 <div class="cm-form-card">
-                                    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                                    <div class="flex-between" style="align-items:flex-start;">
                                     <div>
-                                        <h2 id="cmFormTitle" style="font-size:18px;font-weight:700;margin-bottom:4px;">✍️ 新建笔记</h2>
-                                        <p class="cm-form-subtitle" id="cmFormSubtitle" style="font-size:12px;color:var(--text3);margin-bottom:18px;">填写笔记信息并保存</p>
+                                        <h2 id="cmFormTitle" class="cm-form-title">✍️ 新建笔记</h2>
+                                        <p class="cm-form-subtitle" id="cmFormSubtitle">填写笔记信息并保存</p>
                                     </div>
                                     <button class="btn btn-secondary btn-sm" data-action="cm-quick-paste">📋 快速填入</button>
                                 </div>
 
                                 <!-- Chapter -->
                                 <div class="field">
-                                    <label>📁 章节路径 <span style="font-weight:400;color:var(--text3);font-size:11px;">（多级以 :: 分隔）</span></label>
+                                    <label>📁 章节路径 <span class="cm-field-hint">（多级以 :: 分隔）</span></label>
                                     <input type="text" id="cmInputChapter" placeholder="例如：方剂学::解表剂::辛温解表" autocomplete="off">
-                                    <div class="cm-chapter-tags" id="cmChapterTags" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;"></div>
+                                    <div class="cm-chapter-tags" id="cmChapterTags"></div>
                                 </div>
 
                                 <!-- Main field -->
@@ -204,7 +204,7 @@
                                 <div class="cm-section">
                                     <div class="cm-section-head">
                                         <strong>🔍 知识解析</strong>
-                                        <span style="font-size:11px;color:var(--text3);">字段名 :: 内容</span>
+                                        <span class="cm-section-hint">字段名 :: 内容</span>
                                     </div>
                                     <div id="cmKnowledgeFields"></div>
                                     <button class="cm-add-btn" data-action="add-knowledge">＋ 添加知识解析字段</button>
@@ -214,7 +214,7 @@
                                 <div class="cm-section" style="margin-top:12px;">
                                     <div class="cm-section-head">
                                         <strong>📖 拓展解析</strong>
-                                        <span style="font-size:11px;color:var(--text3);">字段名 :: 内容</span>
+                                        <span class="cm-section-hint">字段名 :: 内容</span>
                                     </div>
                                     <div id="cmExtendedFields"></div>
                                     <button class="cm-add-btn" data-action="add-extended">＋ 添加拓展解析字段</button>
@@ -224,29 +224,29 @@
                                 <div class="cm-form-actions">
                                     <button class="btn btn-primary btn-sm" id="cmBtnSave">💾 保存笔记</button>
                                     <button class="btn btn-secondary btn-sm" id="cmBtnClear">🔄 清空表单</button>
-                                    <button class="btn btn-danger btn-sm" id="cmBtnDelete" style="display:none;">🗑 删除此笔记</button>
+                                    <button class="btn btn-danger btn-sm hidden" id="cmBtnDelete">🗑 删除此笔记</button>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Preview panel (always visible) -->
                         <div class="cm-preview-panel">
-                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-                                <h3 style="font-size:14px;font-weight:600;">🎴 卡片预览（背面）</h3>
-                                <span style="font-size:10px;color:var(--text3);">实时渲染</span>
+                            <div class="flex-between" style="margin-bottom:6px;">
+                                <h3 class="cm-preview-header">🎴 卡片预览（背面）</h3>
+                                <span class="cm-preview-hint">实时渲染</span>
                             </div>
-                            <div style="font-size:11px;margin-bottom:8px;line-height:1.5;" id="cmPreviewInfo">加载中...</div>
+                            <div class="cm-preview-info" id="cmPreviewInfo">加载中...</div>
                             <iframe id="cmPreviewFrame" class="cm-preview-frame"></iframe>
                         </div>
                     </div>
                 </div>
 
                 <!-- Quick Paste Modal -->
-                <div class="cm-modal-overlay" id="cmPasteModal" style="display:none;">
-                    <div class="cm-modal" style="background:var(--surface);border-radius:var(--radius);padding:24px;max-width:600px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.15);">
-                        <h3 style="margin-bottom:4px;">📋 快速填入</h3>
-                        <p style="font-size:12px;color:var(--text3);margin-bottom:14px;">粘贴结构化文本，自动解析填入表单字段</p>
-                        <textarea id="cmPasteInput" rows="14" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;resize:vertical;" placeholder="支持格式：
+                <div class="cm-modal-overlay hidden" id="cmPasteModal">
+                    <div class="cm-modal cm-modal-box">
+                        <h3 class="cm-modal-title">📋 快速填入</h3>
+                        <p class="cm-modal-desc">粘贴结构化文本，自动解析填入表单字段</p>
+                        <textarea id="cmPasteInput" rows="14" class="cm-modal-input" placeholder="支持格式：
 主字段：麻黄汤
 章节：方剂学::解表剂
 知识解析
@@ -254,9 +254,9 @@
 功用：发汗解表，宣肺平喘
 拓展解析
 方歌：麻黄汤中用桂枝"></textarea>
-                        <div style="display:flex;gap:8px;margin-top:12px;justify-content:space-between;">
-                            <button class="btn btn-secondary btn-sm" id="cmAiParse" style="color:var(--accent);">🤖 AI 解析</button>
-                            <div style="display:flex;gap:8px;">
+                        <div class="cm-modal-actions">
+                            <button class="btn btn-secondary btn-sm cm-ai-btn" id="cmAiParse">🤖 AI 解析</button>
+                            <div class="flex-row">
                                 <button class="btn btn-secondary btn-sm" id="cmPasteCancel">取消</button>
                                 <button class="btn btn-primary btn-sm" id="cmPasteApply">解析并填入</button>
                             </div>
@@ -265,17 +265,17 @@
                 </div>
 
                 <!-- Batch directory modal -->
-                <div class="cm-modal-overlay" id="cmBatchDirModal" style="display:none;">
-                    <div class="cm-modal" style="background:var(--surface);border-radius:var(--radius);padding:24px;max-width:550px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.15);">
-                        <h3 style="margin-bottom:4px;">📂 批量导入目录</h3>
-                        <p style="font-size:12px;color:var(--text3);margin-bottom:14px;">粘贴 Markdown 大纲，自动创建多级目录</p>
-                        <textarea id="cmBatchDirInput" rows="12" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;resize:vertical;" placeholder="# 解表剂
+                <div class="cm-modal-overlay hidden" id="cmBatchDirModal">
+                    <div class="cm-modal cm-modal-box" style="max-width:550px;">
+                        <h3 class="cm-modal-title">📂 批量导入目录</h3>
+                        <p class="cm-modal-desc">粘贴 Markdown 大纲，自动创建多级目录</p>
+                        <textarea id="cmBatchDirInput" rows="12" class="cm-modal-input" placeholder="# 解表剂
 ## 辛温解表
 ## 辛凉解表
 # 泻下剂
 ## 寒下
 ## 温下"></textarea>
-                        <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end;">
+                        <div class="cm-modal-actions end">
                             <button class="btn btn-secondary btn-sm" id="cmBatchDirCancel">取消</button>
                             <button class="btn btn-primary btn-sm" id="cmBatchDirApply">导入</button>
                         </div>
@@ -284,20 +284,20 @@
 
                 <!-- Toast -->
                 <div class="cm-toast" id="cmToast"></div>
-                <input type="file" id="cmFileInput" accept=".csv" style="display:none;">
+                <input type="file" id="cmFileInput" accept=".csv" class="hidden">
             </div>
         </div>
 
 <!-- Templates -->
         <div class="page-section" id="secTemplates">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-                <span style="font-size:13px;font-weight:600;color:var(--text2);">模板包</span>
+            <div class="flex-between mb-md">
+                <span class="section-title">模板包</span>
                 <button class="btn btn-secondary btn-sm" id="newTplBtn">+ 新建</button>
             </div>
-            <div class="tpl-grid" id="tplGrid"><div class="tpl-card add" style="grid-column:1/-1;">加载中…</div></div>
-            <div class="tpl-editor" id="tplEditor" style="display:none;">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-                    <h3 id="tplEditorTitle" style="font-size:15px;font-weight:600;"></h3>
+            <div class="tpl-grid" id="tplGrid"><div class="tpl-card add tloading">加载中…</div></div>
+            <div class="tpl-editor hidden" id="tplEditor">
+                <div class="flex-between" style="margin-bottom:10px;">
+                    <h3 id="tplEditorTitle" class="tpl-editor-title"></h3>
                     <button class="btn btn-primary btn-sm" id="tplSaveBtn">保存文件</button>
                 </div>
                 <div class="file-tabs" id="tplFileTabs"></div>
@@ -310,16 +310,16 @@
 
 <!-- CSV preview modal -->
 <div class="modal-overlay" id="csvPreviewOverlay">
-    <div class="modal" style="max-width:90vw;max-height:80vh;overflow-y:auto;padding:20px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-            <h3 id="csvPreviewTitle" style="font-size:16px;font-weight:600;"></h3>
+    <div class="modal modal-wide">
+        <div class="flex-between mb-sm">
+            <h3 id="csvPreviewTitle" class="modal-title-lg"></h3>
             <button class="btn btn-secondary btn-sm" data-action="close-csv-preview">关闭</button>
         </div>
-        <div style="overflow-x:auto;overflow-y:auto;max-height:50vh;"><table class="csv-table" id="csvTable"><tbody></tbody></table></div>
-        <div style="margin-top:8px;font-size:12px;color:var(--text3);" id="csvPreviewInfo"></div>
+        <div class="modal-scroll"><table class="csv-table" id="csvTable"><tbody></tbody></table></div>
+        <div class="modal-info" id="csvPreviewInfo"></div>
     </div>
 </div>
-<input type="file" id="csvFileInput" accept=".csv" style="display:none;">
+<input type="file" id="csvFileInput" accept=".csv" class="hidden">
 
 <!-- Tag Selector Modal -->
 <div class="modal-overlay" id="tagSelectorOverlay">
