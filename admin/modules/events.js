@@ -29,7 +29,6 @@ export function bindAllEvents() {
         tags: () => { loadPlugin('tag-editor', '/tools/tag-editor/index.html' + TV, 'tagEditorPluginContainer'); },
         pages: () => { loadPlugin('page-editor', '/tools/page-editor/index.html' + TV, 'pageEditorPluginContainer'); },
         media: () => { loadPlugin('media-browser', '/tools/media-browser/index.html' + TV, 'mediaBrowserPluginContainer'); },
-        cardmaker: () => { loadPlugin('card-maker', '/tools/card-maker/index.html' + TV, 'cardmakerPluginContainer'); },
     };
 
     // ── Event delegation for dynamic content ──

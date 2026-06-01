@@ -56,7 +56,7 @@ export function setStatus(text, cls = '') {
 export function switchSection(name) {
     $$('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.section === name));
     $$('.page-section').forEach(s => s.classList.toggle('active', s.id === 'sec' + name.charAt(0).toUpperCase() + name.slice(1)));
-    const titles = { dashboard: '📊 仪表盘', decks: '📋 牌组', templates: '🎨 模板', tags: '🏷 标签', pages: '📄 页面', media: '🖼 媒体', cardmaker: '🃏 制卡' };
+    const titles = { dashboard: '📊 仪表盘', decks: '📋 牌组', templates: '🎨 模板', tags: '🏷 标签', pages: '📄 页面', media: '🖼 媒体' };
     $('#pageTitle').textContent = titles[name] || name;
     if (window.innerWidth <= 767) closeSidebar();
     // Trigger section-specific loaders (imported lazily)
