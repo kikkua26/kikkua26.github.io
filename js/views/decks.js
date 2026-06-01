@@ -1,5 +1,5 @@
 import { $, $$, esc, formatTimeAgo } from '../utils.js';
-import { ICONS } from '../storage.js';
+import { ICONS } from '../icons.js';
 import { dataLoader } from '../data-loader.js';
 import { setPageMeta } from '../seo.js';
 import { navigate } from '../navigation.js';

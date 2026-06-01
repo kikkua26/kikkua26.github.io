@@ -1,5 +1,5 @@
 import { $, esc } from '../utils.js';
-import { ICONS } from '../storage.js';
+import { ICONS } from '../icons.js';
 import { dataLoader, preloadDeck } from '../data-loader.js';
 import { mdToHtml } from '../md.js';
 import { setPageMeta } from '../seo.js';

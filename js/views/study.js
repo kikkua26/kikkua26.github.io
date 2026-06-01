@@ -1,5 +1,6 @@
 import { $, $$, esc } from '../utils.js';
-import { ICONS, storage } from '../storage.js';
+import { ICONS } from '../icons.js';
+import { storage } from '../storage.js';
 import { dataLoader } from '../data-loader.js';
 import { replaceFields, renderCard } from '../card.js';
 import { setPageMeta } from '../seo.js';

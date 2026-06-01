@@ -1,5 +1,5 @@
 import { $ } from '../utils.js';
-import { ICONS } from '../storage.js';
+import { ICONS } from '../icons.js';
 import { navigate } from '../navigation.js';
 import { SITE } from '../config.js';
 
