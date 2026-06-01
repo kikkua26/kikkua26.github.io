@@ -7,6 +7,7 @@ const $ = s => document.querySelector(s);
 // State
 let decks = [], dataSha = '', currentDeckIdx = -1;
 let tplNames = [];
+let tagTree = [];
 let csvMeta = {};
 
 // ═══════════════════════════════════════
@@ -88,6 +89,58 @@ function inputDialog(title, label, defaultVal) {
         });
         document.body.appendChild(overlay);
         input.focus(); input.select();
+    });
+}
+
+function tagSelectorDialog(selectedTags) {
+    return new Promise(resolve => {
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        overlay.style.zIndex = '3000';
+
+        function walk(nodes) {
+            let h = '';
+            for (const n of nodes) {
+                const ck = selectedTags.includes(n.path);
+                h += '<div style="padding:2px 0;padding-left:20px;">' +
+                    '<label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:13px;">' +
+                    '<input type="checkbox" ' + (ck ? 'checked ' : '') + ' data-tag-toggle="' + esc(n.path) + '">' +
+                    '<span>' + esc(n.path.split('::').pop()) + '</span>' +
+                    (n.desc ? '<span style="font-size:11px;color:var(--text3);"> (' + esc(n.desc) + ')</span>' : '') +
+                    '</label>' + (n.children ? walk(n.children) : '') + '</div>';
+            }
+            return h;
+        }
+
+        const treeHtml = tagTree.length ? walk(tagTree) : '<div style="padding:20px;text-align:center;color:var(--text3);">暂未注册标签</div>';
+
+        overlay.innerHTML = `<div class="modal" style="max-width:500px;max-height:80vh;display:flex;flex-direction:column;">
+            <h3>选择标签</h3>
+            <div style="max-height:400px;overflow-y:auto;margin:12px 0;">${treeHtml}</div>
+            <div style="font-size:12px;color:var(--text3);margin-bottom:12px;" data-preview>已选：${selectedTags.join('、') || '无'}</div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" data-action="cancel">取消</button>
+                <button class="btn btn-primary" data-action="ok">确定</button>
+            </div>
+        </div>`;
+
+        const preview = overlay.querySelector('[data-preview]');
+        overlay.addEventListener('change', e => {
+            const toggle = e.target.closest('[data-tag-toggle]');
+            if (toggle) {
+                const path = toggle.dataset.tagToggle;
+                if (toggle.checked) { if (!selectedTags.includes(path)) selectedTags.push(path); }
+                else { selectedTags = selectedTags.filter(t => t !== path && !t.startsWith(path + '::')); }
+                preview.textContent = '已选：' + (selectedTags.join('、') || '无');
+            }
+        });
+
+        overlay.addEventListener('click', e => {
+            const action = e.target.dataset.action;
+            if (action === 'ok') { overlay.remove(); resolve(selectedTags); }
+            else if (action === 'cancel' || e.target === overlay) { overlay.remove(); resolve(null); }
+        });
+        document.body.appendChild(overlay);
     });
 }
 
@@ -368,12 +421,13 @@ function setupEvents() {
         }
         const addTag = e.target.closest('[data-add-tag]');
         if (addTag && currentDeckIdx >= 0) {
-            const tag = prompt('标签名称：');
-            if (tag) {
-                if (!decks[currentDeckIdx].tags) decks[currentDeckIdx].tags = [];
-                decks[currentDeckIdx].tags.push(tag);
-                selectDeck(currentDeckIdx);
-            }
+            const currentTags = [...(decks[currentDeckIdx].tags || [])];
+            tagSelectorDialog(currentTags).then(newTags => {
+                if (newTags !== null) {
+                    decks[currentDeckIdx].tags = newTags;
+                    selectDeck(currentDeckIdx);
+                }
+            });
             return;
         }
     });
@@ -399,6 +453,11 @@ async function init() {
         // Load template names
         const items = await listDir('templates');
         tplNames = (items || []).filter(i => i.type === 'dir').map(i => i.name);
+        // Load tag tree
+        try {
+            const tagResp = await apiRequest('data/tags.json');
+            if (tagResp.ok) tagTree = JSON.parse(b64decode(tagResp.data.content));
+        } catch {}
         // Load decks
         const r = await readJson('data/index.json');
         dataSha = r.sha;
