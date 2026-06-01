@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>卡片制作器 — kikkua</title>
+    <link rel="stylesheet" href="../shared/base.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="cm-root" id="cardMakerRoot">
+        <!-- Toolbar -->
+        <div class="cm-toolbar">
+            <select id="cmNotebook"></select>
+            <button class="btn btn-secondary btn-sm" id="cmBtnNewNb">📓 新建笔记本</button>
+            <button class="btn btn-secondary btn-sm" id="cmBtnImport">📥 导入CSV</button>
+            <button class="btn btn-secondary btn-sm" id="cmBtnExport">📤 导出CSV</button>
+            <span class="sep"></span>
+            <button class="btn btn-primary btn-sm" id="cmBtnNew">＋ 新建笔记</button>
+            <button class="btn btn-secondary btn-sm" id="cmBtnToggleBatch">☑ 批量</button>
+            <button class="btn btn-danger btn-sm hidden" id="cmBtnBatch">🗑 删除选中</button>
+            <span class="flex-1"></span>
+            <select id="cmDsModel">
+                <option value="deepseek-v4-flash">v4 Flash</option>
+                <option value="deepseek-v4-pro" selected>v4 Pro</option>
+            </select>
+            <input type="password" id="cmDsKey" placeholder="DeepSeek Key (sk-...)" data-password-toggle>
+            <span class="cm-status-text" id="cmStatus">就绪</span>
+        </div>
+
+        <!-- Main layout -->
+        <div class="cm-layout">
+            <!-- Left: tree + search -->
+            <div class="cm-sidebar">
+                <div class="cm-search-wrap">
+                    <input type="text" id="cmSearch" placeholder="🔍 搜索笔记...">
+                </div>
+                <div class="cm-sidebar-header">
+                    <span class="cm-chapter-header">📂 章节目录</span>
+                    <div class="flex-row gap-sm">
+                        <span class="cm-note-count" id="cmNoteCount">0条笔记</span>
+                        <button class="btn btn-xs" id="cmBtnAddRoot">+</button>
+                    </div>
+                </div>
+                <!-- Chapter context menu -->
+                <div class="cm-ctx-menu hidden" id="cmChapterMenu"></div>
+                <div class="cm-tree" id="cmTree"></div>
+            </div>
+
+            <!-- Right: form + preview side by side -->
+            <div class="cm-content">
+                <div class="cm-content-split">
+                    <div class="cm-content-scroll" id="cmContentScroll">
+                        <div class="cm-form-card">
+                            <div class="flex-between" style="align-items:flex-start;">
+                                <div>
+                                    <h2 id="cmFormTitle" class="cm-form-title">✍️ 新建笔记</h2>
+                                    <p class="cm-form-subtitle" id="cmFormSubtitle">填写笔记信息并保存</p>
+                                </div>
+                                <button class="btn btn-secondary btn-sm" data-action="cm-quick-paste">📋 快速填入</button>
+                            </div>
+
+                            <!-- Chapter -->
+                            <div class="field">
+                                <label>📁 章节路径 <span class="cm-field-hint">（多级以 :: 分隔）</span></label>
+                                <input type="text" id="cmInputChapter" placeholder="例如：方剂学::解表剂::辛温解表" autocomplete="off">
+                                <div class="cm-chapter-tags" id="cmChapterTags"></div>
+                            </div>
+
+                            <!-- Main field -->
+                            <div class="field">
+                                <label>📌 知识名称</label>
+                                <input type="text" id="cmInputMain" placeholder="输入知识名称...">
+                            </div>
+
+                            <!-- Knowledge subfields -->
+                            <div class="cm-section">
+                                <div class="cm-section-head">
+                                    <strong>🔍 知识解析</strong>
+                                    <span class="cm-section-hint">字段名 :: 内容</span>
+                                </div>
+                                <div id="cmKnowledgeFields"></div>
+                                <button class="cm-add-btn" data-action="add-knowledge">＋ 添加知识解析字段</button>
+                            </div>
+
+                            <!-- Extended subfields -->
+                            <div class="cm-section" style="margin-top:12px;">
+                                <div class="cm-section-head">
+                                    <strong>📖 拓展解析</strong>
+                                    <span class="cm-section-hint">字段名 :: 内容</span>
+                                </div>
+                                <div id="cmExtendedFields"></div>
+                                <button class="cm-add-btn" data-action="add-extended">＋ 添加拓展解析字段</button>
+                            </div>
+
+                            <!-- Actions -->
+                            <div class="cm-form-actions">
+                                <button class="btn btn-primary btn-sm" id="cmBtnSave">💾 保存笔记</button>
+                                <button class="btn btn-secondary btn-sm" id="cmBtnClear">🔄 清空表单</button>
+                                <button class="btn btn-danger btn-sm hidden" id="cmBtnDelete">🗑 删除此笔记</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Preview panel (always visible) -->
+                    <div class="cm-preview-panel">
+                        <div class="flex-between" style="margin-bottom:6px;">
+                            <h3 class="cm-preview-header">🎴 卡片预览（背面）</h3>
+                            <span class="cm-preview-hint">实时渲染</span>
+                        </div>
+                        <div class="cm-preview-info" id="cmPreviewInfo">加载中...</div>
+                        <iframe id="cmPreviewFrame" class="cm-preview-frame"></iframe>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Paste Modal -->
+        <div class="cm-modal-overlay hidden" id="cmPasteModal">
+            <div class="cm-modal cm-modal-box">
+                <h3 class="cm-modal-title">📋 快速填入</h3>
+                <p class="cm-modal-desc">粘贴结构化文本，自动解析填入表单字段</p>
+                <textarea id="cmPasteInput" rows="14" class="cm-modal-input" placeholder="支持格式：
+主字段：麻黄汤
+章节：方剂学::解表剂
+知识解析
+组成：麻黄、桂枝、杏仁、甘草
+功用：发汗解表，宣肺平喘
+拓展解析
+方歌：麻黄汤中用桂枝"></textarea>
+                <div class="cm-modal-actions">
+                    <button class="btn btn-secondary btn-sm cm-ai-btn" id="cmAiParse">🤖 AI 解析</button>
+                    <div class="flex-row">
+                        <button class="btn btn-secondary btn-sm" id="cmPasteCancel">取消</button>
+                        <button class="btn btn-primary btn-sm" id="cmPasteApply">解析并填入</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Batch directory modal -->
+        <div class="cm-modal-overlay hidden" id="cmBatchDirModal">
+            <div class="cm-modal cm-modal-box" style="max-width:550px;">
+                <h3 class="cm-modal-title">📂 批量导入目录</h3>
+                <p class="cm-modal-desc">粘贴 Markdown 大纲，自动创建多级目录</p>
+                <textarea id="cmBatchDirInput" rows="12" class="cm-modal-input" placeholder="# 解表剂
+## 辛温解表
+## 辛凉解表
+# 泻下剂
+## 寒下
+## 温下"></textarea>
+                <div class="cm-modal-actions end">
+                    <button class="btn btn-secondary btn-sm" id="cmBatchDirCancel">取消</button>
+                    <button class="btn btn-primary btn-sm" id="cmBatchDirApply">导入</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast -->
+        <div class="cm-toast" id="cmToast"></div>
+        <input type="file" id="cmFileInput" accept=".csv" class="hidden">
+    </div>
+
+    <script type="module" src="main.js"></script>
+</body>
+</html>

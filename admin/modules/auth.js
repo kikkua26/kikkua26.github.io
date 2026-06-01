@@ -2,10 +2,6 @@
 
 import { gh, setToken, getToken } from './api.js';
 import { setStatus, toast } from './ui.js';
-import { loadDecks } from './decks.js';
-import { loadTemplates } from './templates.js';
-import { loadTags } from './tags.js';
-import { loadPages } from './pages.js';
 
 const $ = s => document.querySelector(s);
 
@@ -17,10 +13,6 @@ export async function connect() {
     setStatus('⏳ 连接中…');
     try {
         const user = await gh('/user');
-        await loadDecks();
-        await loadTemplates();
-        await loadTags();
-        await loadPages();
         setStatus(`✅ ${user.login}`, 'ok');
         $('#connectBtn').textContent = '已连';
         $('#connectBtn').disabled = true;
@@ -29,9 +21,6 @@ export async function connect() {
         // Update dashboard (lazy import to avoid circular)
         const { updateDashboard } = await import('./dashboard.js');
         updateDashboard();
-        const { decks } = await import('./decks.js');
-        const { tplNames } = await import('./templates.js');
-        $('#footerStats').textContent = `📋 ${decks.length} 牌组 · 🎨 ${tplNames.length} 模板`;
     } catch (e) {
         const msg = e.name === 'AbortError' ? '连接超时（已离线模式，可本地制卡）' : e.message;
         setStatus('⚠ ' + msg, 'err');
@@ -42,9 +31,6 @@ export async function connect() {
 export function disconnect() {
     sessionStorage.removeItem('admin_token');
     setToken('');
-    // Reset module state
-    import('./decks.js').then(m => { m.decks.length = 0; m.dataSha = ''; m.currentDeckIdx = -1; m.csvMeta = {}; });
-    import('./templates.js').then(m => { m.tplNames.length = 0; });
     $('#tokenInput').value = ''; $('#tokenInput').disabled = false;
     $('#connectBtn').textContent = '连接'; $('#connectBtn').disabled = false;
     $('#disconnectBtn').style.display = 'none';

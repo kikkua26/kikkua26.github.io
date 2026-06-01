@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>标签编辑器 — kikkua</title>
+    <link rel="stylesheet" href="../shared/base.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="layout">
+        <div class="toolbar">
+            <span class="section-title">标签注册表</span>
+            <div class="flex-row gap-sm">
+                <button class="btn btn-secondary btn-sm" data-action="add-root-tag">+ 新建根标签</button>
+                <button class="btn btn-primary btn-sm" data-action="save-tags">💾 保存标签</button>
+            </div>
+        </div>
+        <div id="tagTreeContainer">
+            <div class="empty-msg">加载中…</div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script type="module" src="main.js"></script>
+</body>
+</html>

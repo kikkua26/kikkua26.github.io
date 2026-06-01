@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>牌组管理器 — kikkua</title>
+    <link rel="stylesheet" href="../shared/base.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="layout">
+        <div class="list-view" id="deckListView">
+            <div class="flex-between mb-md">
+                <span class="section-title">牌组列表</span>
+                <button class="btn btn-secondary btn-sm" data-action="add-deck">+ 新建</button>
+            </div>
+            <div class="list-panel" id="deckListPanel">
+                <div class="edit-panel empty">加载中…</div>
+            </div>
+        </div>
+        <div class="detail-view" id="deckDetailView">
+            <div class="flex-row mb-md">
+                <button class="btn btn-secondary btn-sm mob-back" data-action="show-deck-list">← 返回</button>
+                <span class="section-title">编辑牌组</span>
+            </div>
+            <div class="edit-panel empty" id="deckEditPanel">
+                <span>选择一个牌组开始编辑</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script type="module" src="main.js"></script>
+</body>
+</html>

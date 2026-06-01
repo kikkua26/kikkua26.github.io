@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>媒体浏览器 — kikkua</title>
+    <link rel="stylesheet" href="../shared/base.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="layout">
+        <div class="toolbar">
+            <div class="flex-row" id="mediaBreadcrumb"></div>
+            <div class="flex-row gap-sm">
+                <button class="btn btn-secondary btn-sm" data-action="create-folder">📁 新建文件夹</button>
+                <button class="btn btn-primary btn-sm" data-action="upload-media">📤 上传</button>
+            </div>
+        </div>
+        <div class="media-grid" id="mediaGrid">
+            <div class="empty-msg">加载中…</div>
+        </div>
+    </div>
+
+    <!-- Context Menu -->
+    <div class="ctx-menu" id="mediaCtxMenu" style="display:none;"></div>
+
+    <div class="toast" id="toast"></div>
+
+    <script type="module" src="main.js"></script>
+</body>
+</html>

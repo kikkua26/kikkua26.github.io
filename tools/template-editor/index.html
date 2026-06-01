@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>模板编辑器 — kikkua</title>
+    <link rel="stylesheet" href="../shared/base.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="layout">
+        <div class="flex-between mb-md">
+            <span class="section-title">模板包</span>
+        </div>
+        <div class="tpl-grid" id="tplGrid">
+            <div class="tpl-card add tloading">加载中…</div>
+        </div>
+        <div class="tpl-editor hidden" id="tplEditor">
+            <div class="flex-between" style="margin-bottom:10px;">
+                <h3 id="tplEditorTitle" class="tpl-editor-title"></h3>
+                <button class="btn btn-primary btn-sm" data-action="save-tpl">保存文件</button>
+            </div>
+            <div class="file-tabs" id="tplFileTabs"></div>
+            <textarea id="tplEditorContent" spellcheck="false"></textarea>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script type="module" src="main.js"></script>
+</body>
+</html>
