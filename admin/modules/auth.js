@@ -20,7 +20,7 @@ export async function connect() {
         $('#tokenInput').disabled = true;
         // Update dashboard (lazy import to avoid circular)
         const { updateDashboard } = await import('./dashboard.js');
-        updateDashboard();
+        await updateDashboard();
     } catch (e) {
         const msg = e.name === 'AbortError' ? '连接超时（已离线模式，可本地制卡）' : e.message;
         setStatus('⚠ ' + msg, 'err');
