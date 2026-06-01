@@ -31,10 +31,10 @@
         <div class="token-row">
             <input type="password" id="tokenInput" placeholder="Token (ghp_xxx)">
             <button class="btn btn-primary btn-sm" id="connectBtn">连接</button>
-            <button class="btn btn-secondary btn-sm" id="disconnectBtn" style="display:none;">✕</button>
+            <button class="btn btn-secondary btn-sm hidden" id="disconnectBtn">✕</button>
         </div>
         <div class="status" id="statusBadge">⚪ 未连接</div>
-        <div style="font-size:11px;margin-top:2px;"><a href="https://github.com/settings/tokens" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;">生成 Token →</a></div>
+        <div style="font-size:11px;margin-top:2px;"><a href="https://github.com/settings/tokens" target="_blank" rel="noopener" class="no-underline" style="color:var(--accent);">生成 Token →</a></div>
         <div class="stat" id="footerStats"></div>
     </div>
 </aside>
@@ -44,10 +44,10 @@
     <div class="page-header">
         <button class="hamburger" id="menuBtn">☰</button>
         <h2 id="pageTitle">📊 仪表盘</h2>
-        <div style="display:flex;gap:8px;">
+        <div class="flex-row">
             <button class="btn btn-secondary btn-sm" id="saveBtn">💾 保存</button>
-            <button class="btn btn-secondary btn-sm" id="saveTagsBtn" style="display:none;">💾 保存标签</button>
-            <button class="btn btn-primary btn-sm" id="savePagesBtn" style="display:none;">💾 保存页面</button>
+            <button class="btn btn-secondary btn-sm hidden" id="saveTagsBtn">💾 保存标签</button>
+            <button class="btn btn-primary btn-sm hidden" id="savePagesBtn">💾 保存页面</button>
         </div>
     </div>
     <div class="page-content">
@@ -60,7 +60,7 @@
                 <div class="stat-card"><div class="num" id="statCards">-</div><div class="label">卡片总数</div></div>
                 <div class="stat-card"><div class="num" id="statData">-</div><div class="label">数据文件</div></div>
             </div>
-            <div id="dashboardActions" style="display:flex;gap:10px;flex-wrap:wrap;">
+            <div id="dashboardActions" class="flex-wrap">
                 <button class="btn btn-primary btn-sm" data-dashboard-action="decks">📋 管理牌组</button>
                 <button class="btn btn-secondary btn-sm" data-dashboard-action="templates">🎨 管理模板</button>
                 <a href="https://kikkua.goatcounter.com" target="_blank" rel="noopener" class="btn btn-secondary btn-sm" style="text-decoration:none;">📈 访问统计</a>
@@ -71,16 +71,16 @@
         <div class="page-section" id="secDecks">
             <div class="deck-layout">
                 <div class="deck-list-view" id="deckListView">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-                        <span style="font-size:13px;font-weight:600;color:var(--text2);">牌组列表</span>
+                    <div class="flex-between mb-md">
+                        <span class="section-title">牌组列表</span>
                         <button class="btn btn-secondary btn-sm" id="addDeckBtn">+ 新建</button>
                     </div>
                     <div class="deck-list-panel" id="deckListPanel"><div class="deck-edit-panel empty">加载中…</div></div>
                 </div>
                 <div class="deck-detail-view" id="deckDetailView">
-                <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+                <div class="flex-row mb-md">
                     <button class="btn btn-secondary btn-sm mob-back" data-action="show-deck-list">← 返回</button>
-                    <span style="font-size:13px;font-weight:600;color:var(--text2);">编辑牌组</span>
+                    <span class="section-title">编辑牌组</span>
                 </div>
                 <div class="deck-edit-panel" id="deckEditPanel"></div>
             </div>
@@ -89,8 +89,8 @@
 
                 <!-- Tags -->
         <div class="page-section" id="secTags">
-            <div style="margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;">
-                <span style="font-size:13px;font-weight:600;color:var(--text2);">标签注册表</span>
+            <div class="flex-between mb-md">
+                <span class="section-title">标签注册表</span>
                 <button class="btn btn-secondary btn-sm" data-action="add-root-tag">+ 新建根标签</button>
             </div>
             <div id="tagTreeContainer"></div>
@@ -100,16 +100,16 @@
         <div class="page-section" id="secPages">
             <div class="pages-layout">
                 <div class="pages-list-view" id="pageListView">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-                        <span style="font-size:13px;font-weight:600;color:var(--text2);">页面列表</span>
+                    <div class="flex-between mb-md">
+                        <span class="section-title">页面列表</span>
                         <button class="btn btn-secondary btn-sm" id="addPageBtn">+ 新建</button>
                     </div>
                     <div class="pages-list-panel" id="pageListPanel"><div class="pages-edit-panel empty">加载中…</div></div>
                 </div>
                 <div class="pages-detail-view" id="pageDetailView">
-                <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+                <div class="flex-row mb-md">
                     <button class="btn btn-secondary btn-sm mob-back" data-action="show-page-list">← 返回</button>
-                    <span style="font-size:13px;font-weight:600;color:var(--text2);">编辑页面</span>
+                    <span class="section-title">编辑页面</span>
                 </div>
                 <div class="pages-edit-panel" id="pageEditPanel"></div>
             </div>
@@ -118,18 +118,18 @@
 
         <!-- Media -->
         <div class="page-section" id="secMedia">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-                <div style="display:flex;align-items:center;gap:8px;" id="mediaBreadcrumb"></div>
-                <div style="display:flex;gap:6px;">
+            <div class="flex-between" style="margin-bottom:10px;">
+                <div class="flex-row" id="mediaBreadcrumb"></div>
+                <div class="flex-row gap-sm">
                     <button class="btn btn-secondary btn-sm" data-action="create-media-folder">📁 新建文件夹</button>
                     <button class="btn btn-primary btn-sm" data-action="upload-media">📤 上传</button>
                 </div>
             </div>
-            <div style="display:flex;gap:14px;flex-wrap:wrap;" id="mediaGrid">
+            <div class="flex-wrap gap-md" id="mediaGrid">
                 <div style="padding:40px;text-align:center;color:var(--text3);width:100%;">加载中…</div>
             </div>
-            <input type="file" id="mediaFileInput" accept="image/*" multiple style="display:none;">
-            <input type="file" id="mediaReplaceInput" accept="image/*" style="display:none;">
+            <input type="file" id="mediaFileInput" accept="image/*" multiple class="hidden">
+            <input type="file" id="mediaReplaceInput" accept="image/*" class="hidden">
         </div>
 
 <!-- Card Maker -->
@@ -138,39 +138,39 @@
             <div class="cm-root" id="cardMakerRoot">
                 <!-- Toolbar -->
                 <div class="cm-toolbar">
-                    <select id="cmNotebook" style="min-width:160px;"></select>
+                    <select id="cmNotebook"></select>
                     <button class="btn btn-secondary btn-sm" id="cmBtnNewNb">📓 新建笔记本</button>
                     <button class="btn btn-secondary btn-sm" id="cmBtnImport">📥 导入CSV</button>
                     <button class="btn btn-secondary btn-sm" id="cmBtnExport">📤 导出CSV</button>
-                    <span class="sep" style="width:1px;height:20px;background:var(--border);margin:0 4px;display:inline-block;"></span>
+                    <span class="sep"></span>
                     <button class="btn btn-primary btn-sm" id="cmBtnNew">＋ 新建笔记</button>
                     <button class="btn btn-secondary btn-sm" id="cmBtnToggleBatch">☑ 批量</button>
-                    <button class="btn btn-danger btn-sm" id="cmBtnBatch" style="display:none;">🗑 删除选中</button>
-                    <span style="flex:1;"></span>
-                    <select id="cmDsModel" style="width:120px;padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:11px;">
+                    <button class="btn btn-danger btn-sm hidden" id="cmBtnBatch">🗑 删除选中</button>
+                    <span class="flex-1"></span>
+                    <select id="cmDsModel">
                         <option value="deepseek-v4-flash">v4 Flash</option>
                         <option value="deepseek-v4-pro" selected>v4 Pro</option>
                     </select>
-                    <input type="password" id="cmDsKey" placeholder="DeepSeek Key (sk-...)" style="width:170px;padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:11px;" onfocus="this.type='text'" onblur="this.type='password'">
-                    <span style="font-size:12px;color:var(--text3);" id="cmStatus">就绪</span>
+                    <input type="password" id="cmDsKey" placeholder="DeepSeek Key (sk-...)" data-password-toggle>
+                    <span class="cm-status-text" id="cmStatus">就绪</span>
                 </div>
 
                 <!-- Main layout -->
                 <div class="cm-layout">
                     <!-- Left: tree + search -->
                     <div class="cm-sidebar">
-                        <div style="padding:8px 10px;border-bottom:1px solid var(--border);">
-                            <input type="text" id="cmSearch" placeholder="🔍 搜索笔记..." style="width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:4px;font-size:12px;">
+                        <div class="cm-search-wrap">
+                            <input type="text" id="cmSearch" placeholder="🔍 搜索笔记...">
                         </div>
                         <div class="cm-sidebar-header">
-                            <span style="font-weight:600;font-size:13px;">📂 章节目录</span>
-                            <div style="display:flex;gap:6px;align-items:center;">
+                            <span class="cm-chapter-header">📂 章节目录</span>
+                            <div class="flex-row gap-sm">
                                 <span class="cm-note-count" id="cmNoteCount">0条笔记</span>
-                                <button class="btn btn-xs" id="cmBtnAddRoot" style="padding:2px 8px;font-size:16px;line-height:1;background:var(--accent);color:#fff;border:none;border-radius:4px;cursor:pointer;">+</button>
+                                <button class="btn btn-xs" id="cmBtnAddRoot">+</button>
                             </div>
                         </div>
                         <!-- Chapter context menu -->
-                        <div class="cm-ctx-menu" id="cmChapterMenu" style="display:none;position:fixed;z-index:4000;background:var(--surface);border:1px solid var(--border);border-radius:6px;box-shadow:0 4px 20px rgba(0,0,0,.15);padding:4px;min-width:140px;"></div>
+                        <div class="cm-ctx-menu" id="cmChapterMenu" style="display:none;"></div>
                         <div class="cm-tree" id="cmTree"></div>
                     </div>
 

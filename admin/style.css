@@ -312,3 +312,27 @@ body {
     .deck-list-view.mob-show, .deck-detail-view.mob-show { display: block !important; }
     .mob-back { display: inline-flex; }
 }
+
+/* ── Utility classes (replacing inline styles) ── */
+.flex-row { display: flex; align-items: center; gap: 8px; }
+.flex-between { display: flex; justify-content: space-between; align-items: center; }
+.flex-wrap { display: flex; flex-wrap: wrap; gap: 10px; }
+.flex-1 { flex: 1; }
+.gap-sm { gap: 6px; }
+.gap-md { gap: 14px; }
+.mb-sm { margin-bottom: 8px; }
+.mb-md { margin-bottom: 14px; }
+.section-title { font-size: 13px; font-weight: 600; color: var(--text2); }
+.hidden { display: none; }
+.no-underline { text-decoration: none; }
+
+/* Card Maker toolbar inputs */
+.cm-toolbar select#cmNotebook { min-width: 160px; }
+.cm-toolbar select#cmDsModel { width: 120px; padding: 4px 6px; border: 1px solid var(--border); border-radius: 4px; font-size: 11px; }
+.cm-toolbar input#cmDsKey { width: 170px; padding: 4px 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 11px; }
+.cm-toolbar .cm-status-text { font-size: 12px; color: var(--text3); }
+.cm-toolbar .sep { width: 1px; height: 20px; background: var(--border); margin: 0 4px; display: inline-block; }
+#cmBtnAddRoot { padding: 2px 8px; font-size: 16px; line-height: 1; background: var(--accent); color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+.cm-search-wrap { padding: 8px 10px; border-bottom: 1px solid var(--border); }
+.cm-search-wrap input { width: 100%; padding: 6px 10px; border: 1px solid var(--border); border-radius: 4px; font-size: 12px; }
+.cm-chapter-header { font-weight: 600; font-size: 13px; }
