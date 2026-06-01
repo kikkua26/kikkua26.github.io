@@ -1,6 +1,6 @@
 // kikkua · 标签编辑器 — 插件入口
 
-import { registerPlugin, apiRequest, esc } from '../shared/sdk.js';
+import { registerPlugin, apiRequest, esc, b64decode, b64encode } from '../shared/sdk.js';
 
 const $ = s => document.querySelector(s);
 
@@ -17,11 +17,11 @@ async function readTags() {
         if (resp.status === 404) return [];
         throw new Error(resp.error || `HTTP ${resp.status}`);
     }
-    return JSON.parse(atob(resp.data.content));
+    return JSON.parse(b64decode(resp.data.content));
 }
 
 async function writeTags() {
-    const content = btoa(JSON.stringify(tagTree, null, 2));
+    const content = b64encode(JSON.stringify(tagTree, null, 2));
     // Need current SHA for update
     const readResp = await apiRequest('data/tags.json');
     const sha = readResp.ok ? readResp.data.sha : null;

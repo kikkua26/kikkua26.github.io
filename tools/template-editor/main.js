@@ -1,6 +1,6 @@
 // kikkua · 模板编辑器 — 插件入口
 
-import { registerPlugin, apiRequest, esc } from '../shared/sdk.js';
+import { registerPlugin, apiRequest, esc, b64decode, b64encode } from '../shared/sdk.js';
 
 const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
@@ -26,11 +26,11 @@ async function readFile(path) {
         if (resp.status === 404) return { text: '', sha: null };
         throw new Error(resp.error || `HTTP ${resp.status}`);
     }
-    return { text: atob(resp.data.content), sha: resp.data.sha };
+    return { text: b64decode(resp.data.content), sha: resp.data.sha };
 }
 
 async function writeFile(path, content, sha, msg) {
-    const body = { message: msg || 'Update ' + path, content: btoa(content) };
+    const body = { message: msg || 'Update ' + path, content: b64encode(content) };
     if (sha) body.sha = sha;
     const resp = await apiRequest(path, { method: 'PUT', body });
     if (!resp.ok) throw new Error(resp.error || `HTTP ${resp.status}`);

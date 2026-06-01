@@ -1,6 +1,6 @@
 // kikkua · 牌组管理器 — 插件入口
 
-import { registerPlugin, apiRequest, esc } from '../shared/sdk.js';
+import { registerPlugin, apiRequest, esc, b64decode, b64encode } from '../shared/sdk.js';
 
 const $ = s => document.querySelector(s);
 
@@ -16,11 +16,11 @@ let csvMeta = {};
 async function readJson(path) {
     const resp = await apiRequest(path);
     if (!resp.ok) throw new Error(resp.error || `HTTP ${resp.status}`);
-    return { text: atob(resp.data.content), sha: resp.data.sha };
+    return { text: b64decode(resp.data.content), sha: resp.data.sha };
 }
 
 async function writeJson(path, content, sha, msg) {
-    const body = { message: msg || 'Update ' + path, content: btoa(content) };
+    const body = { message: msg || 'Update ' + path, content: b64encode(content) };
     if (sha) body.sha = sha;
     const resp = await apiRequest(path, { method: 'PUT', body });
     if (!resp.ok) throw new Error(resp.error || `HTTP ${resp.status}`);

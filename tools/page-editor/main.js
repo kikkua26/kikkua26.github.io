@@ -1,6 +1,6 @@
 // kikkua · 页面编辑器 — 插件入口
 
-import { registerPlugin, apiRequest, esc } from '../shared/sdk.js';
+import { registerPlugin, apiRequest, esc, b64decode, b64encode } from '../shared/sdk.js';
 
 const $ = s => document.querySelector(s);
 
@@ -16,13 +16,13 @@ async function readPages() {
     if (!resp.ok) throw new Error(resp.error || `HTTP ${resp.status}`);
     const data = resp.data;
     // Decode base64 content
-    const text = atob(data.content);
+    const text = b64decode(data.content);
     pagesSha = data.sha;
     pages = JSON.parse(text).pages || [];
 }
 
 async function writePages() {
-    const content = btoa(JSON.stringify({ pages }, null, 2));
+    const content = b64encode(JSON.stringify({ pages }, null, 2));
     const resp = await apiRequest('data/pages.json', {
         method: 'PUT',
         body: { message: 'Update pages from admin', content, sha: pagesSha },

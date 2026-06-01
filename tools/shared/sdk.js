@@ -11,6 +11,42 @@ export function esc(s) {
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+/**
+ * UTF-8 安全的 base64 解码
+ * @param {string} base64 - base64 编码的字符串
+ * @returns {string} 解码后的 UTF-8 字符串
+ */
+export function b64decode(base64) {
+    try {
+        const binary = atob(base64);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+            bytes[i] = binary.charCodeAt(i);
+        }
+        return new TextDecoder('utf-8').decode(bytes);
+    } catch {
+        return atob(base64);
+    }
+}
+
+/**
+ * UTF-8 安全的 base64 编码
+ * @param {string} str - UTF-8 字符串
+ * @returns {string} base64 编码的字符串
+ */
+export function b64encode(str) {
+    try {
+        const bytes = new TextEncoder().encode(str);
+        let binary = '';
+        for (let i = 0; i < bytes.length; i++) {
+            binary += String.fromCharCode(bytes[i]);
+        }
+        return btoa(binary);
+    } catch {
+        return btoa(str);
+    }
+}
+
 export function sanitizeHtml(html) {
     const tmp = document.createElement('div');
     tmp.innerHTML = html;
