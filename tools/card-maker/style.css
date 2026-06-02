@@ -132,6 +132,38 @@ body {
 .cm-modal-actions.end { justify-content: flex-end; }
 .cm-ai-btn { color: var(--accent); }
 
+/* ── Settings Modal ── */
+.settings-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.btn-close { background: none; border: none; font-size: 18px; cursor: pointer; color: var(--text3); padding: 4px; }
+.btn-close:hover { color: var(--text); }
+.settings-section { margin-bottom: 16px; }
+.settings-label { display: block; font-size: 12px; font-weight: 600; color: var(--text2); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .05em; }
+.provider-cards { display: flex; gap: 10px; }
+.provider-card {
+    flex: 1; padding: 12px; border: 2px solid var(--border); border-radius: 8px;
+    text-align: center; cursor: pointer; transition: all .2s;
+}
+.provider-card:hover { border-color: var(--accent); background: var(--accent-bg); }
+.provider-card.active { border-color: var(--accent); background: var(--accent-bg); }
+.provider-icon { font-size: 24px; margin-bottom: 4px; }
+.provider-name { font-size: 14px; font-weight: 600; }
+.provider-desc { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.key-input-wrap { display: flex; gap: 6px; }
+.key-input-wrap input { flex: 1; }
+.btn-eye {
+    background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+    padding: 0 10px; cursor: pointer; font-size: 14px;
+}
+.btn-eye:hover { background: var(--border); }
+.btn-test { width: 100%; }
+.test-result {
+    margin-top: 10px; padding: 10px; border-radius: 6px; font-size: 13px;
+    line-height: 1.6; min-height: 20px;
+}
+.test-result.success { background: rgba(107,143,114,.1); color: var(--green); }
+.test-result.error { background: rgba(197,83,44,.1); color: var(--accent); }
+.test-detail { font-size: 12px; color: var(--text3); }
+
 /* ── Search ── */
 .cm-search-wrap { padding: 8px 10px; border-bottom: 1px solid var(--border); }
 .cm-search-wrap input { width: 100%; padding: 6px 10px; border: 1px solid var(--border); border-radius: 4px; font-size: 12px; }

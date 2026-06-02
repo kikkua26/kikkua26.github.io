@@ -46,28 +46,6 @@ function initCardMaker() {
         if (mEl) mEl.value = draft.mainField || '';
     }
 
-    // Restore AI settings
-    try {
-        const provider = localStorage.getItem('kikkua_ai_provider') || 'deepseek';
-        const aiKey = localStorage.getItem('kikkua_ai_key') || localStorage.getItem('kikkua_ds_key');
-        const aiModel = localStorage.getItem('kikkua_ai_model') || localStorage.getItem('kikkua_ds_model');
-
-        const providerEl = root.querySelector('#cmAIProvider');
-        const keyEl = root.querySelector('#cmDsKey');
-        const modelEl = root.querySelector('#cmDsModel');
-
-        if (providerEl && provider) {
-            for (const opt of providerEl.options) { if (opt.value === provider) { providerEl.value = provider; break; } }
-            // Trigger model options update
-            const event = new Event('change');
-            providerEl.dispatchEvent(event);
-        }
-        if (keyEl && aiKey) keyEl.value = aiKey;
-        if (modelEl && aiModel) {
-            for (const opt of modelEl.options) { if (opt.value === aiModel) { modelEl.value = aiModel; break; } }
-        }
-    } catch {}
-
     setupEvents();
     state.initialized = true;
 }

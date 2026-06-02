@@ -20,16 +20,8 @@
             <button class="btn btn-secondary btn-sm" id="cmBtnToggleBatch">☑ 批量</button>
             <button class="btn btn-danger btn-sm hidden" id="cmBtnBatch">🗑 删除选中</button>
             <span class="flex-1"></span>
-            <select id="cmAIProvider" title="AI 提供商">
-                <option value="deepseek">DeepSeek</option>
-                <option value="mimo">小米 MiMo</option>
-            </select>
-            <select id="cmDsModel" title="模型">
-                <option value="deepseek-chat">deepseek-chat</option>
-                <option value="deepseek-reasoner">deepseek-reasoner</option>
-            </select>
-            <input type="password" id="cmDsKey" placeholder="DeepSeek Key (sk-...)" data-password-toggle>
             <span class="cm-status-text" id="cmStatus">就绪</span>
+            <button class="btn btn-secondary btn-sm" id="cmBtnSettings" title="AI 设置">⚙️ AI</button>
         </div>
 
         <!-- Main layout -->
@@ -156,6 +148,64 @@
                 <div class="cm-modal-actions end">
                     <button class="btn btn-secondary btn-sm" id="cmBatchDirCancel">取消</button>
                     <button class="btn btn-primary btn-sm" id="cmBatchDirApply">导入</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Settings Modal -->
+        <div class="cm-modal-overlay hidden" id="cmSettingsModal">
+            <div class="cm-modal cm-modal-box" style="max-width:480px;">
+                <div class="settings-header">
+                    <h3 class="cm-modal-title">⚙️ AI 设置</h3>
+                    <button class="btn-close" id="cmSettingsClose">✕</button>
+                </div>
+                <p class="cm-modal-desc">配置 AI 提供商和 API Key</p>
+
+                <!-- Provider Selection -->
+                <div class="settings-section">
+                    <label class="settings-label">AI 提供商</label>
+                    <div class="provider-cards">
+                        <div class="provider-card active" data-provider="deepseek">
+                            <div class="provider-icon">🔮</div>
+                            <div class="provider-name">DeepSeek</div>
+                            <div class="provider-desc">sk- 开头</div>
+                        </div>
+                        <div class="provider-card" data-provider="mimo">
+                            <div class="provider-icon">🤖</div>
+                            <div class="provider-name">小米 MiMo</div>
+                            <div class="provider-desc">tp- 开头</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- API Key -->
+                <div class="settings-section">
+                    <label class="settings-label">API Key</label>
+                    <div class="key-input-wrap">
+                        <input type="password" id="cmSettingsKey" class="cm-modal-input" placeholder="DeepSeek Key (sk-...)">
+                        <button class="btn-eye" id="cmToggleKey" title="显示/隐藏">👁</button>
+                    </div>
+                </div>
+
+                <!-- Model -->
+                <div class="settings-section">
+                    <label class="settings-label">模型</label>
+                    <select id="cmSettingsModel" class="cm-modal-input">
+                        <option value="deepseek-chat">deepseek-chat</option>
+                        <option value="deepseek-reasoner">deepseek-reasoner</option>
+                    </select>
+                </div>
+
+                <!-- Test Connection -->
+                <div class="settings-section">
+                    <button class="btn btn-secondary btn-sm btn-test" id="cmTestBtn">🔗 测试连接</button>
+                    <div class="test-result" id="cmTestResult"></div>
+                </div>
+
+                <!-- Actions -->
+                <div class="cm-modal-actions end">
+                    <button class="btn btn-secondary btn-sm" id="cmSettingsCancel">取消</button>
+                    <button class="btn btn-primary btn-sm" id="cmSettingsSave">保存设置</button>
                 </div>
             </div>
         </div>

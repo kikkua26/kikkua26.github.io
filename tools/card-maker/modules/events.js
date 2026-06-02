@@ -8,7 +8,7 @@ import { renderAll } from './render.js';
 import { clearForm, loadForm, getFormData, addSubfield, removeSubfield } from './form.js';
 import { updatePreview } from './preview.js';
 import { showQuickPaste, hideQuickPaste, applyQuickPaste } from './paste.js';
-import { aiParse, updateModelOptions } from './ai.js';
+import { aiParse, showSettings, hideSettings, saveSettings, testConnection } from './ai.js';
 import { importCSV, exportCSV } from './csv.js';
 import { toast } from './utils.js';
 
@@ -165,8 +165,38 @@ export function setupEvents() {
     rootEl.querySelector('#cmPasteModal')?.addEventListener('click', e => { if (e.target === e.currentTarget) hideQuickPaste(); });
     rootEl.querySelector('#cmBatchDirModal')?.addEventListener('click', e => { if (e.target === e.currentTarget) { const m = rootEl.querySelector('#cmBatchDirModal'); if (m) m.style.display = 'none'; } });
 
-    // AI provider change
-    on('#cmAIProvider', 'change', updateModelOptions);
+    // AI Settings modal
+    on('#cmBtnSettings', 'click', showSettings);
+    on('#cmSettingsClose', 'click', hideSettings);
+    on('#cmSettingsCancel', 'click', hideSettings);
+    on('#cmSettingsSave', 'click', saveSettings);
+    on('#cmTestBtn', 'click', testConnection);
+    on('#cmToggleKey', 'click', () => {
+        const input = rootEl.querySelector('#cmSettingsKey');
+        if (input) input.type = input.type === 'password' ? 'text' : 'password';
+    });
+    rootEl.querySelector('#cmSettingsModal')?.addEventListener('click', e => {
+        if (e.target === e.currentTarget) hideSettings();
+    });
+
+    // Provider card selection
+    rootEl.querySelector('#cmSettingsModal')?.addEventListener('click', e => {
+        const card = e.target.closest('[data-provider]');
+        if (card) {
+            const modal = rootEl.querySelector('#cmSettingsModal');
+            modal.querySelectorAll('[data-provider]').forEach(c => c.classList.remove('active'));
+            card.classList.add('active');
+            // Update model options
+            const provider = card.dataset.provider;
+            const config = { deepseek: { models: ['deepseek-chat', 'deepseek-reasoner'], defaultModel: 'deepseek-chat' }, mimo: { models: ['mimo-v2.5-pro'], defaultModel: 'mimo-v2.5-pro' } };
+            const modelSelect = modal.querySelector('#cmSettingsModel');
+            if (modelSelect && config[provider]) {
+                modelSelect.innerHTML = config[provider].models.map(m => `<option value="${m}">${m}</option>`).join('');
+            }
+            const keyInput = modal.querySelector('#cmSettingsKey');
+            if (keyInput) keyInput.placeholder = provider === 'mimo' ? '小米 MiMo Key (tp-...)' : 'DeepSeek Key (sk-...)';
+        }
+    });
 
     // Drag-and-drop subfield reorder
     let dragSrc = null;
