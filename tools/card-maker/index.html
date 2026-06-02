@@ -20,9 +20,13 @@
             <button class="btn btn-secondary btn-sm" id="cmBtnToggleBatch">☑ 批量</button>
             <button class="btn btn-danger btn-sm hidden" id="cmBtnBatch">🗑 删除选中</button>
             <span class="flex-1"></span>
-            <select id="cmDsModel">
-                <option value="deepseek-v4-flash">v4 Flash</option>
-                <option value="deepseek-v4-pro" selected>v4 Pro</option>
+            <select id="cmAIProvider" title="AI 提供商">
+                <option value="deepseek">DeepSeek</option>
+                <option value="mimo">小米 MiMo</option>
+            </select>
+            <select id="cmDsModel" title="模型">
+                <option value="deepseek-chat">deepseek-chat</option>
+                <option value="deepseek-reasoner">deepseek-reasoner</option>
             </select>
             <input type="password" id="cmDsKey" placeholder="DeepSeek Key (sk-...)" data-password-toggle>
             <span class="cm-status-text" id="cmStatus">就绪</span>

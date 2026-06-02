@@ -8,7 +8,7 @@ import { renderAll } from './render.js';
 import { clearForm, loadForm, getFormData, addSubfield, removeSubfield } from './form.js';
 import { updatePreview } from './preview.js';
 import { showQuickPaste, hideQuickPaste, applyQuickPaste } from './paste.js';
-import { aiParse } from './ai.js';
+import { aiParse, updateModelOptions } from './ai.js';
 import { importCSV, exportCSV } from './csv.js';
 import { toast } from './utils.js';
 
@@ -164,6 +164,9 @@ export function setupEvents() {
     on('#cmAiParse', 'click', aiParse);
     rootEl.querySelector('#cmPasteModal')?.addEventListener('click', e => { if (e.target === e.currentTarget) hideQuickPaste(); });
     rootEl.querySelector('#cmBatchDirModal')?.addEventListener('click', e => { if (e.target === e.currentTarget) { const m = rootEl.querySelector('#cmBatchDirModal'); if (m) m.style.display = 'none'; } });
+
+    // AI provider change
+    on('#cmAIProvider', 'change', updateModelOptions);
 
     // Drag-and-drop subfield reorder
     let dragSrc = null;
