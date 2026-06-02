@@ -61,6 +61,8 @@ export function setupEvents() {
             addSubfield('knowledge', false);
         } else if (action === 'add-extended') {
             addSubfield('extended', false);
+        } else if (action === 'cm-quick-paste') {
+            showQuickPaste();
         }
     });
 
