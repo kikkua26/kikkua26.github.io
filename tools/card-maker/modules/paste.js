@@ -12,10 +12,11 @@ export function setPasteUpdatePreview(fn) { _updatePreview = fn; }
 export function showQuickPaste() {
     const modal = rootEl.querySelector('#cmPasteModal');
     const input = rootEl.querySelector('#cmPasteInput');
-    if (modal && input) { modal.style.display = 'flex'; input.value = ''; input.focus(); }
+    if (modal && input) { modal.classList.remove('hidden'); modal.style.display = 'flex'; input.value = ''; input.focus(); }
 }
 
-export function hideQuickPaste() { const m = rootEl.querySelector('#cmPasteModal'); if (m) m.style.display = 'none'; }
+export function hideQuickPaste() { const m = rootEl.querySelector('#cmPasteModal'); if (m) { m.style.display = 'none'; m.classList.add('hidden'); } }
+
 
 export function applyQuickPaste() {
     const input = rootEl.querySelector('#cmPasteInput');
