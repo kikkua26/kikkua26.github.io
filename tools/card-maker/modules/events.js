@@ -353,7 +353,7 @@ export function setupEvents() {
     on('#cmBatchDirApply', 'click', () => {
         const input = rootEl.querySelector('#cmBatchDirInput');
         if (!input || !input.value.trim()) return;
-        const lines = input.value.split(/[\n\r]+/).map(l => l.trim()).filter(Boolean);
+        const lines = input.value.split(/[\n\r]+/);
         const nb = state.notebooks[state.activeNotebook];
         if (!nb._chapters) nb._chapters = [];
         if (!nb._order) nb._order = {};
@@ -362,11 +362,17 @@ export function setupEvents() {
         let addedChapters = 0;
         let addedNotes = 0;
         let currentChapter = '';
+        let currentNote = null;
+        let currentSection = 'knowledge'; // 'knowledge' or 'extended'
 
-        for (const line of lines) {
+        for (const rawLine of lines) {
+            const line = rawLine.trim();
+            if (!line) { currentNote = null; currentSection = 'knowledge'; continue; }
+
             // Chapter line: # xxx
             const chapterMatch = line.match(/^(#{1,9})\s+(.+)/);
             if (chapterMatch) {
+                currentNote = null;
                 const depth = chapterMatch[1].length;
                 const name = chapterMatch[2].trim();
                 while (stack.length > 0 && stack[stack.length - 1].depth >= depth) stack.pop();
@@ -383,11 +389,11 @@ export function setupEvents() {
             }
 
             // Note line: - xxx
-            const noteMatch = line.match(/^[-*]\s+(.+)/);
+            const noteMatch = rawLine.match(/^[-*]\s+(.+)/);
             if (noteMatch) {
                 const noteName = noteMatch[1].trim();
                 if (!noteName) continue;
-                const note = {
+                currentNote = {
                     id: genId(),
                     mainField: noteName,
                     chapter: currentChapter,
@@ -395,9 +401,34 @@ export function setupEvents() {
                     extendedAnalysis: '',
                 };
                 if (!nb.notes) nb.notes = [];
-                nb.notes.push(note);
+                nb.notes.push(currentNote);
                 addedNotes++;
+                currentSection = 'knowledge';
                 continue;
+            }
+
+            // Section markers
+            if (currentNote) {
+                if (/^知识解析[：:]?\s*$/.test(line)) { currentSection = 'knowledge'; continue; }
+                if (/^拓展解析[：:]?\s*$/.test(line) || /^知识拓展[：:]?\s*$/.test(line)) { currentSection = 'extended'; continue; }
+
+                // Field line: xxx：xxx or xxx:xxx
+                const fieldMatch = line.match(/^(.+?)[：:]\s*(.*)$/);
+                if (fieldMatch) {
+                    const key = fieldMatch[1].trim();
+                    const val = fieldMatch[2].trim();
+                    if (!val) continue;
+                    const entry = key + '::' + val;
+                    if (currentSection === 'extended') {
+                        currentNote.extendedAnalysis = currentNote.extendedAnalysis
+                            ? currentNote.extendedAnalysis + '<br>###' + entry
+                            : entry;
+                    } else {
+                        currentNote.knowledgeAnalysis = currentNote.knowledgeAnalysis
+                            ? currentNote.knowledgeAnalysis + '<br>###' + entry
+                            : entry;
+                    }
+                }
             }
         }
         flushData(); renderAll();
@@ -511,8 +542,13 @@ function setupContextMenu() {
             ctxChapterPath = '';
             menuItems.push({ label: '📂 新建根目录', action: 'addRoot' });
         }
+        // Always show expand/collapse all
+        menuItems.push({ divider: true });
+        menuItems.push({ label: '🔽 全部展开', action: 'expandAll' });
+        menuItems.push({ label: '🔼 全部收起', action: 'collapseAll' });
 
         chapterMenu.innerHTML = menuItems.map((m, i) => {
+            if (m.divider) return '<div class="cm-ctx-divider"></div>';
             const noteIdAttr = m.noteId ? ` data-note-id="${m.noteId}"` : '';
             if (i > 0 && m.danger && !menuItems[i-1].danger) return `<div class="cm-ctx-divider"></div><div class="cm-ctx-item${m.danger?' cm-ctx-danger':''}" data-cm-action="${m.action}"${noteIdAttr}>${m.label}</div>`;
             return `<div class="cm-ctx-item${m.danger?' cm-ctx-danger':''}" data-cm-action="${m.action}"${noteIdAttr}>${m.label}</div>`;
@@ -624,6 +660,26 @@ function setupContextMenu() {
             nb._chapters = nb._chapters.filter(c => c !== ctxChapterPath && !c.startsWith(ctxChapterPath + '::'));
             nbMeta().notes = notes.filter(n => n.chapter !== ctxChapterPath && !n.chapter?.startsWith(ctxChapterPath + '::'));
             flushData(); renderAll();
+        } else if (action === 'expandAll') {
+            state.expandedChapters.clear();
+            for (const nb2 of Object.values(state.notebooks)) {
+                for (const note of (nb2.notes || [])) {
+                    if (note.chapter) {
+                        const parts = note.chapter.split('::');
+                        let acc = '';
+                        for (const p of parts) { acc = acc ? acc + '::' + p : p; state.expandedChapters.add(acc); }
+                    }
+                }
+                for (const ch of (nb2._chapters || [])) {
+                    const parts = ch.split('::');
+                    let acc = '';
+                    for (const p of parts) { acc = acc ? acc + '::' + p : p; state.expandedChapters.add(acc); }
+                }
+            }
+            renderAll();
+        } else if (action === 'collapseAll') {
+            state.expandedChapters.clear();
+            renderAll();
         }
         hideChapterMenu();
     });
