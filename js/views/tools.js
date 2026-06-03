@@ -127,14 +127,14 @@ export function renderTools() {
             .pro-tab.locked::after { content: '🔒'; font-size: 10px; margin-left: 4px; }
         </style>
         <div class="page pro-page">
-            <header class="header" style="border:none;">
+            <header class="header">
                 <div class="header-inner">
                     <div class="header-left">
                         <a href="/" class="back-btn" title="返回首页">${ICONS.back}</a>
-                        <h1 class="header-title" style="margin-left:4px;">工具箱</h1>
+                        <h1 class="header-title">工具箱</h1>
                     </div>
                     <div class="header-right">
-                        <span style="font-size:11px;color:var(--ink-light);">专业工具集</span>
+                        <span class="header-link" style="font-size:11px;">专业工具集</span>
                     </div>
                 </div>
             </header>

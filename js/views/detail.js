@@ -27,11 +27,11 @@ export async function renderDeckDetail(deckName) {
     app.innerHTML = `
         <div class="page detail-page">
             <div class="container">
-                <header class="header" style="border:none;">
+                <header class="header">
                     <div class="header-inner">
                         <div class="header-left">
                             <a href="/${ROUTES.decks}" class="back-btn" title="${UI.detail.back}">${ICONS.back}</a>
-                            <h1 class="header-title" style="margin-left: 4px;">${deck.name}</h1>
+                            <h1 class="header-title">${deck.name}</h1>
                         </div>
                         <div class="header-right">
                             ${deck.purchaseUrl ? `<a href="${deck.purchaseUrl}" target="_blank" rel="noopener" class="header-purchase">${UI.detail.purchase}</a>` : ''}

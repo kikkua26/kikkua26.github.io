@@ -69,12 +69,11 @@ export async function renderDeckList(filterPath) {
                     <div class="header-inner">
                         <div class="header-left">
                             <a href="/" class="back-btn" title="${SITE.brand}">${ICONS.back}</a>
-                            <h1 class="header-title" style="margin-left: 4px;">${UI.decks.title}</h1>
+                            <h1 class="header-title">${UI.decks.title}</h1>
                         </div>
-                        <div></div>
                         <div class="header-right">
-                            <a href="/tools" class="header-about-link" style="margin-right:4px;">工具箱</a>
-                            <a href="/about" class="header-about-link">关于</a>
+                            <a href="/tools" class="header-link">工具箱</a>
+                            <a href="/about" class="header-link">关于</a>
                         </div>
                     </div>
                 </header>
