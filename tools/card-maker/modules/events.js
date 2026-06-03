@@ -358,25 +358,53 @@ export function setupEvents() {
         if (!nb._order) nb._order = {};
         if (!nb._order['']) nb._order[''] = [];
         const stack = [];
-        let added = 0;
+        let addedChapters = 0;
+        let addedNotes = 0;
+        let currentChapter = '';
+
         for (const line of lines) {
-            const m = line.match(/^(#{1,9})\s+(.+)/);
-            if (!m) continue;
-            const depth = m[1].length;
-            const name = m[2].trim();
-            while (stack.length > 0 && stack[stack.length - 1].depth >= depth) stack.pop();
-            const parentPath = stack.length > 0 ? stack[stack.length - 1].path : '';
-            const fullPath = parentPath ? parentPath + '::' + name : name;
-            if (!nb._chapters.includes(fullPath)) { nb._chapters.push(fullPath); added++; }
-            const orderKey = parentPath || '';
-            if (!nb._order[orderKey]) nb._order[orderKey] = [];
-            if (!nb._order[orderKey].includes(name)) nb._order[orderKey].push(name);
-            stack.push({ depth, path: fullPath });
-            state.expandedChapters.add(fullPath);
+            // Chapter line: # xxx
+            const chapterMatch = line.match(/^(#{1,9})\s+(.+)/);
+            if (chapterMatch) {
+                const depth = chapterMatch[1].length;
+                const name = chapterMatch[2].trim();
+                while (stack.length > 0 && stack[stack.length - 1].depth >= depth) stack.pop();
+                const parentPath = stack.length > 0 ? stack[stack.length - 1].path : '';
+                const fullPath = parentPath ? parentPath + '::' + name : name;
+                if (!nb._chapters.includes(fullPath)) { nb._chapters.push(fullPath); addedChapters++; }
+                const orderKey = parentPath || '';
+                if (!nb._order[orderKey]) nb._order[orderKey] = [];
+                if (!nb._order[orderKey].includes(name)) nb._order[orderKey].push(name);
+                stack.push({ depth, path: fullPath });
+                currentChapter = fullPath;
+                state.expandedChapters.add(fullPath);
+                continue;
+            }
+
+            // Note line: - xxx
+            const noteMatch = line.match(/^[-*]\s+(.+)/);
+            if (noteMatch) {
+                const noteName = noteMatch[1].trim();
+                if (!noteName) continue;
+                const note = {
+                    id: genId(),
+                    mainField: noteName,
+                    chapter: currentChapter,
+                    knowledgeAnalysis: '',
+                    extendedAnalysis: '',
+                };
+                if (!nb.notes) nb.notes = [];
+                nb.notes.push(note);
+                addedNotes++;
+                continue;
+            }
         }
         flushData(); renderAll();
         const m = rootEl.querySelector('#cmBatchDirModal'); if (m) { m.style.display = 'none'; m.classList.add('hidden'); }
-        toast(`已导入 ${added} 个目录`, 'success');
+        const parts = [];
+        if (addedChapters > 0) parts.push(`${addedChapters} 个目录`);
+        if (addedNotes > 0) parts.push(`${addedNotes} 条笔记`);
+        toast(`已导入 ${parts.join('、')}`, 'success');
     });
 
     // Listen for quick-paste message from parent admin
