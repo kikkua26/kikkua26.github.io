@@ -20,6 +20,7 @@
             <button class="btn btn-secondary btn-sm" id="cmBtnToggleBatch">☑ 批量</button>
             <button class="btn btn-danger btn-sm hidden" id="cmBtnBatch">🗑 删除选中</button>
             <button class="btn btn-secondary btn-sm" id="cmBtnBatchImport" title="AI 批量制作">🤖 批量</button>
+            <button class="btn btn-secondary btn-sm" id="cmBtnApkg" title="导出 Anki 包">📦 导出</button>
             <span class="flex-1"></span>
             <span class="cm-status-text" id="cmStatus">就绪</span>
             <button class="btn btn-secondary btn-sm" id="cmBtnSettings" title="AI 设置">⚙️ AI</button>
@@ -234,6 +235,42 @@
                         <button class="btn btn-secondary btn-sm" id="cmBatchCancel">取消</button>
                         <button class="btn btn-primary btn-sm" id="cmBatchApply">批量导入</button>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- APKG Export Modal -->
+        <div class="cm-modal-overlay hidden" id="cmApkgModal">
+            <div class="cm-modal cm-modal-box" style="max-width:450px;">
+                <div class="cm-modal-header">
+                    <h3 class="cm-modal-title">📦 导出 Anki 包</h3>
+                    <button class="btn-close" id="cmApkgClose">✕</button>
+                </div>
+                <p class="cm-modal-desc">上传模板 apkg，然后导出当前笔记本为 apkg 文件</p>
+
+                <div class="settings-section">
+                    <label class="settings-label">步骤 1：上传模板</label>
+                    <p style="font-size:12px;color:var(--text3);margin-bottom:8px;">上传包含 kikkua 模板的 apkg 文件</p>
+                    <button class="btn btn-secondary btn-sm" id="cmApkgUpload">📁 选择 apkg 文件</button>
+                    <div class="cm-ai-status hidden" id="cmApkgStatus"></div>
+                </div>
+
+                <div class="settings-section">
+                    <label class="settings-label">步骤 2：设置牌组名称</label>
+                    <input type="text" id="cmApkgDeckName" class="cm-modal-input" placeholder="kikkua卡片" value="">
+                </div>
+
+                <div class="settings-section">
+                    <label class="settings-label">步骤 3：导出</label>
+                    <p style="font-size:12px;color:var(--text3);margin-bottom:8px;">
+                        当前笔记本: <strong id="cmApkgNotebook">-</strong> ·
+                        笔记数: <strong id="cmApkgNoteCount">-</strong>
+                    </p>
+                    <button class="btn btn-primary btn-sm" id="cmApkgExport">📦 导出 apkg</button>
+                </div>
+
+                <div class="cm-modal-actions end">
+                    <button class="btn btn-secondary btn-sm" id="cmApkgCancel">关闭</button>
                 </div>
             </div>
         </div>

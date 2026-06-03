@@ -9,6 +9,7 @@ import { clearForm, loadForm, getFormData, addSubfield, removeSubfield, autoSave
 import { updatePreview } from './preview.js';
 import { showQuickPaste, hideQuickPaste, applyQuickPaste } from './paste.js';
 import { aiParse, copyPrompt, showSettings, hideSettings, saveSettings, testConnection, showBatchModal, hideBatchModal, copyBatchPrompt, batchAIParse, applyBatchImport } from './ai.js';
+import { showApkgModal, hideApkgModal, handleApkgUpload, handleApkgExport } from './apkg.js';
 import { importCSV, exportCSV } from './csv.js';
 import { toast } from './utils.js';
 
@@ -191,6 +192,23 @@ export function setupEvents() {
     on('#cmBatchApply', 'click', applyBatchImport);
     rootEl.querySelector('#cmBatchModal')?.addEventListener('click', e => {
         if (e.target === e.currentTarget) hideBatchModal();
+    });
+
+    // APKG Export modal
+    on('#cmBtnApkg', 'click', () => {
+        showApkgModal();
+        // Update notebook info
+        const nbEl = rootEl.querySelector('#cmApkgNotebook');
+        const countEl = rootEl.querySelector('#cmApkgNoteCount');
+        if (nbEl) nbEl.textContent = state.activeNotebook;
+        if (countEl) countEl.textContent = (state.notebooks[state.activeNotebook]?.notes || []).length;
+    });
+    on('#cmApkgClose', 'click', hideApkgModal);
+    on('#cmApkgCancel', 'click', hideApkgModal);
+    on('#cmApkgUpload', 'click', handleApkgUpload);
+    on('#cmApkgExport', 'click', handleApkgExport);
+    rootEl.querySelector('#cmApkgModal')?.addEventListener('click', e => {
+        if (e.target === e.currentTarget) hideApkgModal();
     });
 
     // Provider card selection
