@@ -232,7 +232,7 @@
     background: var(--bg-primary);
 }
 
-.deck-grid {
+.deck-showcase .deck-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 16px;
@@ -469,6 +469,86 @@
 }
 
 /* ═══════════════════════════════════════
+   TAG PILLS (used on decks page)
+   ═══════════════════════════════════════ */
+
+.tag-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 16px 0 8px;
+}
+
+.tag-crumbs {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.tag-crumb {
+    font-size: 13px;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-weight: 500;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: color var(--transition-fast);
+}
+
+.tag-crumb:hover {
+    color: var(--accent);
+}
+
+.tag-crumb.current {
+    color: var(--accent-dark);
+    cursor: default;
+}
+
+.tag-crumb-sep {
+    color: var(--text-muted);
+    font-size: 14px;
+}
+
+.tag-pills-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.tag-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-light);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    user-select: none;
+}
+
+.tag-pill:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+.tag-pill.active {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+}
+
+.tag-result {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+/* ═══════════════════════════════════════
    ANIMATIONS
    ═══════════════════════════════════════ */
 
@@ -532,7 +612,7 @@
         font-size: 28px;
     }
 
-    .deck-grid {
+    .deck-showcase .deck-grid {
         grid-template-columns: 1fr;
     }
 

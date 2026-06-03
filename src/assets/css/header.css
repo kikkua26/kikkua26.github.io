@@ -63,6 +63,8 @@
     overflow: hidden;
     text-overflow: ellipsis;
     letter-spacing: -0.01em;
+    min-width: 0;
+    flex-shrink: 1;
 }
 
 .header-center {
@@ -76,6 +78,7 @@
     align-items: center;
     gap: 4px;
     flex-shrink: 0;
+    margin-left: 12px;
 }
 
 .header-link {
