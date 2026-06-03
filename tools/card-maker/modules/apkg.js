@@ -4,7 +4,7 @@
 import { state, rootEl } from './constants.js';
 import { activeNotes } from './data.js';
 import { toast } from './utils.js';
-import { loadScript } from '../shared/sdk.js';
+import { loadScript } from '../../shared/sdk.js';
 
 let apkgModel = null;
 
