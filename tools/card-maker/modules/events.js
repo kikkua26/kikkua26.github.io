@@ -317,13 +317,15 @@ export function setupEvents() {
                 renderAll();
             }
         } else if (treeDragType === 'chapter' && chapter) {
-            // Reorder chapters
+            // Reorder chapters and their notes
             const srcPath = treeDragSrc.dataset.path;
             const dstPath = chapter.dataset.path;
             if (!nb._order) nb._order = {};
             const srcParent = srcPath.includes('::') ? srcPath.split('::').slice(0, -1).join('::') : '';
             const dstParent = dstPath.includes('::') ? dstPath.split('::').slice(0, -1).join('::') : '';
+
             if (srcParent === dstParent) {
+                // Update chapter order
                 const key = srcParent || '';
                 if (!nb._order[key]) nb._order[key] = [];
                 const order = nb._order[key];
@@ -331,9 +333,41 @@ export function setupEvents() {
                 const dstName = dstPath.split('::').pop();
                 const srcOrderIdx = order.indexOf(srcName);
                 const dstOrderIdx = order.indexOf(dstName);
+
                 if (srcOrderIdx >= 0 && dstOrderIdx >= 0) {
                     order.splice(srcOrderIdx, 1);
                     order.splice(dstOrderIdx, 0, srcName);
+
+                    // Also reorder notes: move all notes under srcPath to dstPath position
+                    // Find notes belonging to source chapter (including sub-chapters)
+                    const srcNotes = notes.filter(n =>
+                        n.chapter === srcPath || n.chapter?.startsWith(srcPath + '::')
+                    );
+                    // Find insertion point: notes under destination chapter
+                    const dstFirstNoteIdx = notes.findIndex(n =>
+                        n.chapter === dstPath || n.chapter?.startsWith(dstPath + '::')
+                    );
+
+                    if (srcNotes.length > 0 && dstFirstNoteIdx >= 0) {
+                        // Remove source notes from array
+                        const remaining = notes.filter(n =>
+                            n.chapter !== srcPath && !n.chapter?.startsWith(srcPath + '::')
+                        );
+                        // Find where to insert (before or after destination based on drag direction)
+                        const insertIdx = remaining.indexOf(notes[dstFirstNoteIdx]);
+                        if (srcOrderIdx < dstOrderIdx) {
+                            // Moving down: insert after destination notes
+                            const dstLastNoteIdx = remaining.findLastIndex(n =>
+                                n.chapter === dstPath || n.chapter?.startsWith(dstPath + '::')
+                            );
+                            remaining.splice(dstLastNoteIdx + 1, 0, ...srcNotes);
+                        } else {
+                            // Moving up: insert before destination notes
+                            remaining.splice(insertIdx, 0, ...srcNotes);
+                        }
+                        nb.notes = remaining;
+                    }
+
                     flushData();
                     renderAll();
                 }
