@@ -11,19 +11,23 @@
     <div class="cm-root" id="cardMakerRoot">
         <!-- Toolbar -->
         <div class="cm-toolbar">
+            <!-- Left: Notebook -->
             <select id="cmNotebook"></select>
-            <button class="btn btn-secondary btn-sm" id="cmBtnNewNb">📓 新建笔记本</button>
-            <button class="btn btn-secondary btn-sm" id="cmBtnImport">📥 导入CSV</button>
-            <button class="btn btn-secondary btn-sm" id="cmBtnExport">📤 导出CSV</button>
+            <button class="btn btn-secondary btn-xs" id="cmBtnNewNb" title="新建笔记本">＋</button>
             <span class="sep"></span>
-            <button class="btn btn-primary btn-sm" id="cmBtnNew">＋ 新建笔记</button>
-            <button class="btn btn-secondary btn-sm" id="cmBtnToggleBatch">☑ 批量</button>
-            <button class="btn btn-danger btn-sm hidden" id="cmBtnBatch">🗑 删除选中</button>
-            <button class="btn btn-secondary btn-sm" id="cmBtnBatchImport" title="AI 批量制作">🤖 批量</button>
-            <button class="btn btn-secondary btn-sm" id="cmBtnApkg" title="导出 Anki 包">📦 导出</button>
+            <button class="btn btn-secondary btn-xs" id="cmBtnImport" title="导入 CSV">📥</button>
+            <button class="btn btn-secondary btn-xs" id="cmBtnExport" title="导出 CSV">📤</button>
+            <button class="btn btn-secondary btn-xs" id="cmBtnApkg" title="导出 Anki 包">📦</button>
+            <span class="sep"></span>
+            <!-- Middle: Notes -->
+            <button class="btn btn-primary btn-xs" id="cmBtnNew" title="新建笔记">＋ 新建</button>
+            <button class="btn btn-secondary btn-xs" id="cmBtnToggleBatch" title="批量选择">☑</button>
+            <button class="btn btn-danger btn-xs hidden" id="cmBtnBatch">🗑 删除选中</button>
+            <button class="btn btn-secondary btn-xs" id="cmBtnBatchImport" title="AI 批量制作">🤖 批量</button>
             <span class="flex-1"></span>
+            <!-- Right: Status & Settings -->
             <span class="cm-status-text" id="cmStatus">就绪</span>
-            <button class="btn btn-secondary btn-sm" id="cmBtnSettings" title="AI 设置">⚙️ AI</button>
+            <button class="btn btn-secondary btn-xs" id="cmBtnSettings" title="AI 设置">⚙️</button>
         </div>
 
         <!-- Main layout -->

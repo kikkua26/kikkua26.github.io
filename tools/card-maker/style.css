@@ -43,12 +43,11 @@ body {
 
 /* ── Card Maker ── */
 .cm-root { display: flex; flex-direction: column; height: 100%; overflow: hidden; flex: 1; }
-.cm-toolbar { display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0; flex-wrap: wrap; }
-.cm-toolbar select { padding: 6px 28px 6px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; background: var(--bg); cursor: pointer; appearance: none; -webkit-appearance: none; }
-.cm-toolbar select#cmNotebook { min-width: 160px; }
-.cm-toolbar select#cmDsModel { width: 120px; padding: 4px 6px; border: 1px solid var(--border); border-radius: 4px; font-size: 11px; }
-.cm-toolbar input#cmDsKey { width: 170px; padding: 4px 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 11px; }
-.cm-toolbar .cm-status-text { font-size: 12px; color: var(--text3); }
+.cm-toolbar { display: flex; align-items: center; gap: 4px; padding: 6px 10px; background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.cm-toolbar select { padding: 4px 24px 4px 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 12px; background: var(--bg); cursor: pointer; appearance: none; -webkit-appearance: none; }
+.cm-toolbar select#cmNotebook { min-width: 140px; }
+.cm-toolbar .sep { width: 1px; height: 18px; background: var(--border); margin: 0 2px; }
+.cm-toolbar .cm-status-text { font-size: 11px; color: var(--text3); margin: 0 4px; }
 .cm-toolbar .sep { width: 1px; height: 20px; background: var(--border); margin: 0 4px; display: inline-block; }
 
 .cm-layout { display: flex; flex: 1; overflow: hidden; }
