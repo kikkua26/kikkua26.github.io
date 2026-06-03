@@ -1,7 +1,7 @@
 // kikkua · 制卡工具 — 表单管理
 
 import { state, rootEl, $ } from './constants.js';
-import { clearDraft, parseSubfields, serializeSubfields } from './data.js';
+import { clearDraft, parseSubfields, serializeSubfields, flushData } from './data.js';
 import { esc } from './utils.js';
 
 // Forward references — set by main.js to avoid circular imports
@@ -9,6 +9,27 @@ let _renderAll = () => {};
 let _updatePreview = () => {};
 export function setRenderAll(fn) { _renderAll = fn; }
 export function setUpdatePreview(fn) { _updatePreview = fn; }
+
+// Auto-save with debounce
+let autoSaveTimer = null;
+export function autoSaveForm() {
+    if (autoSaveTimer) clearTimeout(autoSaveTimer);
+    autoSaveTimer = setTimeout(() => {
+        if (!state.currentNoteId) return;
+        const nb = state.notebooks[state.activeNotebook];
+        if (!nb) return;
+        const notes = nb.notes || [];
+        const note = notes.find(n => n.id === state.currentNoteId);
+        if (!note) return;
+
+        const fd = getFormData();
+        note.chapter = fd.chapter;
+        note.mainField = fd.mainField;
+        note.knowledgeAnalysis = fd.knowledgeAnalysis;
+        note.extendedAnalysis = fd.extendedAnalysis;
+        flushData();
+    }, 1000); // Auto-save after 1 second of inactivity
+}
 
 export function clearForm(keepChapter) {
     state.currentNoteId = null;

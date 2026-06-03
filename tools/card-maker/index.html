@@ -51,7 +51,7 @@
                         <div class="cm-form-card">
                             <div class="flex-between" style="margin-bottom:8px;">
                                 <span id="cmFormTitle" class="cm-form-title">✍️ 新建笔记</span>
-                                <button class="btn btn-secondary btn-xs" data-action="cm-quick-paste">📋 快速填入</button>
+                                <button class="btn btn-secondary btn-xs" data-action="cm-quick-paste">🤖 AI 填入</button>
                             </div>
 
                             <!-- Chapter -->
@@ -108,31 +108,41 @@
             </div>
         </div>
 
-        <!-- Quick Paste Modal -->
+        <!-- AI Fill Modal -->
         <div class="cm-modal-overlay hidden" id="cmPasteModal">
-            <div class="cm-modal cm-modal-box">
+            <div class="cm-modal cm-modal-box" style="max-width:600px;">
                 <div class="cm-modal-header">
-                    <h3 class="cm-modal-title">📋 快速填入</h3>
+                    <h3 class="cm-modal-title">🤖 AI 填入</h3>
                     <div class="help-icon" title="">❓
                         <div class="help-tooltip">
-                            <div class="help-step">① 点击「复制提示词」复制到剪切板</div>
-                            <div class="help-step">② 粘贴到任意 AI 对话（如豆包、Kimi、ChatGPT）</div>
-                            <div class="help-step">③ 复制 AI 返回的 JSON 结果</div>
-                            <div class="help-step">④ 粘贴到下方输入框，点击「解析填入」</div>
+                            <div class="help-step">① 输入要解析的内容（如一段知识点）</div>
+                            <div class="help-step">② 点击「复制提示词」或「AI 解析」</div>
+                            <div class="help-step">③ 将 AI 返回的 JSON 粘贴到下方</div>
+                            <div class="help-step">④ 点击「填入表单」自动填充</div>
                         </div>
                     </div>
                 </div>
-                <p class="cm-modal-desc">粘贴 AI 返回的 JSON 自动填入表单</p>
+                <p class="cm-modal-desc">输入内容后复制提示词给 AI，再粘贴 JSON 结果填入表单</p>
 
-                <textarea id="cmPasteInput" rows="10" class="cm-modal-input" placeholder='在此粘贴 AI 返回的 JSON...
+                <!-- Input for content to send to AI -->
+                <div class="field">
+                    <label>📝 输入内容（发送给 AI 的原始文本）</label>
+                    <textarea id="cmAIContent" rows="6" class="cm-modal-input" placeholder="粘贴要解析的内容，如一段知识点...
 
-示例：
-{
+例如：
+麻黄汤出自《伤寒论》，由麻黄、桂枝、杏仁、甘草组成，具有发汗解表、宣肺平喘的功效..."></textarea>
+                </div>
+
+                <!-- JSON result from AI -->
+                <div class="field">
+                    <label>📋 AI 返回的 JSON（粘贴到此处）</label>
+                    <textarea id="cmPasteInput" rows="6" class="cm-modal-input" placeholder='{
   "主字段": "麻黄汤",
   "章节": "方剂学::解表剂::辛温解表",
   "知识解析": { "组成": "麻黄、桂枝、杏仁、甘草", "功用": "发汗解表" },
   "拓展解析": { "方歌": "麻黄汤中用桂枝" }
 }'></textarea>
+                </div>
 
                 <div class="cm-ai-status hidden" id="cmAIStatus"></div>
 
@@ -143,7 +153,7 @@
                     </div>
                     <div class="flex-row">
                         <button class="btn btn-secondary btn-sm" id="cmPasteCancel">取消</button>
-                        <button class="btn btn-primary btn-sm" id="cmPasteApply">解析填入</button>
+                        <button class="btn btn-primary btn-sm" id="cmPasteApply">填入表单</button>
                     </div>
                 </div>
             </div>

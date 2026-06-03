@@ -5,7 +5,7 @@ import { activeNotes, nbMeta, flushData, saveDraft, loadDraft, clearDraft } from
 import { genId } from './utils.js';
 import { buildChapterTree } from './tree.js';
 import { renderAll } from './render.js';
-import { clearForm, loadForm, getFormData, addSubfield, removeSubfield } from './form.js';
+import { clearForm, loadForm, getFormData, addSubfield, removeSubfield, autoSaveForm } from './form.js';
 import { updatePreview } from './preview.js';
 import { showQuickPaste, hideQuickPaste, applyQuickPaste } from './paste.js';
 import { aiParse, copyPrompt, showSettings, hideSettings, saveSettings, testConnection, showBatchModal, hideBatchModal, copyBatchPrompt, batchAIParse, applyBatchImport } from './ai.js';
@@ -130,13 +130,13 @@ export function setupEvents() {
     });
 
     // Chapter input
-    on('#cmInputChapter', 'input', () => { renderAll(); });
+    on('#cmInputChapter', 'input', () => { renderAll(); autoSaveForm(); });
     on('#cmInputChapter', 'blur', () => { renderAll(); });
 
-    // Form change → auto-save draft
+    // Form change → auto-save
     const formEls = rootEl.querySelectorAll('#cmInputChapter, #cmInputMain');
     formEls.forEach(el => el.addEventListener('input', () => {
-        if (state.currentNoteId) saveDraft(getFormData());
+        autoSaveForm();
     }));
 
     // Keyboard
@@ -145,12 +145,13 @@ export function setupEvents() {
         if ((e.ctrlKey || e.metaKey) && e.key === 'n') { e.preventDefault(); clearForm(false); rootEl.querySelector('#cmInputMain')?.focus(); }
     });
 
-    // Auto-preview on form input (debounced)
+    // Auto-preview and auto-save on form input (debounced)
     let previewTimer;
     rootEl.addEventListener('input', e => {
         if (e.target.closest('#cmInputChapter, #cmInputMain, .cm-sf-name, .cm-sf-content')) {
             clearTimeout(previewTimer);
             previewTimer = setTimeout(updatePreview, 300);
+            autoSaveForm();
         }
     });
     rootEl.addEventListener('blur', e => {
