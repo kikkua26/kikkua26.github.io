@@ -24,7 +24,7 @@ export function renderAll() {
         treeEl.innerHTML = '<div class="cm-empty"><div class="cm-empty-icon">📝</div><p>暂无笔记</p><p style="font-size:12px;">新建笔记或导入CSV开始使用</p></div>';
     } else {
         let html = '';
-        for (let i = 0; i < tree.notes.length; i++) html += renderNoteNode(tree.notes[i], 0, (i + 1) + '.');
+        for (let i = 0; i < tree.notes.length; i++) html += renderNoteNode(tree.notes[i], 0);
         const rootKeys = Object.keys(tree.children);
         for (let i = 0; i < rootKeys.length; i++) html += renderChapterNode(tree.children[rootKeys[i]], 0, '', (i + 1) + '.');
         treeEl.innerHTML = html;
@@ -61,7 +61,7 @@ export function renderChapterNode(node, depth, parentPath, numPrefix) {
     h += `<span class="cm-empty-hint">${node.isEmpty && cnt === 0 ? '空' : ''}</span>`;
     h += `</div></div>`;
     h += `<div class="cm-children${expanded ? ' expanded' : ''}" data-children="${esc(node.fullPath)}">`;
-    for (let i = 0; i < node.notes.length; i++) h += renderNoteNode(node.notes[i], depth + 1, numPrefix ? myNum : (i + 1) + '.');
+    for (let i = 0; i < node.notes.length; i++) h += renderNoteNode(node.notes[i], depth + 1, '');
     for (let i = 0; i < sortedKeys.length; i++) {
         const childNum = myNum ? myNum + (i + 1) + '.' : (i + 1) + '.';
         h += renderChapterNode(node.children[sortedKeys[i]], depth + 1, node.fullPath, childNum);
@@ -70,17 +70,16 @@ export function renderChapterNode(node, depth, parentPath, numPrefix) {
     return h;
 }
 
-export function renderNoteNode(note, depth, numPrefix) {
+export function renderNoteNode(note, depth) {
     const active = state.currentNoteId === note.id ? ' active' : '';
     const checked = state.batchSet.has(note.id);
     const label = note.mainField || '(未命名)';
-    const num = numPrefix ? numPrefix + ' ' : '';
     return `<div class="cm-note" data-note-id="${note.id}" data-chapter="${esc(note.chapter || '')}" draggable="true">
         <div class="cm-tree-row${active}" style="padding-left:${8 + depth * 12 + 10}px;" data-action="note-click" data-note-id="${note.id}" oncontextmenu="return false;">
             ${state.batchMode ? `<input type="checkbox" class="cm-check" data-action="batch-check" data-note-id="${note.id}" ${checked ? 'checked' : ''}>` : ''}
             <span class="cm-toggle" style="visibility:hidden;">▶</span>
             <span class="cm-icon">📄</span>
-            <span class="cm-label">${esc(num + label)}</span>
+            <span class="cm-label">${esc(label)}</span>
         </div>
     </div>`;
 }
