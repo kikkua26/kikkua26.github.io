@@ -124,18 +124,17 @@
                         </div>
                     </div>
                 </div>
-                <p class="cm-modal-desc">粘贴文本内容，使用 AI 解析或手动填入</p>
+                <p class="cm-modal-desc">粘贴 AI 返回的 JSON 自动填入表单</p>
 
-                <textarea id="cmPasteInput" rows="10" class="cm-modal-input" placeholder="在此粘贴 AI 返回的 JSON 或结构化文本...
+                <textarea id="cmPasteInput" rows="10" class="cm-modal-input" placeholder='在此粘贴 AI 返回的 JSON...
 
-示例格式：
-主字段：麻黄汤
-章节：方剂学::解表剂
-知识解析
-组成：麻黄、桂枝、杏仁、甘草
-功用：发汗解表，宣肺平喘
-拓展解析
-方歌：麻黄汤中用桂枝"></textarea>
+示例：
+{
+  "主字段": "麻黄汤",
+  "章节": "方剂学::解表剂::辛温解表",
+  "知识解析": { "组成": "麻黄、桂枝、杏仁、甘草", "功用": "发汗解表" },
+  "拓展解析": { "方歌": "麻黄汤中用桂枝" }
+}'></textarea>
 
                 <div class="cm-ai-status hidden" id="cmAIStatus"></div>
 
@@ -146,7 +145,7 @@
                     </div>
                     <div class="flex-row">
                         <button class="btn btn-secondary btn-sm" id="cmPasteCancel">取消</button>
-                        <button class="btn btn-primary btn-sm" id="cmPasteApply">解析并填入</button>
+                        <button class="btn btn-primary btn-sm" id="cmPasteApply">解析填入</button>
                     </div>
                 </div>
             </div>

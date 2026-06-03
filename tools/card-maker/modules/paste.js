@@ -25,33 +25,17 @@ export function applyQuickPaste() {
     if (!text) { import('./utils.js').then(m => m.toast('请粘贴内容', 'error')); return; }
 
     let data;
-    try { data = JSON.parse(text); if (typeof data === 'object' && !Array.isArray(data)) { parseDataObject(data); hideQuickPaste(); return; } } catch {}
-
-    const lines = text.split(/[\n\r]+/).map(l => l.trim()).filter(Boolean);
-    let chapter = '', mainField = '';
-    const knowledge = [], extended = [];
-    let mode = 'top';
-
-    for (const line of lines) {
-        if (/^知识解析[：:]?\s*$/.test(line)) { mode = 'knowledge'; continue; }
-        if (/^拓展解析[：:]?\s*$/.test(line) || /^知识拓展[：:]?\s*$/.test(line)) { mode = 'extended'; continue; }
-        const m = line.match(/^(.+?)[：:]\s*(.*)$/);
-        if (m) {
-            const key = m[1].trim(), val = m[2].trim();
-            if (!val) continue;
-            if (/^(主字段|知识名称|Front|标题)$/.test(key)) { mainField = val; }
-            else if (/^(章节|Chapter|分类)$/.test(key)) { chapter = val; }
-            else if (mode === 'extended') { extended.push({ name: key, content: val }); }
-            else { knowledge.push({ name: key, content: val }); }
-            continue;
+    try {
+        data = JSON.parse(text);
+        if (typeof data === 'object' && !Array.isArray(data)) {
+            parseDataObject(data);
+            hideQuickPaste();
+            import('./utils.js').then(m => m.toast('已解析并填入', 'success'));
+            return;
         }
-        if (line.includes('::') && !chapter && mode === 'top') { chapter = line; continue; }
-        if (mode === 'top' && !mainField && !line.includes('：') && !line.includes(':')) { mainField = line; continue; }
-        if (line) knowledge.push({ name: '', content: line });
+    } catch {
+        import('./utils.js').then(m => m.toast('JSON 格式错误，请检查', 'error'));
     }
-    fillFormFromParsed({ chapter, mainField, knowledge, extended });
-    hideQuickPaste();
-    import('./utils.js').then(m => m.toast(`已填入${mainField ? '：' + mainField : ''} | ${knowledge.filter(f=>f.name||f.content).length + extended.filter(f=>f.name||f.content).length}条字段`, 'success'));
 }
 
 export function parseDataObject(obj) {
