@@ -40,7 +40,7 @@ export function applyQuickPaste() {
             import('./utils.js').then(m => m.toast('已解析并填入', 'success'));
             return;
         }
-        import('./utils.js').then(m => m.toast('JSON 格式错误：应为对象 {}", 'error'));
+        import('./utils.js').then(m => m.toast('JSON 格式错误：应为对象 {}', 'error'));
     } catch {
         import('./utils.js').then(m => m.toast('JSON 格式错误，请检查', 'error'));
     }
