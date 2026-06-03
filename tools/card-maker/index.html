@@ -51,7 +51,12 @@
                         <div class="cm-form-card">
                             <div class="flex-between" style="margin-bottom:8px;">
                                 <span id="cmFormTitle" class="cm-form-title">✍️ 新建笔记</span>
-                                <button class="btn btn-secondary btn-xs" data-action="cm-quick-paste">🤖 AI 填入</button>
+                                <div class="flex-row gap-sm">
+                                    <button class="btn btn-primary btn-xs" id="cmBtnSave">💾 保存</button>
+                                    <button class="btn btn-secondary btn-xs" id="cmBtnClear">🔄 清空</button>
+                                    <button class="btn btn-danger btn-xs hidden" id="cmBtnDelete">🗑 删除</button>
+                                    <button class="btn btn-secondary btn-xs" data-action="cm-quick-paste">🤖 AI</button>
+                                </div>
                             </div>
 
                             <!-- Chapter -->
@@ -84,13 +89,6 @@
                                 </div>
                                 <div id="cmExtendedFields"></div>
                                 <button class="cm-add-btn" data-action="add-extended">＋ 添加拓展解析字段</button>
-                            </div>
-
-                            <!-- Actions -->
-                            <div class="cm-form-actions">
-                                <button class="btn btn-primary btn-sm" id="cmBtnSave">💾 保存笔记</button>
-                                <button class="btn btn-secondary btn-sm" id="cmBtnClear">🔄 清空表单</button>
-                                <button class="btn btn-danger btn-sm hidden" id="cmBtnDelete">🗑 删除此笔记</button>
                             </div>
                         </div>
                     </div>
