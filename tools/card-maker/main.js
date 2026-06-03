@@ -29,7 +29,16 @@ function initCardMaker() {
 
     loadData();
     state.expandedChapters.clear();
+    // Expand all chapters that have notes
     for (const nb of Object.values(state.notebooks)) {
+        for (const note of (nb.notes || [])) {
+            if (note.chapter) {
+                const parts = note.chapter.split('::');
+                let acc = '';
+                for (const p of parts) { acc = acc ? acc + '::' + p : p; state.expandedChapters.add(acc); }
+            }
+        }
+        // Also expand manually added chapters
         for (const ch of (nb._chapters || [])) {
             const parts = ch.split('::');
             let acc = '';

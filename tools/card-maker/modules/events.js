@@ -354,7 +354,7 @@ function setupContextMenu() {
     const chapterMenu = rootEl.querySelector('#cmChapterMenu');
     let ctxChapterPath = '';
 
-    function hideChapterMenu() { if (chapterMenu) chapterMenu.style.display = 'none'; }
+    function hideChapterMenu() { if (chapterMenu) { chapterMenu.style.display = 'none'; chapterMenu.classList.add('hidden'); } }
     document.addEventListener('click', e => {
         if (!e.target.closest('#cmChapterMenu')) hideChapterMenu();
     });
@@ -393,6 +393,7 @@ function setupContextMenu() {
             return `<div class="cm-ctx-item${m.danger?' cm-ctx-danger':''}" data-cm-action="${m.action}"${noteIdAttr}>${m.label}</div>`;
         }).join('');
 
+        chapterMenu.classList.remove('hidden');
         chapterMenu.style.display = 'block';
         chapterMenu.style.left = Math.min(e.clientX, window.innerWidth - 160) + 'px';
         chapterMenu.style.top = Math.min(e.clientY, window.innerHeight - 220) + 'px';
