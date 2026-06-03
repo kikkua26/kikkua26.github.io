@@ -133,6 +133,14 @@ body {
 .cm-modal-actions.end { justify-content: flex-end; }
 .cm-ai-btn { color: var(--accent); }
 
+/* ── AI Guide ── */
+.ai-guide { background: var(--bg); border-radius: 8px; padding: 12px; margin-bottom: 12px; }
+.ai-guide-step { font-size: 12px; color: var(--text2); padding: 3px 0; }
+.ai-guide-step::before { content: ''; display: inline-block; width: 6px; height: 6px; background: var(--accent); border-radius: 50%; margin-right: 8px; vertical-align: middle; }
+.cm-ai-status { padding: 8px 12px; border-radius: 6px; font-size: 12px; margin-top: 8px; }
+.cm-ai-status.success { background: rgba(107,143,114,.1); color: var(--green); }
+.cm-ai-status.error { background: rgba(197,83,44,.1); color: var(--accent); }
+
 /* ── Settings Modal ── */
 .settings-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
 .btn-close { background: none; border: none; font-size: 18px; cursor: pointer; color: var(--text3); padding: 4px; }

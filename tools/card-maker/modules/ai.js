@@ -175,7 +175,63 @@ export async function testConnection() {
 }
 
 // ═══════════════════════════════════════
-// AI Parse
+// Copy Prompt (no API needed)
+// ═══════════════════════════════════════
+
+const SYSTEM_PROMPT = `你是一个知识卡片结构化助手。将用户输入的文本解析为JSON格式（只输出JSON，不要任何其他文字）。
+
+{
+  "主字段": "核心知识点名称（不超过20字）",
+  "章节": "学科::大类::小类（用::分隔层级，无法推断则留空）",
+  "知识解析": { "要点1": "内容", "要点2": "内容" },
+  "拓展解析": { "补充1": "内容" }
+}
+
+规则：
+- 主字段提取最核心的知识点名称
+- 章节推断学科归属，用::分隔（如 方剂学::解表剂::辛温解表）
+- 知识解析提取3-5个关键概念/定义/组成/功效，字段名不超过8字
+- 拓展解析提取1-3个补充信息（方歌/口诀/鉴别/举例/注意事项）
+- 兼容多种输入格式：自由文本/教材段落/已标注字段/表格数据
+- 空字段用空字符串""，不要写"无"或"暂无"`;
+
+export async function copyPrompt() {
+    const input = rootEl.querySelector('#cmPasteInput');
+    const content = input?.value?.trim();
+
+    // If there's content, use it as user message; otherwise use a template
+    const userMsg = content || '请在此粘贴你要解析的知识内容...';
+    const fullPrompt = `[System]\n${SYSTEM_PROMPT}\n\n[User]\n${userMsg}`;
+
+    try {
+        await navigator.clipboard.writeText(fullPrompt);
+        showAIStatus('success', '✅ 已复制到剪切板！请粘贴到 AI 对话中');
+    } catch {
+        // Fallback for older browsers
+        const ta = document.createElement('textarea');
+        ta.value = fullPrompt;
+        ta.style.cssText = 'position:fixed;left:-9999px;';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        ta.remove();
+        showAIStatus('success', '✅ 已复制到剪切板！请粘贴到 AI 对话中');
+    }
+}
+
+function showAIStatus(type, msg) {
+    const el = rootEl.querySelector('#cmAIStatus');
+    if (!el) return;
+    el.textContent = msg;
+    el.className = 'cm-ai-status ' + type;
+    el.classList.remove('hidden');
+    if (type === 'success') {
+        setTimeout(() => el.classList.add('hidden'), 3000);
+    }
+}
+
+// ═══════════════════════════════════════
+// AI Parse (with API)
 // ═══════════════════════════════════════
 
 export async function aiParse() {
@@ -192,7 +248,7 @@ export async function aiParse() {
     const config = AI_PROVIDERS[provider];
 
     if (!apiKey) {
-        toast('请先在设置中配置 AI', 'error');
+        toast('请先在设置中配置 AI，或使用「复制提示词」功能', 'error');
         return;
     }
 

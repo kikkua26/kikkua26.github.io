@@ -8,7 +8,7 @@ import { renderAll } from './render.js';
 import { clearForm, loadForm, getFormData, addSubfield, removeSubfield } from './form.js';
 import { updatePreview } from './preview.js';
 import { showQuickPaste, hideQuickPaste, applyQuickPaste } from './paste.js';
-import { aiParse, showSettings, hideSettings, saveSettings, testConnection } from './ai.js';
+import { aiParse, copyPrompt, showSettings, hideSettings, saveSettings, testConnection } from './ai.js';
 import { importCSV, exportCSV } from './csv.js';
 import { toast } from './utils.js';
 
@@ -164,6 +164,7 @@ export function setupEvents() {
     on('#cmPasteCancel', 'click', hideQuickPaste);
     on('#cmPasteApply', 'click', applyQuickPaste);
     on('#cmAiParse', 'click', aiParse);
+    on('#cmCopyPrompt', 'click', copyPrompt);
     rootEl.querySelector('#cmPasteModal')?.addEventListener('click', e => { if (e.target === e.currentTarget) hideQuickPaste(); });
     rootEl.querySelector('#cmBatchDirModal')?.addEventListener('click', e => { if (e.target === e.currentTarget) { const m = rootEl.querySelector('#cmBatchDirModal'); if (m) m.style.display = 'none'; } });
 
