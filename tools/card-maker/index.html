@@ -54,13 +54,20 @@
                 <div class="cm-content-split">
                     <div class="cm-content-scroll" id="cmContentScroll">
                         <div class="cm-form-card">
-                            <div class="flex-between" style="margin-bottom:8px;">
-                                <span id="cmFormTitle" class="cm-form-title">✍️ 新建笔记</span>
-                                <div class="flex-row gap-sm">
-                                    <button class="btn btn-primary btn-xs" id="cmBtnSave">💾 保存</button>
-                                    <button class="btn btn-secondary btn-xs" id="cmBtnClear">🔄 清空</button>
-                                    <button class="btn btn-danger btn-xs hidden" id="cmBtnDelete">🗑 删除</button>
-                                    <button class="btn btn-secondary btn-xs" data-action="cm-quick-paste">🤖 AI</button>
+                            <!-- Form Header -->
+                            <div class="cm-form-header">
+                                <div class="cm-form-header-left">
+                                    <span class="cm-form-icon">📝</span>
+                                    <div>
+                                        <span id="cmFormTitle" class="cm-form-title">新建笔记</span>
+                                        <span class="cm-form-hint" id="cmFormHint">填写信息后保存</span>
+                                    </div>
+                                </div>
+                                <div class="cm-form-header-right">
+                                    <button class="btn btn-ghost btn-xs" data-action="cm-quick-paste" title="AI 解析填入">🤖 AI</button>
+                                    <button class="btn btn-ghost btn-xs" id="cmBtnClear" title="清空表单">清空</button>
+                                    <button class="btn btn-ghost btn-xs hidden" id="cmBtnDelete" title="删除笔记">🗑 删除</button>
+                                    <button class="btn btn-primary btn-xs" id="cmBtnSave" title="保存 (Ctrl+S)">💾 保存</button>
                                 </div>
                             </div>
 
@@ -98,11 +105,11 @@
                         </div>
                     </div>
 
-                    <!-- Preview panel (always visible) -->
+                    <!-- Preview panel -->
                     <div class="cm-preview-panel">
-                        <div class="flex-between" style="margin-bottom:6px;">
-                            <h3 class="cm-preview-header">🎴 卡片预览（背面）</h3>
-                            <span class="cm-preview-hint">实时渲染</span>
+                        <div class="cm-preview-header">
+                            <span class="cm-preview-title">🎴 卡片预览</span>
+                            <span class="cm-preview-badge">实时</span>
                         </div>
                         <div class="cm-preview-info" id="cmPreviewInfo">加载中...</div>
                         <iframe id="cmPreviewFrame" class="cm-preview-frame"></iframe>
