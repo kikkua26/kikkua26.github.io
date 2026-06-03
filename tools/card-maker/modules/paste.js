@@ -21,18 +21,26 @@ export function hideQuickPaste() { const m = rootEl.querySelector('#cmPasteModal
 export function applyQuickPaste() {
     const input = rootEl.querySelector('#cmPasteInput');
     if (!input) return;
-    const text = input.value.trim();
+    let text = input.value.trim();
     if (!text) { import('./utils.js').then(m => m.toast('请粘贴内容', 'error')); return; }
+
+    // Clean AI artifacts like [reference:X]
+    text = text.replace(/\[reference:\d+\]/g, '');
 
     let data;
     try {
         data = JSON.parse(text);
-        if (typeof data === 'object' && !Array.isArray(data)) {
+        // Accept object or array (take first item)
+        if (Array.isArray(data) && data.length > 0) {
+            data = data[0];
+        }
+        if (typeof data === 'object' && data !== null) {
             parseDataObject(data);
             hideQuickPaste();
             import('./utils.js').then(m => m.toast('已解析并填入', 'success'));
             return;
         }
+        import('./utils.js').then(m => m.toast('JSON 格式错误：应为对象 {}", 'error'));
     } catch {
         import('./utils.js').then(m => m.toast('JSON 格式错误，请检查', 'error'));
     }

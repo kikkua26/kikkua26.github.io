@@ -182,7 +182,7 @@ export async function testConnection() {
 
 const SYSTEM_PROMPT = `你是一个知识卡片结构化助手。根据用户输入的内容，提取并整理为JSON格式。
 
-输出格式：
+输出格式（严格只输出这个JSON对象，不要任何其他文字）：
 {
   "主字段": "核心知识点名称",
   "章节": "学科::大类::小类",
@@ -191,13 +191,14 @@ const SYSTEM_PROMPT = `你是一个知识卡片结构化助手。根据用户输
 }
 
 规则：
+- 严格只输出JSON，禁止输出任何解释、说明、引用标记（如[reference:X]）、markdown代码块标记
 - 如果用户提供了章节信息则保留，否则根据内容推断
 - 知识解析：全面覆盖该知识点的核心内容（定义、组成、功效、主治、方解、用法等），字段名自行拟定
 - 拓展解析：全面覆盖补充信息（方歌、口诀、鉴别、注意事项、现代研究等），字段名控制在2个字
 - 如果用户指定了字段，按用户要求的字段来组织，并尽量补充相关知识
 - 内容应来源于权威教材、文献，确保准确完整
 - 确保知识覆盖全面，不遗漏重要内容
-- 只输出JSON，不要其他文字`;
+- 内容中不要包含任何引用标记或来源标注`;
 
 export async function copyPrompt() {
     const contentInput = rootEl.querySelector('#cmAIContent');
@@ -243,7 +244,7 @@ function showAIStatus(type, msg) {
 
 const BATCH_SYSTEM_PROMPT = `你是一个知识卡片批量结构化助手。根据用户输入的内容，提取并整理为JSON数组格式。
 
-输出格式：
+输出格式（严格只输出这个JSON数组，不要任何其他文字）：
 [
   {
     "章节": "学科::大类::小类",
@@ -254,6 +255,7 @@ const BATCH_SYSTEM_PROMPT = `你是一个知识卡片批量结构化助手。根
 ]
 
 规则：
+- 严格只输出JSON数组，禁止输出任何解释、说明、引用标记（如[reference:X]）、markdown代码块标记
 - 每个独立知识点一个对象
 - 如果用户提供了章节信息则保留，否则根据内容推断
 - 知识解析：全面覆盖该知识点的核心内容，字段名自行拟定
@@ -261,7 +263,7 @@ const BATCH_SYSTEM_PROMPT = `你是一个知识卡片批量结构化助手。根
 - 如果用户指定了字段，按用户要求的字段来组织，并尽量补充相关知识
 - 内容应来源于权威教材、文献，确保准确完整
 - 确保所有知识点覆盖全面，不遗漏重要内容
-- 只输出JSON数组，不要其他文字`;
+- 内容中不要包含任何引用标记或来源标注`;
 
 export function showBatchModal() {
     const modal = rootEl.querySelector('#cmBatchModal');
@@ -335,18 +337,21 @@ export async function batchAIParse() {
 export function applyBatchImport() {
     const input = rootEl.querySelector('#cmBatchInput');
     if (!input) return;
-    const text = input.value.trim();
+    let text = input.value.trim();
     if (!text) {
         showBatchStatus('error', '请粘贴 AI 返回的 JSON');
         return;
     }
 
+    // Clean AI artifacts like [reference:X]
+    text = text.replace(/\[reference:\d+\]/g, '');
+
     let data;
     try {
         data = JSON.parse(text);
+        // Accept object (wrap in array) or array
         if (!Array.isArray(data)) {
-            showBatchStatus('error', 'JSON 格式错误：应为数组 []');
-            return;
+            data = [data];
         }
     } catch {
         showBatchStatus('error', 'JSON 格式错误，请检查');
@@ -477,8 +482,16 @@ async function callAI(text, apiKey, providerKey, model) {
     });
     if (!resp.ok) { const err = await resp.json().catch(() => ({})); throw new Error(err.error?.message || `HTTP ${resp.status}`); }
     const data = await resp.json();
-    const content = data.choices?.[0]?.message?.content || '';
-    const m = content.match(/\{[\s\S]*\}/);
+    let content = data.choices?.[0]?.message?.content || '';
+
+    // Clean AI artifacts
+    content = content.replace(/\[reference:\d+\]/g, '');
+    content = content.replace(/```json\s*/g, '').replace(/```\s*/g, '');
+
+    // Try to extract JSON object or array
+    const objMatch = content.match(/\{[\s\S]*\}/);
+    const arrMatch = content.match(/\[[\s\S]*\]/);
+    const m = objMatch || arrMatch;
     if (!m) throw new Error('AI 未返回有效的 JSON');
     return JSON.parse(m[0]);
 }
