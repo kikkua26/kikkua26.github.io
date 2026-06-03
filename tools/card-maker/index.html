@@ -113,16 +113,18 @@
         <!-- Quick Paste Modal -->
         <div class="cm-modal-overlay hidden" id="cmPasteModal">
             <div class="cm-modal cm-modal-box">
-                <h3 class="cm-modal-title">📋 快速填入</h3>
-                <p class="cm-modal-desc">粘贴文本内容，使用 AI 解析或手动填入</p>
-
-                <!-- AI Guide -->
-                <div class="ai-guide" id="cmAIGuide">
-                    <div class="ai-guide-step">① 点击「复制提示词」复制到剪切板</div>
-                    <div class="ai-guide-step">② 粘贴到任意 AI 对话（如豆包、Kimi、ChatGPT 等）</div>
-                    <div class="ai-guide-step">③ 复制 AI 返回的 JSON 结果，粘贴到下方输入框</div>
-                    <div class="ai-guide-step">④ 点击「解析填入」自动填充表单</div>
+                <div class="cm-modal-header">
+                    <h3 class="cm-modal-title">📋 快速填入</h3>
+                    <div class="help-icon" title="">❓
+                        <div class="help-tooltip">
+                            <div class="help-step">① 点击「复制提示词」复制到剪切板</div>
+                            <div class="help-step">② 粘贴到任意 AI 对话（如豆包、Kimi、ChatGPT）</div>
+                            <div class="help-step">③ 复制 AI 返回的 JSON 结果</div>
+                            <div class="help-step">④ 粘贴到下方输入框，点击「解析填入」</div>
+                        </div>
+                    </div>
                 </div>
+                <p class="cm-modal-desc">粘贴文本内容，使用 AI 解析或手动填入</p>
 
                 <textarea id="cmPasteInput" rows="10" class="cm-modal-input" placeholder="在此粘贴 AI 返回的 JSON 或结构化文本...
 
