@@ -246,12 +246,13 @@ export function setupEvents() {
     setupContextMenu();
 
     // Batch directory import
-    on('#cmBtnAddRoot', 'click', () => {
+       on('#cmBtnAddRoot', 'click', () => {
         const modal = rootEl.querySelector('#cmBatchDirModal');
         const input = rootEl.querySelector('#cmBatchDirInput');
-        if (modal && input) { modal.style.display = 'flex'; input.value = ''; input.focus(); }
+        if (modal && input) { modal.classList.remove('hidden'); modal.style.display = 'flex'; input.value = ''; input.focus(); }
     });
-    on('#cmBatchDirCancel', 'click', () => { const m = rootEl.querySelector('#cmBatchDirModal'); if (m) m.style.display = 'none'; });
+
+    on('#cmBatchDirCancel', 'click', () => { const m = rootEl.querySelector('#cmBatchDirModal'); if (m) { m.style.display = 'none'; m.classList.add('hidden'); } });
     on('#cmBatchDirApply', 'click', () => {
         const input = rootEl.querySelector('#cmBatchDirInput');
         if (!input || !input.value.trim()) return;
@@ -278,7 +279,7 @@ export function setupEvents() {
             state.expandedChapters.add(fullPath);
         }
         flushData(); renderAll();
-        const m = rootEl.querySelector('#cmBatchDirModal'); if (m) m.style.display = 'none';
+        const m = rootEl.querySelector('#cmBatchDirModal'); if (m) { m.style.display = 'none'; m.classList.add('hidden'); }
         toast(`已导入 ${added} 个目录`, 'success');
     });
 
