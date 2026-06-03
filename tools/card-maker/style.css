@@ -61,6 +61,7 @@ body {
 .cm-tree-row { display: flex; align-items: center; padding: 6px 10px; margin: 1px 6px; border-radius: 6px; cursor: pointer; gap: 5px; font-size: 13px; transition: background .12s; }
 .cm-tree-row:hover { background: var(--bg); }
 .cm-tree-row.active { background: var(--accent-bg); color: var(--accent); font-weight: 600; }
+.cm-tree-row.cm-active-chapter { background: rgba(13,148,136,.06); border-left: 2px solid var(--accent); }
 .cm-toggle { width: 16px; height: 16px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 9px; color: var(--text3); transition: transform .2s; }
 .cm-toggle.expanded { transform: rotate(90deg); }
 .cm-icon { flex-shrink: 0; font-size: 14px; width: 18px; text-align: center; }

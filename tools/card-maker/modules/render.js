@@ -30,8 +30,6 @@ export function renderAll() {
         treeEl.innerHTML = html;
     }
 
-    renderChapterTags(notes);
-
     const sel = rootEl.querySelector('#cmNotebook');
     if (sel) {
         sel.innerHTML = Object.keys(state.notebooks).map(n => `<option value="${esc(n)}"${n === state.activeNotebook ? ' selected' : ''}>📓 ${esc(n)}</option>`).join('');
@@ -50,8 +48,12 @@ export function renderChapterNode(node, depth, parentPath, numPrefix) {
     const myNum = numPrefix || '';
     const label = myNum ? myNum + ' ' + node.name : node.name;
 
+    // Check if this chapter contains the active note
+    const activeNote = state.currentNoteId ? (state.notebooks[state.activeNotebook]?.notes || []).find(n => n.id === state.currentNoteId) : null;
+    const isActiveChapter = activeNote && (activeNote.chapter === node.fullPath || activeNote.chapter?.startsWith(node.fullPath + '::'));
+
     let h = `<div class="cm-chapter" data-path="${esc(node.fullPath)}" data-parent="${esc(parentPath || '')}" draggable="true">`;
-    h += `<div class="cm-tree-row${emptyClass}" style="padding-left:${8 + depth * 12}px;" data-action="chapter-click" data-path="${esc(node.fullPath)}" oncontextmenu="return false;">`;
+    h += `<div class="cm-tree-row${emptyClass}${isActiveChapter ? ' cm-active-chapter' : ''}" style="padding-left:${8 + depth * 12}px;" data-action="chapter-click" data-path="${esc(node.fullPath)}" oncontextmenu="return false;">`;
     h += `<span class="cm-toggle${hasKids ? (expanded ? ' expanded' : '') : ''}" data-action="chapter-toggle" data-path="${esc(node.fullPath)}">▶</span>`;
     h += `<span class="cm-icon">${node.isEmpty && cnt === 0 ? '📂' : '📁'}</span>`;
     h += `<span class="cm-label">${esc(label)}</span>`;
@@ -74,29 +76,11 @@ export function renderNoteNode(note, depth, numPrefix) {
     const label = note.mainField || '(未命名)';
     const num = numPrefix ? numPrefix + ' ' : '';
     return `<div class="cm-note" data-note-id="${note.id}" data-chapter="${esc(note.chapter || '')}" draggable="true">
-        <div class="cm-tree-row${active}" style="padding-left:${8 + depth * 12 + 16}px;" data-action="note-click" data-note-id="${note.id}" oncontextmenu="return false;">
+        <div class="cm-tree-row${active}" style="padding-left:${8 + depth * 12 + 10}px;" data-action="note-click" data-note-id="${note.id}" oncontextmenu="return false;">
             ${state.batchMode ? `<input type="checkbox" class="cm-check" data-action="batch-check" data-note-id="${note.id}" ${checked ? 'checked' : ''}>` : ''}
             <span class="cm-toggle" style="visibility:hidden;">▶</span>
             <span class="cm-icon">📄</span>
             <span class="cm-label">${esc(num + label)}</span>
         </div>
     </div>`;
-}
-
-export function renderChapterTags(notes) {
-    const el = rootEl.querySelector('#cmChapterTags');
-    if (!el) return;
-    const set = new Set();
-    for (const n of notes) {
-        const cp = (n.chapter || '').trim();
-        if (!cp) continue;
-        set.add(cp);
-        const parts = cp.split('::').filter(Boolean);
-        let acc = '';
-        for (const p of parts) { acc = acc ? acc + '::' + p : p; set.add(acc); }
-    }
-    const sorted = [...set].sort((a, b) => a.localeCompare(b, 'zh-CN')).slice(0, 15);
-    const cur = (rootEl.querySelector('#cmInputChapter')?.value || '').trim();
-    el.innerHTML = sorted.map(p => `<span class="cm-tag${p === cur ? ' active' : ''}" data-action="tag-click" data-path="${esc(p)}">${esc(p)}</span>`).join('')
-        + (set.size > 15 ? `<span style="font-size:11px;color:var(--text3);">...共${set.size}个</span>` : '');
 }
