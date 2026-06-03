@@ -53,17 +53,28 @@ export async function parseApkg(file) {
     const models = JSON.parse(result[0].values[0][0]);
     const modelKeys = Object.keys(models);
 
-    // 查找 kikkua 模板
+    // 查找 kikkua Pro+ 智能卡片模板
     let foundModel = null;
     for (const key of modelKeys) {
         const m = models[key];
-        if (m.name && (m.name.includes('kikkua') || m.name.includes('卡片'))) {
+        if (m.name && m.name.includes('kikkua Pro')) {
             foundModel = m;
             break;
         }
     }
 
-    // 如果没找到 kikkua 模板，使用第一个模板
+    // 如果没找到，尝试模糊匹配
+    if (!foundModel) {
+        for (const key of modelKeys) {
+            const m = models[key];
+            if (m.name && (m.name.includes('kikkua') || m.name.includes('智能卡片'))) {
+                foundModel = m;
+                break;
+            }
+        }
+    }
+
+    // 如果还是没找到，使用第一个模板
     if (!foundModel && modelKeys.length > 0) {
         foundModel = models[modelKeys[0]];
     }
