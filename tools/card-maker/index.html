@@ -19,6 +19,7 @@
             <button class="btn btn-primary btn-sm" id="cmBtnNew">＋ 新建笔记</button>
             <button class="btn btn-secondary btn-sm" id="cmBtnToggleBatch">☑ 批量</button>
             <button class="btn btn-danger btn-sm hidden" id="cmBtnBatch">🗑 删除选中</button>
+            <button class="btn btn-secondary btn-sm" id="cmBtnBatchImport" title="AI 批量制作">🤖 批量</button>
             <span class="flex-1"></span>
             <span class="cm-status-text" id="cmStatus">就绪</span>
             <button class="btn btn-secondary btn-sm" id="cmBtnSettings" title="AI 设置">⚙️ AI</button>
@@ -170,6 +171,61 @@
                 <div class="cm-modal-actions end">
                     <button class="btn btn-secondary btn-sm" id="cmBatchDirCancel">取消</button>
                     <button class="btn btn-primary btn-sm" id="cmBatchDirApply">导入</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Batch Import Modal -->
+        <div class="cm-modal-overlay hidden" id="cmBatchModal">
+            <div class="cm-modal cm-modal-box" style="max-width:600px;">
+                <div class="cm-modal-header">
+                    <h3 class="cm-modal-title">🤖 AI 批量制作</h3>
+                    <div class="help-icon" title="">❓
+                        <div class="help-tooltip">
+                            <div class="help-step">① 输入要批量制作的内容（如一章的全部知识点）</div>
+                            <div class="help-step">② 点击「复制提示词」复制到剪切板</div>
+                            <div class="help-step">③ 粘贴到任意 AI 对话获取 JSON 结果</div>
+                            <div class="help-step">④ 复制 JSON 结果粘贴到下方输入框</div>
+                            <div class="help-step">⑤ 点击「批量导入」自动创建所有卡片</div>
+                        </div>
+                    </div>
+                </div>
+                <p class="cm-modal-desc">输入内容后复制提示词给 AI，再粘贴 JSON 结果批量导入</p>
+
+                <!-- Input for content to send to AI -->
+                <div class="field">
+                    <label>📝 输入内容（发送给 AI 的原始文本）</label>
+                    <textarea id="cmBatchContent" rows="6" class="cm-modal-input" placeholder="粘贴要批量制作的内容，如一章的所有知识点...
+
+例如：
+解表剂分为辛温解表和辛凉解表。
+辛温解表代表方：麻黄汤（麻黄、桂枝、杏仁、甘草）..."></textarea>
+                </div>
+
+                <!-- JSON result from AI -->
+                <div class="field">
+                    <label>📋 AI 返回的 JSON（粘贴到此处）</label>
+                    <textarea id="cmBatchInput" rows="8" class="cm-modal-input" placeholder='[
+  {
+    "章节": "解表剂::辛温解表",
+    "主字段": "麻黄汤",
+    "知识解析": { "组成": "麻黄、桂枝、杏仁、甘草", "功用": "发汗解表" },
+    "拓展解析": { "方歌": "麻黄汤中用桂枝" }
+  }
+]'></textarea>
+                </div>
+
+                <div class="cm-ai-status hidden" id="cmBatchStatus"></div>
+
+                <div class="cm-modal-actions">
+                    <div class="flex-row">
+                        <button class="btn btn-secondary btn-sm" id="cmBatchCopyPrompt">📋 复制提示词</button>
+                        <button class="btn btn-secondary btn-sm" id="cmBatchAIParse">🤖 AI 解析</button>
+                    </div>
+                    <div class="flex-row">
+                        <button class="btn btn-secondary btn-sm" id="cmBatchCancel">取消</button>
+                        <button class="btn btn-primary btn-sm" id="cmBatchApply">批量导入</button>
+                    </div>
                 </div>
             </div>
         </div>

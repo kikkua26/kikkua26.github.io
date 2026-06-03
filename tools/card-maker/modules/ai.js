@@ -1,8 +1,10 @@
 // kikkua · 制卡工具 — AI 集成（支持 DeepSeek + 小米 MiMo）
 
-import { rootEl } from './constants.js';
+import { state, rootEl } from './constants.js';
+import { flushData } from './data.js';
+import { genId, toast } from './utils.js';
+import { renderAll } from './render.js';
 import { parseDataObject, hideQuickPaste } from './paste.js';
-import { toast } from './utils.js';
 
 // AI Provider 配置
 const AI_PROVIDERS = {
@@ -227,6 +229,194 @@ function showAIStatus(type, msg) {
     el.classList.remove('hidden');
     if (type === 'success') {
         setTimeout(() => el.classList.add('hidden'), 3000);
+    }
+}
+
+// ═══════════════════════════════════════
+// Batch Import
+// ═══════════════════════════════════════
+
+const BATCH_SYSTEM_PROMPT = `你是一个知识卡片批量结构化助手。将用户输入的内容解析为JSON数组格式（只输出JSON，不要任何其他文字）。
+
+[
+  {
+    "章节": "学科::大类::小类（用::分隔层级，无法推断则留空）",
+    "主字段": "知识点名称（不超过20字）",
+    "知识解析": { "要点1": "内容", "要点2": "内容" },
+    "拓展解析": { "补充1": "内容" }
+  }
+]
+
+规则：
+- 每个知识点一个对象，输出为数组
+- 章节用::分隔层级
+- 知识解析提取3-5个关键概念/定义/组成/功效，字段名不超过8字
+- 拓展解析提取1-3个补充信息（方歌/口诀/鉴别/举例/注意事项）
+- 兼容多种输入格式：自由文本/教材段落/表格数据
+- 空字段用空字符串""，不要写"无"或"暂无"
+- 确保输出有效JSON格式`;
+
+export function showBatchModal() {
+    const modal = rootEl.querySelector('#cmBatchModal');
+    if (modal) modal.classList.remove('hidden');
+}
+
+export function hideBatchModal() {
+    const modal = rootEl.querySelector('#cmBatchModal');
+    if (modal) modal.classList.add('hidden');
+}
+
+export async function copyBatchPrompt() {
+    const contentInput = rootEl.querySelector('#cmBatchContent');
+    const content = contentInput?.value?.trim();
+    if (!content) {
+        showBatchStatus('error', '请先输入要批量制作的内容');
+        return;
+    }
+
+    const fullPrompt = `[System]\n${BATCH_SYSTEM_PROMPT}\n\n[User]\n${content}`;
+
+    try {
+        await navigator.clipboard.writeText(fullPrompt);
+        showBatchStatus('success', '✅ 已复制到剪切板！请粘贴到 AI 对话中');
+    } catch {
+        const ta = document.createElement('textarea');
+        ta.value = fullPrompt;
+        ta.style.cssText = 'position:fixed;left:-9999px;';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        ta.remove();
+        showBatchStatus('success', '✅ 已复制到剪切板！请粘贴到 AI 对话中');
+    }
+}
+
+export async function batchAIParse() {
+    const contentInput = rootEl.querySelector('#cmBatchContent');
+    const content = contentInput?.value?.trim();
+    if (!content) {
+        showBatchStatus('error', '请先输入要批量制作的内容');
+        return;
+    }
+
+    const provider = localStorage.getItem('kikkua_ai_provider') || 'deepseek';
+    const apiKey = localStorage.getItem('kikkua_ai_key') || '';
+    const model = localStorage.getItem('kikkua_ai_model') || AI_PROVIDERS[provider].defaultModel;
+
+    if (!apiKey) {
+        showBatchStatus('error', '请先在 AI 设置中配置 API Key');
+        return;
+    }
+
+    const btn = rootEl.querySelector('#cmBatchAIParse');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ AI 思考中...'; }
+
+    try {
+        const result = await callAI(content, apiKey, provider, model);
+        const jsonInput = rootEl.querySelector('#cmBatchInput');
+        if (jsonInput) {
+            jsonInput.value = JSON.stringify(result, null, 2);
+        }
+        showBatchStatus('success', '✅ AI 解析完成，请检查后点击「批量导入」');
+    } catch (e) {
+        showBatchStatus('error', '❌ AI 解析失败: ' + (e.message || '未知错误'));
+    }
+
+    if (btn) { btn.disabled = false; btn.textContent = '🤖 AI 解析'; }
+}
+
+export function applyBatchImport() {
+    const input = rootEl.querySelector('#cmBatchInput');
+    if (!input) return;
+    const text = input.value.trim();
+    if (!text) {
+        showBatchStatus('error', '请粘贴 AI 返回的 JSON');
+        return;
+    }
+
+    let data;
+    try {
+        data = JSON.parse(text);
+        if (!Array.isArray(data)) {
+            showBatchStatus('error', 'JSON 格式错误：应为数组 []');
+            return;
+        }
+    } catch {
+        showBatchStatus('error', 'JSON 格式错误，请检查');
+        return;
+    }
+
+    // Import notes
+    const nb = rootEl.querySelector ? state.notebooks[state.activeNotebook] : null;
+    if (!nb) return;
+    if (!nb.notes) nb.notes = [];
+    if (!nb._chapters) nb._chapters = [];
+    if (!nb._order) nb._order = {};
+
+    let addedNotes = 0;
+    let addedChapters = 0;
+
+    for (const item of data) {
+        if (!item['主字段']) continue;
+
+        const chapter = item['章节'] || '';
+        const mainField = item['主字段'];
+        const knowledgeAnalysis = item['知识解析'] ? serializeFields(item['知识解析']) : '';
+        const extendedAnalysis = item['拓展解析'] ? serializeFields(item['拓展解析']) : '';
+
+        // Add chapter if needed
+        if (chapter && !nb._chapters.includes(chapter)) {
+            nb._chapters.push(chapter);
+            addedChapters++;
+            // Add to order
+            const parts = chapter.split('::');
+            const parentPath = parts.length > 1 ? parts.slice(0, -1).join('::') : '';
+            const name = parts[parts.length - 1];
+            const orderKey = parentPath || '';
+            if (!nb._order[orderKey]) nb._order[orderKey] = [];
+            if (!nb._order[orderKey].includes(name)) nb._order[orderKey].push(name);
+            // Expand
+            let acc = '';
+            for (const p of parts) { acc = acc ? acc + '::' + p : p; state.expandedChapters.add(acc); }
+        }
+
+        // Add note
+        nb.notes.push({
+            id: genId(),
+            mainField,
+            chapter,
+            knowledgeAnalysis,
+            extendedAnalysis,
+        });
+        addedNotes++;
+    }
+
+    flushData();
+    renderAll();
+    hideBatchModal();
+
+    const parts = [];
+    if (addedChapters > 0) parts.push(`${addedChapters} 个目录`);
+    if (addedNotes > 0) parts.push(`${addedNotes} 条笔记`);
+    toast(`已导入 ${parts.join('、')}`, 'success');
+}
+
+function serializeFields(obj) {
+    if (typeof obj === 'string') return obj;
+    if (typeof obj === 'object') {
+        return Object.entries(obj).map(([k, v]) => `${k}::${v}`).join('<br>###');
+    }
+    return '';
+}
+
+function showBatchStatus(type, msg) {
+    const el = rootEl.querySelector('#cmBatchStatus');
+    if (!el) return;
+    el.textContent = msg;
+    el.className = 'cm-ai-status ' + type;
+    el.classList.remove('hidden');
+    if (type === 'success') {
+        setTimeout(() => el.classList.add('hidden'), 5000);
     }
 }
 

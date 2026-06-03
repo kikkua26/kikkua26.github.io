@@ -8,7 +8,7 @@ import { renderAll } from './render.js';
 import { clearForm, loadForm, getFormData, addSubfield, removeSubfield } from './form.js';
 import { updatePreview } from './preview.js';
 import { showQuickPaste, hideQuickPaste, applyQuickPaste } from './paste.js';
-import { aiParse, copyPrompt, showSettings, hideSettings, saveSettings, testConnection } from './ai.js';
+import { aiParse, copyPrompt, showSettings, hideSettings, saveSettings, testConnection, showBatchModal, hideBatchModal, copyBatchPrompt, batchAIParse, applyBatchImport } from './ai.js';
 import { importCSV, exportCSV } from './csv.js';
 import { toast } from './utils.js';
 
@@ -180,6 +180,16 @@ export function setupEvents() {
     });
     rootEl.querySelector('#cmSettingsModal')?.addEventListener('click', e => {
         if (e.target === e.currentTarget) hideSettings();
+    });
+
+    // AI Batch modal
+    on('#cmBtnBatchImport', 'click', showBatchModal);
+    on('#cmBatchCancel', 'click', hideBatchModal);
+    on('#cmBatchCopyPrompt', 'click', copyBatchPrompt);
+    on('#cmBatchAIParse', 'click', batchAIParse);
+    on('#cmBatchApply', 'click', applyBatchImport);
+    rootEl.querySelector('#cmBatchModal')?.addEventListener('click', e => {
+        if (e.target === e.currentTarget) hideBatchModal();
     });
 
     // Provider card selection
