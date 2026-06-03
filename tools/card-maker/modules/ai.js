@@ -19,7 +19,7 @@ const AI_PROVIDERS = {
         name: '小米 MiMo',
         baseUrl: 'https://token-plan-cn.xiaomimimo.com/v1',
         keyPrefix: 'tp-',
-        models: ['mimo-v2.5-pro'],
+        models: ['mimo-v2.5', 'mimo-v2.5-pro'],
         defaultModel: 'mimo-v2.5-pro',
     },
 };
