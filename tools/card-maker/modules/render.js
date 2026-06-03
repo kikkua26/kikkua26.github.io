@@ -48,9 +48,9 @@ export function renderChapterNode(node, depth, parentPath, numPrefix) {
     const myNum = numPrefix || '';
     const label = myNum ? myNum + ' ' + node.name : node.name;
 
-    // Check if this chapter contains the active note
+    // Only highlight the direct parent chapter of the active note
     const activeNote = state.currentNoteId ? (state.notebooks[state.activeNotebook]?.notes || []).find(n => n.id === state.currentNoteId) : null;
-    const isActiveChapter = activeNote && (activeNote.chapter === node.fullPath || activeNote.chapter?.startsWith(node.fullPath + '::'));
+    const isActiveChapter = activeNote && activeNote.chapter === node.fullPath;
 
     let h = `<div class="cm-chapter" data-path="${esc(node.fullPath)}" data-parent="${esc(parentPath || '')}" draggable="true">`;
     h += `<div class="cm-tree-row${emptyClass}${isActiveChapter ? ' cm-active-chapter' : ''}" style="padding-left:${8 + depth * 12}px;" data-action="chapter-click" data-path="${esc(node.fullPath)}" oncontextmenu="return false;">`;
