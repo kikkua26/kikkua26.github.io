@@ -242,6 +242,102 @@ export function setupEvents() {
         dragSrc = null;
     });
 
+    // Tree drag-and-drop (chapters and notes)
+    let treeDragSrc = null;
+    let treeDragType = null; // 'chapter' or 'note'
+
+    rootEl.addEventListener('dragstart', e => {
+        const chapter = e.target.closest('.cm-chapter[draggable]');
+        const note = e.target.closest('.cm-note[draggable]');
+        if (chapter) {
+            treeDragSrc = chapter;
+            treeDragType = 'chapter';
+            chapter.classList.add('cm-dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', chapter.dataset.path);
+        } else if (note) {
+            treeDragSrc = note;
+            treeDragType = 'note';
+            note.classList.add('cm-dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', note.dataset.noteId);
+        }
+    });
+
+    rootEl.addEventListener('dragover', e => {
+        const chapter = e.target.closest('.cm-chapter[draggable]');
+        const note = e.target.closest('.cm-note[draggable]');
+        const target = chapter || note;
+        if (!target || !treeDragSrc || target === treeDragSrc) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        target.classList.add('cm-drag-over');
+    });
+
+    rootEl.addEventListener('dragleave', e => {
+        const chapter = e.target.closest('.cm-chapter[draggable]');
+        const note = e.target.closest('.cm-note[draggable]');
+        const target = chapter || note;
+        if (target) target.classList.remove('cm-drag-over');
+    });
+
+    rootEl.addEventListener('drop', e => {
+        const chapter = e.target.closest('.cm-chapter[draggable]');
+        const note = e.target.closest('.cm-note[draggable]');
+        const target = chapter || note;
+        if (target) target.classList.remove('cm-drag-over');
+        if (!target || !treeDragSrc || target === treeDragSrc) return;
+        e.preventDefault();
+
+        const nb = state.notebooks[state.activeNotebook];
+        const notes = nb.notes || [];
+
+        if (treeDragType === 'note' && note) {
+            // Reorder notes within the same chapter or move to different chapter
+            const srcId = treeDragSrc.dataset.noteId;
+            const dstId = note.dataset.noteId;
+            const srcIdx = notes.findIndex(n => n.id === srcId);
+            const dstIdx = notes.findIndex(n => n.id === dstId);
+            if (srcIdx >= 0 && dstIdx >= 0) {
+                const [moved] = notes.splice(srcIdx, 1);
+                notes.splice(dstIdx, 0, moved);
+                flushData();
+                renderAll();
+            }
+        } else if (treeDragType === 'chapter' && chapter) {
+            // Reorder chapters
+            const srcPath = treeDragSrc.dataset.path;
+            const dstPath = chapter.dataset.path;
+            if (!nb._order) nb._order = {};
+            const srcParent = srcPath.includes('::') ? srcPath.split('::').slice(0, -1).join('::') : '';
+            const dstParent = dstPath.includes('::') ? dstPath.split('::').slice(0, -1).join('::') : '';
+            if (srcParent === dstParent) {
+                const key = srcParent || '';
+                if (!nb._order[key]) nb._order[key] = [];
+                const order = nb._order[key];
+                const srcName = srcPath.split('::').pop();
+                const dstName = dstPath.split('::').pop();
+                const srcOrderIdx = order.indexOf(srcName);
+                const dstOrderIdx = order.indexOf(dstName);
+                if (srcOrderIdx >= 0 && dstOrderIdx >= 0) {
+                    order.splice(srcOrderIdx, 1);
+                    order.splice(dstOrderIdx, 0, srcName);
+                    flushData();
+                    renderAll();
+                }
+            }
+        }
+    });
+
+    rootEl.addEventListener('dragend', e => {
+        if (treeDragSrc) {
+            treeDragSrc.classList.remove('cm-dragging');
+            treeDragSrc = null;
+            treeDragType = null;
+        }
+        rootEl.querySelectorAll('.cm-drag-over').forEach(el => el.classList.remove('cm-drag-over'));
+    });
+
     // Context menu
     setupContextMenu();
 

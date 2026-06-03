@@ -50,7 +50,7 @@ export function renderChapterNode(node, depth, parentPath, numPrefix) {
     const myNum = numPrefix || '';
     const label = myNum ? myNum + ' ' + node.name : node.name;
 
-    let h = `<div class="cm-chapter" data-path="${esc(node.fullPath)}" data-parent="${esc(parentPath || '')}">`;
+    let h = `<div class="cm-chapter" data-path="${esc(node.fullPath)}" data-parent="${esc(parentPath || '')}" draggable="true">`;
     h += `<div class="cm-tree-row${emptyClass}" style="padding-left:${12 + depth * 16}px;" data-action="chapter-click" data-path="${esc(node.fullPath)}" oncontextmenu="return false;">`;
     h += `<span class="cm-toggle${hasKids ? (expanded ? ' expanded' : '') : ''}" data-action="chapter-toggle" data-path="${esc(node.fullPath)}">▶</span>`;
     h += `<span class="cm-icon">${node.isEmpty && cnt === 0 ? '📂' : '📁'}</span>`;
@@ -73,7 +73,7 @@ export function renderNoteNode(note, depth, numPrefix) {
     const checked = state.batchSet.has(note.id);
     const label = note.mainField || '(未命名)';
     const num = numPrefix ? numPrefix + ' ' : '';
-    return `<div class="cm-note" data-note-id="${note.id}">
+    return `<div class="cm-note" data-note-id="${note.id}" data-chapter="${esc(note.chapter || '')}" draggable="true">
         <div class="cm-tree-row${active}" style="padding-left:${12 + depth * 16 + 20}px;" data-action="note-click" data-note-id="${note.id}" oncontextmenu="return false;">
             ${state.batchMode ? `<input type="checkbox" class="cm-check" data-action="batch-check" data-note-id="${note.id}" ${checked ? 'checked' : ''}>` : ''}
             <span class="cm-toggle" style="visibility:hidden;">▶</span>
