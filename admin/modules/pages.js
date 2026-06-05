@@ -44,13 +44,23 @@ export function showPageList() {
     currentPageIdx = -1;
 }
 
-export function selectPage(i) {
+export async function selectPage(i) {
     currentPageIdx = i; renderPageList();
     if (window.innerWidth <= 767) {
         document.getElementById('pageListView').classList.remove('mob-show');
         document.getElementById('pageDetailView').classList.add('mob-show');
     }
     const p = pages[i];
+
+    // Load content from .md file if page uses file reference
+    let content = p.content || '';
+    if (p.file && !content) {
+        try {
+            const r = await readRepo('data/pages/' + p.file);
+            content = r.text;
+        } catch {}
+    }
+
     $('#pageEditPanel').className = 'pages-edit-panel';
     $('#pageEditPanel').innerHTML = `
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
@@ -73,7 +83,7 @@ export function selectPage(i) {
                 <button class="btn btn-secondary btn-xs" data-action="import-md">📥 导入 .md</button>
                 <button class="btn btn-secondary btn-xs" data-action="preview-md">👁 预览</button>
             </div>
-            <textarea rows="12" id="pageContentInput" data-page-field="content">${esc(p.content||'')}</textarea></div>
+            <textarea rows="12" id="pageContentInput" data-page-field="content">${esc(content)}</textarea></div>
         <div class="field"><label>更新日期</label><input value="${esc(p.updatedAt||'')}" data-page-field="updatedAt" placeholder="2026-05-24"></div>
         <div class="edit-actions">
             <button class="btn btn-primary btn-sm" data-action="save-pages">💾 保存</button>
@@ -191,7 +201,8 @@ function _mdPreview(text) {
         .replace(/`([^`]+)`/g, '<code style="background:var(--bg);padding:2px 6px;border-radius:4px;font-size:0.9em;">$1</code>')
         .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
         .replace(/\*(.+?)\*/g, '<em>$1</em>')
-        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color:var(--accent);">$1</a>');
+        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color:var(--accent);">$1</a>')
+        .replace(/(?<!["'>])(https?:\/\/[^\s<>"'，。；：、]+)/g, '<a href="$1" target="_blank" style="color:var(--accent);">$1</a>');
     return text.split(/\n{2,}/).map(b => {
         b = b.trim();
         if (!b) return '';
