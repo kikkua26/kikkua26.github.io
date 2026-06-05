@@ -8,6 +8,40 @@ const $$ = s => document.querySelectorAll(s);
 // State
 let tplNames = [], currentTpl = '', currentTplFile = '';
 let tplFiles = {};
+const LS_KEY = 'kikkua_tpl_draft';
+
+function saveLocal(path, content) {
+    const drafts = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
+    drafts[path] = content;
+    localStorage.setItem(LS_KEY, JSON.stringify(drafts));
+}
+function loadLocalDraft(path) {
+    const drafts = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
+    return drafts[path] ?? null;
+}
+function getAllDrafts() { return JSON.parse(localStorage.getItem(LS_KEY) || '{}'); }
+function clearDrafts() { localStorage.removeItem(LS_KEY); }
+
+async function syncToGitHub() {
+    const drafts = getAllDrafts();
+    for (const [path, content] of Object.entries(drafts)) {
+        const r = await readFile(path);
+        await writeFile(path, content, r.sha, 'Update ' + path);
+    }
+    clearDrafts();
+}
+
+window.__pluginSync = syncToGitHub;
+window.__pluginHasDraft = () => Object.keys(getAllDrafts()).length > 0;
+window.__pluginPullRemote = async () => {
+    clearDrafts();
+    if (currentTplFile) {
+        const r = await readFile(currentTplFile);
+        tplFiles[currentTplFile] = { sha: r.sha };
+        const content = $('#tplEditorContent');
+        if (content) content.value = r.text || '';
+    }
+};
 
 // ═══════════════════════════════════════
 // GitHub API via parent proxy
@@ -114,21 +148,18 @@ async function switchTplFile(tpl, file, tab) {
     try {
         const r = await readFile(currentTplFile);
         tplFiles[currentTplFile] = { sha: r.sha };
-        if (content) content.value = r.text || '/* 新文件 */\n';
+        const localDraft = loadLocalDraft(currentTplFile);
+        if (content) content.value = localDraft ?? (r.text || '/* 新文件 */\n');
     } catch (e) {
         if (content) content.value = `/* 加载失败: ${e.message} */`;
     }
 }
 
-async function saveTplFile() {
+function saveTplFile() {
     const content = $('#tplEditorContent')?.value;
     if (content === undefined) return;
-    const info = tplFiles[currentTplFile] || { sha: null };
-    try {
-        const newSha = await writeFile(currentTplFile, content, info.sha, 'Update ' + currentTplFile);
-        tplFiles[currentTplFile] = { sha: newSha };
-        toast('已保存');
-    } catch (e) { toast(e.message, 'error'); }
+    saveLocal(currentTplFile, content);
+    toast('💾 已保存');
 }
 
 async function createTpl() {

@@ -88,6 +88,18 @@ body {
     padding: 16px 20px; border-top: 1px solid var(--border);
     display: flex; flex-direction: column; gap: 8px;
 }
+.sidebar-sync {
+    padding: 12px 20px; border-top: 1px solid var(--border);
+    display: flex; flex-direction: column; gap: 8px;
+}
+.sync-status {
+    font-size: 12px; padding: 4px 12px; border-radius: 12px;
+    text-align: center; font-weight: 500;
+}
+.sync-status.synced { background: rgba(107,143,114,.12); color: var(--green); }
+.sync-status.unsaved { background: rgba(245,158,11,.12); color: #d97706; }
+.sync-actions { display: flex; gap: 6px; }
+.sync-actions .btn { flex: 1; }
 .sidebar-footer .stat { font-size: 12px; color: var(--text3); }
 .sidebar-footer .token-row { display: flex; gap: 6px; }
 .sidebar-footer input {

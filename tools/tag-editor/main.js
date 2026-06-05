@@ -6,6 +6,29 @@ const $ = s => document.querySelector(s);
 
 // State
 let tagTree = [];
+const LS_KEY = 'kikkua_tags_draft';
+
+function saveLocal() { localStorage.setItem(LS_KEY, JSON.stringify(tagTree)); }
+function loadLocal() { try { return JSON.parse(localStorage.getItem(LS_KEY)); } catch { return null; } }
+
+async function syncToGitHub() {
+    const content = b64encode(JSON.stringify(tagTree, null, 2));
+    const readResp = await apiRequest('data/tags.json');
+    const sha = readResp.ok ? readResp.data.sha : null;
+    const body = { message: 'Update tags', content };
+    if (sha) body.sha = sha;
+    const resp = await apiRequest('data/tags.json', { method: 'PUT', body });
+    if (!resp.ok) throw new Error(resp.error || `HTTP ${resp.status}`);
+    localStorage.removeItem(LS_KEY);
+}
+
+window.__pluginSync = syncToGitHub;
+window.__pluginHasDraft = () => !!localStorage.getItem(LS_KEY);
+window.__pluginPullRemote = async () => {
+    localStorage.removeItem(LS_KEY);
+    tagTree = await readTags();
+    renderTagTree();
+};
 
 // ═══════════════════════════════════════
 // GitHub API via parent proxy
@@ -85,7 +108,7 @@ function renderTagTree() {
 
 function renameTagDesc(path, val) {
     const f = findTagNode(tagTree, path);
-    if (f) f.node.desc = val;
+    if (f) { f.node.desc = val; saveLocal(); }
 }
 
 function renameTag(path) {
@@ -102,6 +125,7 @@ function renameTag(path) {
         if (node.children) node.children.forEach(c => updatePaths(c, oldBase, newBase));
     }
     updatePaths(f.node, f.node.path, newPath);
+    saveLocal();
     renderTagTree();
 }
 
@@ -109,6 +133,7 @@ function addRootTag() {
     const name = prompt('根标签名称：');
     if (!name) return;
     tagTree.push({ path: name, desc: '', children: [] });
+    saveLocal();
     renderTagTree();
 }
 
@@ -118,6 +143,7 @@ function addSubTag(path) {
     const name = prompt('子标签名称：');
     if (!name) return;
     f.node.children.push({ path: f.node.path + '::' + name, desc: '', children: [] });
+    saveLocal();
     renderTagTree();
 }
 
@@ -126,6 +152,7 @@ function delTagNode(path) {
     if (!f) return;
     if (!confirm('删除 "' + f.node.path.split('::').pop() + '" 及其子标签？')) return;
     f.parent.splice(f.idx, 1);
+    saveLocal();
     renderTagTree();
 }
 
@@ -133,15 +160,7 @@ function delTagNode(path) {
 // Actions
 // ═══════════════════════════════════════
 
-async function saveTags() {
-    const btn = $('[data-action="save-tags"]');
-    try {
-        if (btn) { btn.textContent = '⏳ 保存中…'; btn.disabled = true; }
-        await writeTags();
-        toast('✅ 标签已保存');
-    } catch (e) { toast('❌ ' + e.message, 'error'); }
-    finally { if (btn) { btn.textContent = '💾 保存标签'; btn.disabled = false; } }
-}
+function saveTags() { saveLocal(); toast('💾 已保存'); }
 
 // ═══════════════════════════════════════
 // Event Binding
@@ -208,7 +227,9 @@ async function init() {
 
     try {
         toast('加载中…');
-        tagTree = await readTags();
+        try { tagTree = await readTags(); } catch {}
+        const local = loadLocal();
+        if (local) tagTree = local;
         renderTagTree();
         toast('加载完成');
     } catch (e) {

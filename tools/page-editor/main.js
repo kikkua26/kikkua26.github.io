@@ -8,10 +8,42 @@ const $ = s => document.querySelector(s);
 let pages = [], pagesSha = '', currentPageIdx = -1;
 const LS_KEY = 'kikkua_pages_draft';
 
-function hasLocalDraft() { return !!localStorage.getItem(LS_KEY); }
-function saveLocalDraft() { localStorage.setItem(LS_KEY, JSON.stringify(pages)); }
-function loadLocalDraft() { return JSON.parse(localStorage.getItem(LS_KEY) || 'null'); }
-function clearLocalDraft() { localStorage.removeItem(LS_KEY); }
+function saveLocal() { localStorage.setItem(LS_KEY, JSON.stringify(pages)); }
+function loadLocal() { try { return JSON.parse(localStorage.getItem(LS_KEY)); } catch { return null; } }
+
+// Expose sync function for admin global sync
+async function syncToGitHub() {
+    // Save .md files
+    for (const p of pages) {
+        if (p.file && p.content) {
+            const readResp = await apiRequest('data/pages/' + p.file);
+            const fileSha = readResp.ok ? readResp.data.sha : undefined;
+            await apiRequest('data/pages/' + p.file, {
+                method: 'PUT',
+                body: { message: `Update ${p.file}`, content: b64encode(p.content), sha: fileSha },
+            });
+        }
+    }
+    // Save pages.json metadata
+    const metaPages = pages.map(({ content, ...rest }) => rest);
+    const jsonContent = b64encode(JSON.stringify({ pages: metaPages }, null, 2));
+    const resp = await apiRequest('data/pages.json', {
+        method: 'PUT',
+        body: { message: 'Update pages', content: jsonContent, sha: pagesSha },
+    });
+    if (!resp.ok) throw new Error(resp.error || `HTTP ${resp.status}`);
+    pagesSha = resp.data.content.sha;
+    localStorage.removeItem(LS_KEY);
+}
+
+// Expose to parent for global sync
+window.__pluginSync = syncToGitHub;
+window.__pluginHasDraft = () => !!localStorage.getItem(LS_KEY);
+window.__pluginPullRemote = async () => {
+    localStorage.removeItem(LS_KEY);
+    await readPages();
+    renderPageList();
+};
 
 // ═══════════════════════════════════════
 // GitHub API via parent proxy
@@ -21,11 +53,8 @@ async function readPages() {
     const resp = await apiRequest('data/pages.json');
     if (!resp.ok) throw new Error(resp.error || `HTTP ${resp.status}`);
     const data = resp.data;
-    const text = b64decode(data.content);
     pagesSha = data.sha;
-    pages = JSON.parse(text).pages || [];
-
-    // Load .md file content for pages that use file reference
+    pages = JSON.parse(b64decode(data.content)).pages || [];
     for (const p of pages) {
         if (p.file && !p.content) {
             try {
@@ -34,34 +63,6 @@ async function readPages() {
             } catch {}
         }
     }
-}
-
-async function writePages() {
-    // Save .md file content for pages that use file reference
-    for (const p of pages) {
-        if (p.file && p.content) {
-            try {
-                // Read current file to get SHA
-                const readResp = await apiRequest('data/pages/' + p.file);
-                const fileSha = readResp.ok ? readResp.data.sha : undefined;
-                const mdContent = b64encode(p.content);
-                await apiRequest('data/pages/' + p.file, {
-                    method: 'PUT',
-                    body: { message: `Update ${p.file} from admin`, content: mdContent, sha: fileSha },
-                });
-            } catch (e) { console.warn('Failed to save .md file:', p.file, e); }
-        }
-    }
-
-    // Save pages.json (metadata only, without content)
-    const metaPages = pages.map(({ content, ...rest }) => rest);
-    const jsonContent = b64encode(JSON.stringify({ pages: metaPages }, null, 2));
-    const resp = await apiRequest('data/pages.json', {
-        method: 'PUT',
-        body: { message: 'Update pages from admin', content: jsonContent, sha: pagesSha },
-    });
-    if (!resp.ok) throw new Error(resp.error || `HTTP ${resp.status}`);
-    pagesSha = resp.data.content.sha;
 }
 
 // ═══════════════════════════════════════
@@ -215,14 +216,11 @@ function selectPage(i) {
         </div>
         <div class="field"><label>更新日期</label><input value="${esc(p.updatedAt || '')}" data-page-field="updatedAt" placeholder="2026-05-24"></div>
         <div class="edit-actions">
-            <span id="syncBadge" class="sync-badge ${hasLocalDraft() ? 'unsaved' : 'synced'}">${hasLocalDraft() ? '● 有未同步更改' : '✓ 已同步'}</span>
             <button class="btn btn-primary btn-sm" data-action="save-page">💾 保存</button>
-            <button class="btn btn-accent btn-sm" data-action="sync-github">🔄 同步到 GitHub</button>
             <button class="btn btn-danger btn-sm" data-action="del-page">删除</button>
         </div>
     `;
 
-    // Bind field inputs (auto-save to local on change)
     panel.querySelectorAll('[data-page-field]').forEach(el => {
         const field = el.dataset.pageField;
         el.addEventListener('input', () => {
@@ -230,8 +228,7 @@ function selectPage(i) {
             else if (field === 'order') pages[i].order = parseInt(el.value) || 0;
             else pages[i][field] = el.value;
             if (field === 'id' || field === 'title') renderPageList();
-            saveLocalDraft();
-            updateSyncBadge();
+            saveLocal();
         });
     });
 }
@@ -251,53 +248,7 @@ function showPageList() {
 // Actions
 // ═══════════════════════════════════════
 
-function savePage() {
-    saveLocalDraft();
-    updateSyncBadge();
-    toast('💾 已保存到本地');
-}
-
-async function syncToGitHub() {
-    const btn = $('[data-action="sync-github"]');
-    try {
-        if (btn) { btn.textContent = '⏳ 同步中…'; btn.disabled = true; }
-        await writePages();
-        clearLocalDraft();
-        updateSyncBadge();
-        toast('✅ 已同步到 GitHub');
-    } catch (e) { toast('❌ ' + e.message, 'error'); }
-    finally { if (btn) { btn.textContent = '🔄 同步到 GitHub'; btn.disabled = false; } }
-}
-
-function updateSyncBadge() {
-    const badge = $('#syncBadge');
-    if (!badge) return;
-    if (hasLocalDraft()) {
-        badge.textContent = '● 有未同步更改';
-        badge.className = 'sync-badge unsaved';
-    } else {
-        badge.textContent = '✓ 已同步';
-        badge.className = 'sync-badge synced';
-    }
-}
-
-async function pullRemote() {
-    if (hasLocalDraft()) {
-        const ok = await confirmDialog('丢弃本地更改，从 GitHub 重新拉取？');
-        if (!ok) return;
-    }
-    clearLocalDraft();
-    try {
-        toast('拉取中…');
-        await readPages();
-        renderPageList();
-        updateSyncBadge();
-        currentPageIdx = -1;
-        const panel = $('#pageEditPanel');
-        if (panel) { panel.className = 'edit-panel empty'; panel.innerHTML = '<span>选择一个页面开始编辑</span>'; }
-        toast('✅ 已从 GitHub 拉取最新数据');
-    } catch (e) { toast('❌ ' + e.message, 'error'); }
-}
+function savePage() { saveLocal(); toast('💾 已保存'); }
 
 async function delPage() {
     if (currentPageIdx < 0) return;
@@ -305,9 +256,8 @@ async function delPage() {
     if (!ok) return;
     pages.splice(currentPageIdx, 1);
     currentPageIdx = -1;
-    saveLocalDraft();
-    updateSyncBadge();
-    toast('已删除（本地）');
+    saveLocal();
+    toast('已删除');
     renderPageList();
     const panel = $('#pageEditPanel');
     if (panel) { panel.className = 'edit-panel empty'; panel.innerHTML = '<span>选择一个页面开始编辑</span>'; }
@@ -319,11 +269,10 @@ async function addPage() {
     if (pages.find(p => p.id === name)) { toast('页面 ID 已存在', 'error'); return; }
     const today = new Date().toISOString().slice(0, 10);
     pages.push({ id: name, title: name, group: '', icon: '📄', order: pages.length + 1, tags: [], file: name + '.md', content: '## ' + name + '\n\n在这里输入内容…', updatedAt: today });
-    saveLocalDraft();
-    updateSyncBadge();
+    saveLocal();
     renderPageList();
     selectPage(pages.length - 1);
-    toast('已添加（本地）');
+    toast('已添加');
 }
 
 function importMd() {
@@ -337,8 +286,7 @@ function importMd() {
         content = content.replace(/!\[([^\]]*)\]\(\.\/?(images|img|assets|media)\/([^)]+)\)/g, '![$1](/data/media/$3)');
         const ta = $('#pageContentInput');
         if (ta) { ta.value = content; pages[currentPageIdx].content = content; }
-        saveLocalDraft();
-        updateSyncBadge();
+        saveLocal();
         toast(`已导入: ${file.name}`);
     };
     input.click();
@@ -355,18 +303,14 @@ function previewMd() {
 // ═══════════════════════════════════════
 
 function setupEvents() {
-    // List item click
     document.addEventListener('click', e => {
         const item = e.target.closest('[data-page-idx]');
         if (item) { selectPage(parseInt(item.dataset.pageIdx)); return; }
-
         const action = e.target.closest('[data-action]');
         if (!action) return;
         const act = action.dataset.action;
         if (act === 'add-page') addPage();
         else if (act === 'save-page') savePage();
-        else if (act === 'sync-github') syncToGitHub();
-        else if (act === 'pull-remote') pullRemote();
         else if (act === 'del-page') delPage();
         else if (act === 'import-md') importMd();
         else if (act === 'preview-md') previewMd();
@@ -379,38 +323,17 @@ function setupEvents() {
 // ═══════════════════════════════════════
 
 async function init() {
-    registerPlugin({
-        id: 'page-editor',
-        name: '页面编辑器',
-        icon: '📄',
-        desc: '管理文档页面，支持 Markdown 编辑和预览',
-        version: '1.0',
-    });
-
+    registerPlugin({ id: 'page-editor', name: '页面编辑器', icon: '📄', desc: '管理文档页面', version: '1.0' });
     setupEvents();
-
     try {
         toast('加载中…');
-
-        // Always fetch GitHub data for SHA
         try { await readPages(); } catch {}
-
-        // If local draft exists, use it (but keep GitHub SHA)
-        if (hasLocalDraft()) {
-            pages = loadLocalDraft();
-            toast('📂 已加载本地草稿', 'info');
-        }
-
+        const local = loadLocal();
+        if (local) pages = local;
         renderPageList();
-        updateSyncBadge();
         toast('加载完成');
-    } catch (e) {
-        toast('加载失败: ' + e.message, 'error');
-    }
+    } catch (e) { toast('加载失败: ' + e.message, 'error'); }
 }
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-} else {
-    init();
-}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+else init();

@@ -9,6 +9,26 @@ let decks = [], dataSha = '', currentDeckIdx = -1;
 let tplNames = [];
 let tagTree = [];
 let csvMeta = {};
+const LS_KEY = 'kikkua_decks_draft';
+
+function saveLocal() { localStorage.setItem(LS_KEY, JSON.stringify(decks)); }
+function loadLocal() { try { return JSON.parse(localStorage.getItem(LS_KEY)); } catch { return null; } }
+
+async function syncToGitHub() {
+    const json = JSON.stringify(decks, null, 2);
+    dataSha = await writeJson('data/index.json', json, dataSha, 'Update decks from admin');
+    localStorage.removeItem(LS_KEY);
+}
+
+window.__pluginSync = syncToGitHub;
+window.__pluginHasDraft = () => !!localStorage.getItem(LS_KEY);
+window.__pluginPullRemote = async () => {
+    localStorage.removeItem(LS_KEY);
+    const r = await readJson('data/index.json');
+    dataSha = r.sha;
+    decks = JSON.parse(r.text);
+    renderDeckList();
+};
 
 // ═══════════════════════════════════════
 // GitHub API via parent proxy
@@ -273,7 +293,7 @@ async function selectDeck(i) {
     panel.querySelectorAll('[data-deck-field]').forEach(el => {
         const field = el.dataset.deckField;
         const evt = el.tagName === 'SELECT' ? 'change' : 'input';
-        el.addEventListener(evt, () => { decks[i][field] = el.value; if (field === 'name') renderDeckList(); });
+        el.addEventListener(evt, () => { decks[i][field] = el.value; if (field === 'name') renderDeckList(); saveLocal(); });
     });
 }
 
@@ -281,23 +301,15 @@ async function selectDeck(i) {
 // Actions
 // ═══════════════════════════════════════
 
-async function saveDecks(quiet) {
-    const btn = $('[data-action="save-decks"]');
-    try {
-        if (!quiet && btn) { btn.textContent = '⏳ 保存中…'; btn.disabled = true; }
-        const json = JSON.stringify(decks, null, 2);
-        dataSha = await writeJson('data/index.json', json, dataSha, 'Update decks from admin');
-        if (!quiet) toast('✅ 已保存到 GitHub');
-    } catch (e) { if (!quiet) toast('❌ ' + e.message, 'error'); }
-    finally { if (!quiet && btn) { btn.textContent = '💾 保存'; btn.disabled = false; } }
-}
+function saveDecks() { saveLocal(); toast('💾 已保存'); }
 
 async function delDeck(i) {
     const ok = await confirmDialog(`确认删除"${decks[i].name}"？`);
     if (!ok) return;
     decks.splice(i, 1);
     currentDeckIdx = -1;
-    await saveDecks();
+    saveLocal();
+    toast('已删除');
     renderDeckList();
     const panel = $('#deckEditPanel');
     if (panel) { panel.className = 'edit-panel empty'; panel.innerHTML = '<span>选择一个牌组开始编辑</span>'; }
@@ -370,7 +382,7 @@ function uploadCsv(deck) {
             if (currentDeckIdx >= 0 && decks[currentDeckIdx]?.name === deck) {
                 const count = parseCsvFull(text).length - 1;
                 decks[currentDeckIdx].totalCards = count > 0 ? count : 0;
-                await saveDecks(true);
+                saveLocal();
                 renderDeckList();
                 await selectDeck(currentDeckIdx);
             }
@@ -416,6 +428,7 @@ function setupEvents() {
         const removeTag = e.target.closest('[data-remove-tag]');
         if (removeTag && currentDeckIdx >= 0) {
             decks[currentDeckIdx].tags = (decks[currentDeckIdx].tags || []).filter(t => t !== removeTag.dataset.removeTag);
+            saveLocal();
             selectDeck(currentDeckIdx);
             return;
         }
@@ -425,6 +438,7 @@ function setupEvents() {
             tagSelectorDialog(currentTags).then(newTags => {
                 if (newTags !== null) {
                     decks[currentDeckIdx].tags = newTags;
+                    saveLocal();
                     selectDeck(currentDeckIdx);
                 }
             });
@@ -458,10 +472,14 @@ async function init() {
             const tagResp = await apiRequest('data/tags.json');
             if (tagResp.ok) tagTree = JSON.parse(b64decode(tagResp.data.content));
         } catch {}
-        // Load decks
-        const r = await readJson('data/index.json');
-        dataSha = r.sha;
-        decks = JSON.parse(r.text);
+        // Load decks (GitHub for SHA, local draft for content)
+        try {
+            const r = await readJson('data/index.json');
+            dataSha = r.sha;
+            decks = JSON.parse(r.text);
+        } catch {}
+        const local = loadLocal();
+        if (local) decks = local;
         renderDeckList();
         toast('加载完成');
     } catch (e) {

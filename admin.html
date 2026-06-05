@@ -54,6 +54,13 @@
         <div class="nav-item" data-section="pages">📄 页面</div>
         <div class="nav-item" data-section="media">🖼 媒体</div>
     </nav>
+    <div class="sidebar-sync" id="sidebarSync">
+        <div class="sync-status" id="globalSyncBadge">✓ 已同步</div>
+        <div class="sync-actions">
+            <button class="btn btn-primary btn-sm" id="globalSyncBtn">🔄 同步到 GitHub</button>
+            <button class="btn btn-secondary btn-sm" id="globalPullBtn" title="丢弃本地更改，从 GitHub 重新拉取">⟳ 拉取</button>
+        </div>
+    </div>
     <div class="sidebar-footer">
         <div class="status" id="statusBadge">✅ 已连接</div>
         <button class="btn btn-secondary btn-sm" id="disconnectBtn">断开连接</button>
