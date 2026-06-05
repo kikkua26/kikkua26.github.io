@@ -44,13 +44,16 @@
         height: calc(100vh - 56px);
         height: calc(100dvh - 56px);
         z-index: 998;
-        transition: left 0.25s var(--ease-out);
+        /* No transition on close — prevents flash on page load */
         box-shadow: 4px 0 24px rgba(44, 33, 22, 0.1);
         padding: 12px 0;
         background: var(--bg-secondary);
         overflow-y: auto;
     }
-    .pro-tabs.open { left: 0; }
+    .pro-tabs.open {
+        left: 0;
+        transition: left 0.25s var(--ease-out);
+    }
 
     /* Overlay */
     .pro-overlay {

@@ -142,6 +142,9 @@ export async function renderHome() {
         const decks = await resp.json();
         if (!decks || !decks.length) return;
 
+        // If user navigated away while fetching, bail out
+        if (location.pathname !== '/' && location.pathname !== '') return;
+
         // 更新统计数字
         const statDecks = document.getElementById('stat-decks');
         const statCards = document.getElementById('stat-cards');
