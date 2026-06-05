@@ -1,6 +1,6 @@
 ## 0. 使用前言
 
-视频使用教程：https://www.bilibili.com/video/BV1oVhAzFEEW/?spm_id_from=333.1387.upload.video_card.click&vd_source=a8e2ee258a485a93f5dcf10ac374e9f2
+**视频使用教程：** [B 站视频教程](https://www.bilibili.com/video/BV1oVhAzFEEW/?spm_id_from=333.1387.upload.video_card.click&vd_source=a8e2ee258a485a93f5dcf10ac374e9f2)
 
 感谢购买 kikkua 模板，本模板适用于 Anki、Anymo 卡片的制作，可用于制作**选择题**（含单选、多选、判断题）、**挖空题**、**问答题**、**图片遮挡题**共 6 种题型的卡片。
 
