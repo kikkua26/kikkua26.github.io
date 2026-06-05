@@ -15,17 +15,44 @@ async function readPages() {
     const resp = await apiRequest('data/pages.json');
     if (!resp.ok) throw new Error(resp.error || `HTTP ${resp.status}`);
     const data = resp.data;
-    // Decode base64 content
     const text = b64decode(data.content);
     pagesSha = data.sha;
     pages = JSON.parse(text).pages || [];
+
+    // Load .md file content for pages that use file reference
+    for (const p of pages) {
+        if (p.file && !p.content) {
+            try {
+                const r = await apiRequest('data/pages/' + p.file);
+                if (r.ok) p.content = b64decode(r.data.content);
+            } catch {}
+        }
+    }
 }
 
 async function writePages() {
-    const content = b64encode(JSON.stringify({ pages }, null, 2));
+    // Save .md file content for pages that use file reference
+    for (const p of pages) {
+        if (p.file && p.content) {
+            try {
+                // Read current file to get SHA
+                const readResp = await apiRequest('data/pages/' + p.file);
+                const fileSha = readResp.ok ? readResp.data.sha : undefined;
+                const mdContent = b64encode(p.content);
+                await apiRequest('data/pages/' + p.file, {
+                    method: 'PUT',
+                    body: { message: `Update ${p.file} from admin`, content: mdContent, sha: fileSha },
+                });
+            } catch (e) { console.warn('Failed to save .md file:', p.file, e); }
+        }
+    }
+
+    // Save pages.json (metadata only, without content)
+    const metaPages = pages.map(({ content, ...rest }) => rest);
+    const jsonContent = b64encode(JSON.stringify({ pages: metaPages }, null, 2));
     const resp = await apiRequest('data/pages.json', {
         method: 'PUT',
-        body: { message: 'Update pages from admin', content, sha: pagesSha },
+        body: { message: 'Update pages from admin', content: jsonContent, sha: pagesSha },
     });
     if (!resp.ok) throw new Error(resp.error || `HTTP ${resp.status}`);
     pagesSha = resp.data.content.sha;
@@ -97,7 +124,8 @@ function mdPreview(text) {
         .replace(/`([^`]+)`/g, '<code style="background:var(--bg);padding:2px 6px;border-radius:4px;font-size:0.9em;">$1</code>')
         .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
         .replace(/\*(.+?)\*/g, '<em>$1</em>')
-        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color:var(--accent);">$1</a>');
+        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color:var(--accent);">$1</a>')
+        .replace(/(?<!["'>])(https?:\/\/[^\s<>"'，。；：、]+)/g, '<a href="$1" target="_blank" style="color:var(--accent);">$1</a>');
     return text.split(/\n{2,}/).map(b => {
         b = b.trim();
         if (!b) return '';
@@ -243,7 +271,7 @@ async function addPage() {
     if (!name) return;
     if (pages.find(p => p.id === name)) { toast('页面 ID 已存在', 'error'); return; }
     const today = new Date().toISOString().slice(0, 10);
-    pages.push({ id: name, title: name, group: '', icon: '📄', order: pages.length + 1, tags: [], content: '## ' + name + '\n\n在这里输入内容…', updatedAt: today });
+    pages.push({ id: name, title: name, group: '', icon: '📄', order: pages.length + 1, tags: [], file: name + '.md', content: '## ' + name + '\n\n在这里输入内容…', updatedAt: today });
     renderPageList();
     selectPage(pages.length - 1);
     toast('已添加，点击保存提交');
