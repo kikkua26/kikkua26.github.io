@@ -166,6 +166,12 @@ export function renderTools() {
     const menuBtn = document.getElementById('proMenuBtn');
     const proTabs = app.querySelector('.pro-tabs');
     const proLayout = app.querySelector('.pro-layout');
+    const isMobile = window.matchMedia('(max-width: 767px)').matches;
+
+    // Force hide sidebar on mobile immediately (don't wait for CSS)
+    if (proTabs && isMobile) {
+        proTabs.style.display = 'none';
+    }
 
     if (menuBtn && proTabs) {
         // Create overlay element for mobile
@@ -175,13 +181,21 @@ export function renderTools() {
 
         const closeSidebar = () => {
             proTabs.classList.remove('open');
+            proTabs.style.display = 'none';
             menuBtn.classList.remove('active');
             overlay.classList.remove('visible');
         };
 
         menuBtn.addEventListener('click', () => {
             const opening = !proTabs.classList.contains('open');
-            proTabs.classList.toggle('open');
+            if (opening) {
+                proTabs.classList.add('open');
+                proTabs.style.display = 'flex';
+                proTabs.style.flexDirection = 'column';
+            } else {
+                proTabs.classList.remove('open');
+                proTabs.style.display = 'none';
+            }
             menuBtn.classList.toggle('active');
             overlay.classList.toggle('visible', opening);
         });
