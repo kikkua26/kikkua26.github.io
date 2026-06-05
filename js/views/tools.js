@@ -7,8 +7,8 @@ const TV = '?v=8'; // cache buster for tool iframes
 const PROTECTED_HASH = '2f9ce55a6be0183a94b0271738254dad35a34467b0fc852fd65654485f751c25';
 
 const TOOLS = [
-    { id: 'occlusion', name: '遮挡块工具', icon: '🖼', desc: '在图片上绘制遮挡块，生成Anki图遮挡题数据', url: '/tools/occlusion/index.html' + TV },
-    { id: 'question-bank', name: '题库编辑器', icon: '📋', desc: '表格化题库管理，支持CSV/Excel导入导出、AI生成题目', url: '/tools/question-bank/index.html' + TV },
+    { id: 'occlusion', name: '遮挡块工具', icon: '🖼', desc: '在图片上绘制遮挡块，生成Anki图遮挡题数据', url: '/tools/occlusion/index.html' + TV, tutorialId: 'occlusion-guide' },
+    { id: 'question-bank', name: '题库编辑器', icon: '📋', desc: '表格化题库管理，支持CSV/Excel导入导出、AI生成题目', url: '/tools/question-bank/index.html' + TV, tutorialId: 'question-bank-guide' },
     { id: 'card-maker', name: '制卡工具', icon: '🃏', desc: '制卡工具，支持章节管理、AI解析、CSV导入导出', url: '/tools/card-maker/index.html' + TV, protected: true },
 ];
 
@@ -133,6 +133,7 @@ export function renderTools() {
                     </div>
                     <div class="header-right">
                         <span class="header-link" style="font-size:11px;">专业工具集</span>
+                        <a href="/about?id=${TOOLS.find(t => t.id === activeTool)?.tutorialId || 'occlusion-guide'}" class="header-link pro-tutorial-link" id="proTutorialLink" data-link style="font-size:11px;${TOOLS.find(t => t.id === activeTool)?.tutorialId ? '' : 'display:none'}">📖 教程</a>
                         <button class="pro-menu-btn" id="proMenuBtn" title="切换工具列表">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
                         </button>
@@ -214,6 +215,18 @@ export function renderTools() {
                 proTabs.classList.remove('open');
                 menuBtn?.classList.remove('active');
                 app.querySelector('.pro-overlay')?.classList.remove('visible');
+            }
+
+            // Update tutorial link
+            const tutorialLink = document.getElementById('proTutorialLink');
+            const toolData = TOOLS.find(t => t.id === toolId);
+            if (tutorialLink) {
+                if (toolData?.tutorialId) {
+                    tutorialLink.href = '/about?id=' + toolData.tutorialId;
+                    tutorialLink.style.display = '';
+                } else {
+                    tutorialLink.style.display = 'none';
+                }
             }
 
             navigate('/tools?tool=' + toolId);
