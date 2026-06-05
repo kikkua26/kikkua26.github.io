@@ -637,6 +637,23 @@ select.ai-input { cursor: pointer; }
         padding: 4px 8px;
     }
     .preview-toolbar .btn { padding: 3px 6px; font-size: 10.5px; }
+
+    /* Modals — fit small screens */
+    .modal { min-width: 0; width: 92vw; padding: 20px; }
+    .apkg-modal { min-width: 0; width: 92vw; max-width: 92vw; }
+    .row-form-modal { width: 95vw; max-width: 95vw; height: 80vh; }
+    .preview-modal { width: 95vw; max-width: 95vw; height: 80vh; }
+    .preview-body { flex-direction: column; }
+    .preview-editor { border-right: none; border-bottom: 1px solid var(--border); }
+
+    .form-row { flex-direction: column; align-items: stretch; gap: 4px; }
+    .form-label { width: auto; text-align: left; font-size: 11px; }
+    .form-row .ans-hint { padding: 2px 0 0; }
+
+    .ai-config-grid { grid-template-columns: 1fr; }
+    .ai-config-grid label { justify-content: flex-start; padding: 6px 10px; }
+
+    .ctx-menu { min-width: 0; }
 }
 
 @media (max-width:480px) {
