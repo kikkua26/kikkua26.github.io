@@ -57,6 +57,14 @@ export async function renderAbout() {
         return;
     }
 
+    // Load content from .md file if specified
+    if (page.file) {
+        try {
+            const resp = await fetch('/data/pages/' + page.file + '?v=' + Date.now());
+            if (resp.ok) page._content = await resp.text();
+        } catch {}
+    }
+
     renderFull(page, pages);
 
     const backBtn = app.querySelector('.back-btn');
@@ -82,7 +90,7 @@ function renderFallback() {
 }
 
 function renderFull(page, pages) {
-    const content = page.content || '';
+    const content = page._content || page.content || '';
     const html = mdToHtml(content);
 
     // Build grouped nav
