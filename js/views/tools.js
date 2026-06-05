@@ -1,7 +1,5 @@
 import { $ } from '../utils.js';
-import { ICONS } from '../icons.js';
 import { navigate } from '../navigation.js';
-import { SITE } from '../config.js';
 
 const TV = '?v=8'; // cache buster for tool iframes
 
@@ -131,14 +129,13 @@ export function renderTools() {
             <header class="header">
                 <div class="header-inner">
                     <div class="header-left">
-                        <a href="/" class="back-btn" title="返回首页">${ICONS.back}</a>
-                        <button class="pro-menu-btn" id="proMenuBtn" title="切换工具列表">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
-                        </button>
                         <h1 class="header-title">工具箱</h1>
                     </div>
                     <div class="header-right">
                         <span class="header-link" style="font-size:11px;">专业工具集</span>
+                        <button class="pro-menu-btn" id="proMenuBtn" title="切换工具列表">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+                        </button>
                     </div>
                 </div>
             </header>
