@@ -96,6 +96,11 @@ export async function parseApkg(file) {
     }
 }
 
+function isEmptyRow(row) {
+    const keys = ['chapter','type','question','clozetext','optA','optB','optC','optD','optE','optF','optG','answer','answertext','analysis','reference'];
+    return keys.every(k => !row[k] || !String(row[k]).trim());
+}
+
 function buildApkgNoteFields(row, fieldDefs) {
     const visibleOpts = OPT_LETTERS.slice(0, 7 - getHiddenOptCols());
     let options, answer;
@@ -147,8 +152,8 @@ export async function exportApkg() {
 
     try {
         const useSubDecks = document.getElementById('apkgSubDecks').checked;
-        const data = collectData();
-        if (data.length === 0) throw new Error('表格中没有数据');
+        const data = collectData().filter(row => !isEmptyRow(row));
+        if (data.length === 0) throw new Error('表格中没有有效数据');
 
         const SQL = window._sqlJsReady;
         const db = new SQL.Database();
@@ -249,7 +254,7 @@ export async function exportApkg() {
         zip.file('collection.anki2', dbData);
         zip.file('media', '{}');
 
-        const blob = await zip.generateAsync({ type: 'blob', mimeType: 'application/zip' });
+        const blob = await zip.generateAsync({ type: 'blob', mimeType: 'application/octet-stream' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
         a.download = deckName + '.apkg';

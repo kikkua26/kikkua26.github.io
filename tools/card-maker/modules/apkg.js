@@ -297,7 +297,7 @@ export async function exportApkg(deckName) {
     zip.file('collection.anki2', dbData);
     zip.file('media', '{}');
 
-    const blob = await zip.generateAsync({ type: 'blob', mimeType: 'application/zip' });
+    const blob = await zip.generateAsync({ type: 'blob', mimeType: 'application/octet-stream' });
     downloadBlob(blob, (deckName || 'kikkua卡片') + '.apkg');
 
     toast(`已导出 ${notes.length} 张卡片`, 'success');

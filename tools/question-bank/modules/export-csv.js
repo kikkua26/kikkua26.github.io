@@ -4,11 +4,17 @@ import { OPT_LETTERS } from './constants.js';
 import { download, loadScript } from './utils.js';
 import { collectData, getHiddenOptCols } from './table.js';
 
+function isEmptyRow(row) {
+    const keys = ['chapter','type','question','clozetext','optA','optB','optC','optD','optE','optF','optG','answer','answertext','analysis','reference'];
+    return keys.every(k => !row[k] || !String(row[k]).trim());
+}
+
 function buildExportData(data) {
     const fields = ['chapter','type','question','clozetext','optA','optB','optC','optD','optE','optF','optG','answer','answertext','analysis','reference'];
     const header = ['序号','Chapter','Type','Question','ClozeText','OptionA','OptionB','OptionC','OptionD','OptionE','OptionF','OptionG','Answer','AnswerText','Analysis','Reference'];
+    const filtered = data.filter(row => !isEmptyRow(row));
     const aoa = [header];
-    data.forEach((row, i) => { aoa.push([i+1, ...fields.map(f => row[f] || '')]); });
+    filtered.forEach((row, i) => { aoa.push([i+1, ...fields.map(f => row[f] || '')]); });
     return { aoa, header, fields };
 }
 
@@ -20,7 +26,7 @@ export function exportStandardCSV() {
 }
 
 export function exportKikkuaCSV() {
-    const data = collectData();
+    const data = collectData().filter(row => !isEmptyRow(row));
     const visibleOpts = OPT_LETTERS.slice(0, 7 - getHiddenOptCols());
     const header = ['序号','Chapter','Type','Question','ClozeText','Options','Answer','AnswerText','Analysis','Reference'];
     const fields = ['_chapter','_type','_question','clozetext','_options','answer','answertext','analysis','reference'];
