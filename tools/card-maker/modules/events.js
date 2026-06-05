@@ -220,7 +220,7 @@ export function setupEvents() {
             card.classList.add('active');
             // Update model options
             const provider = card.dataset.provider;
-            const config = { deepseek: { models: ['deepseek-chat', 'deepseek-reasoner'], defaultModel: 'deepseek-chat' }, mimo: { models: ['mimo-v2.5-pro'], defaultModel: 'mimo-v2.5-pro' } };
+            const config = { deepseek: { models: ['deepseek-v4-flash', 'deepseek-v4-pro'], defaultModel: 'deepseek-v4-flash' }, mimo: { models: ['mimo-v2.5-pro'], defaultModel: 'mimo-v2.5-pro' } };
             const modelSelect = modal.querySelector('#cmSettingsModel');
             if (modelSelect && config[provider]) {
                 modelSelect.innerHTML = config[provider].models.map(m => `<option value="${m}">${m}</option>`).join('');
