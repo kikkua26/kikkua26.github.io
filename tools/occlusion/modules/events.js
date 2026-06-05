@@ -45,6 +45,12 @@ export function bindEvents() {
     drawingLayer.addEventListener('contextmenu', e => e.preventDefault());
     document.addEventListener('pointermove', draw);
     document.addEventListener('pointerup', endDraw);
+
+    // ── Prevent browser gestures ──
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('touchmove', e => {
+        if (e.target.closest('.drawing-layer, .rect-block')) e.preventDefault();
+    }, { passive: false });
     document.addEventListener('pointercancel', e => {
         pointers.delete(e.pointerId);
         if (state.isPanning && pointers.size < 2) state.isPanning = false;
