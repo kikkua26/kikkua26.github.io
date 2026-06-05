@@ -41,7 +41,7 @@ export async function renderHome() {
 
     // 先渲染静态结构
     app.innerHTML = `
-    <div class="home-page">
+    <div class="page home-page">
         <!-- Hero -->
         <section class="home-hero">
             <div class="hero-content">
