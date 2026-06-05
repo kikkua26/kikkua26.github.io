@@ -68,7 +68,12 @@ body {
 .field input:focus, .field textarea:focus { outline: none; border-color: var(--accent); }
 .field textarea { min-height: 50px; resize: vertical; font-size: 13px; }
 .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.edit-actions { display: flex; gap: 8px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+.edit-actions { display: flex; gap: 8px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); align-items: center; }
+.sync-badge { font-size: 11px; padding: 3px 10px; border-radius: 12px; font-weight: 500; margin-right: auto; }
+.sync-badge.synced { background: rgba(107,143,114,.12); color: var(--green); }
+.sync-badge.unsaved { background: rgba(245,158,11,.12); color: #d97706; }
+.btn-accent { background: var(--accent); color: #fff; border-color: transparent; }
+.btn-accent:hover { background: var(--accent-hover); }
 
 /* ── Modal ── */
 .modal-overlay {

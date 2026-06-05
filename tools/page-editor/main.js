@@ -6,6 +6,12 @@ const $ = s => document.querySelector(s);
 
 // State
 let pages = [], pagesSha = '', currentPageIdx = -1;
+const LS_KEY = 'kikkua_pages_draft';
+
+function hasLocalDraft() { return !!localStorage.getItem(LS_KEY); }
+function saveLocalDraft() { localStorage.setItem(LS_KEY, JSON.stringify(pages)); }
+function loadLocalDraft() { return JSON.parse(localStorage.getItem(LS_KEY) || 'null'); }
+function clearLocalDraft() { localStorage.removeItem(LS_KEY); }
 
 // ═══════════════════════════════════════
 // GitHub API via parent proxy
@@ -209,12 +215,14 @@ function selectPage(i) {
         </div>
         <div class="field"><label>更新日期</label><input value="${esc(p.updatedAt || '')}" data-page-field="updatedAt" placeholder="2026-05-24"></div>
         <div class="edit-actions">
+            <span id="syncBadge" class="sync-badge ${hasLocalDraft() ? 'unsaved' : 'synced'}">${hasLocalDraft() ? '● 有未同步更改' : '✓ 已同步'}</span>
             <button class="btn btn-primary btn-sm" data-action="save-page">💾 保存</button>
+            <button class="btn btn-accent btn-sm" data-action="sync-github">🔄 同步到 GitHub</button>
             <button class="btn btn-danger btn-sm" data-action="del-page">删除</button>
         </div>
     `;
 
-    // Bind field inputs
+    // Bind field inputs (auto-save to local on change)
     panel.querySelectorAll('[data-page-field]').forEach(el => {
         const field = el.dataset.pageField;
         el.addEventListener('input', () => {
@@ -222,6 +230,8 @@ function selectPage(i) {
             else if (field === 'order') pages[i].order = parseInt(el.value) || 0;
             else pages[i][field] = el.value;
             if (field === 'id' || field === 'title') renderPageList();
+            saveLocalDraft();
+            updateSyncBadge();
         });
     });
 }
@@ -241,14 +251,52 @@ function showPageList() {
 // Actions
 // ═══════════════════════════════════════
 
-async function savePage() {
-    const btn = $('[data-action="save-page"]');
+function savePage() {
+    saveLocalDraft();
+    updateSyncBadge();
+    toast('💾 已保存到本地');
+}
+
+async function syncToGitHub() {
+    const btn = $('[data-action="sync-github"]');
     try {
-        if (btn) { btn.textContent = '⏳ 保存中…'; btn.disabled = true; }
+        if (btn) { btn.textContent = '⏳ 同步中…'; btn.disabled = true; }
         await writePages();
-        toast('✅ 页面已保存到 GitHub');
+        clearLocalDraft();
+        updateSyncBadge();
+        toast('✅ 已同步到 GitHub');
     } catch (e) { toast('❌ ' + e.message, 'error'); }
-    finally { if (btn) { btn.textContent = '💾 保存'; btn.disabled = false; } }
+    finally { if (btn) { btn.textContent = '🔄 同步到 GitHub'; btn.disabled = false; } }
+}
+
+function updateSyncBadge() {
+    const badge = $('#syncBadge');
+    if (!badge) return;
+    if (hasLocalDraft()) {
+        badge.textContent = '● 有未同步更改';
+        badge.className = 'sync-badge unsaved';
+    } else {
+        badge.textContent = '✓ 已同步';
+        badge.className = 'sync-badge synced';
+    }
+}
+
+async function pullRemote() {
+    if (hasLocalDraft()) {
+        const ok = await confirmDialog('丢弃本地更改，从 GitHub 重新拉取？');
+        if (!ok) return;
+    }
+    clearLocalDraft();
+    try {
+        toast('拉取中…');
+        await readPages();
+        renderPageList();
+        updateSyncBadge();
+        currentPageIdx = -1;
+        const panel = $('#pageEditPanel');
+        if (panel) { panel.className = 'edit-panel empty'; panel.innerHTML = '<span>选择一个页面开始编辑</span>'; }
+        toast('✅ 已从 GitHub 拉取最新数据');
+    } catch (e) { toast('❌ ' + e.message, 'error'); }
 }
 
 async function delPage() {
@@ -257,10 +305,9 @@ async function delPage() {
     if (!ok) return;
     pages.splice(currentPageIdx, 1);
     currentPageIdx = -1;
-    try {
-        await writePages();
-        toast('已删除');
-    } catch (e) { toast('❌ ' + e.message, 'error'); }
+    saveLocalDraft();
+    updateSyncBadge();
+    toast('已删除（本地）');
     renderPageList();
     const panel = $('#pageEditPanel');
     if (panel) { panel.className = 'edit-panel empty'; panel.innerHTML = '<span>选择一个页面开始编辑</span>'; }
@@ -272,9 +319,11 @@ async function addPage() {
     if (pages.find(p => p.id === name)) { toast('页面 ID 已存在', 'error'); return; }
     const today = new Date().toISOString().slice(0, 10);
     pages.push({ id: name, title: name, group: '', icon: '📄', order: pages.length + 1, tags: [], file: name + '.md', content: '## ' + name + '\n\n在这里输入内容…', updatedAt: today });
+    saveLocalDraft();
+    updateSyncBadge();
     renderPageList();
     selectPage(pages.length - 1);
-    toast('已添加，点击保存提交');
+    toast('已添加（本地）');
 }
 
 function importMd() {
@@ -288,6 +337,8 @@ function importMd() {
         content = content.replace(/!\[([^\]]*)\]\(\.\/?(images|img|assets|media)\/([^)]+)\)/g, '![$1](/data/media/$3)');
         const ta = $('#pageContentInput');
         if (ta) { ta.value = content; pages[currentPageIdx].content = content; }
+        saveLocalDraft();
+        updateSyncBadge();
         toast(`已导入: ${file.name}`);
     };
     input.click();
@@ -314,6 +365,8 @@ function setupEvents() {
         const act = action.dataset.action;
         if (act === 'add-page') addPage();
         else if (act === 'save-page') savePage();
+        else if (act === 'sync-github') syncToGitHub();
+        else if (act === 'pull-remote') pullRemote();
         else if (act === 'del-page') delPage();
         else if (act === 'import-md') importMd();
         else if (act === 'preview-md') previewMd();
@@ -338,8 +391,18 @@ async function init() {
 
     try {
         toast('加载中…');
-        await readPages();
+
+        // Always fetch GitHub data for SHA
+        try { await readPages(); } catch {}
+
+        // If local draft exists, use it (but keep GitHub SHA)
+        if (hasLocalDraft()) {
+            pages = loadLocalDraft();
+            toast('📂 已加载本地草稿', 'info');
+        }
+
         renderPageList();
+        updateSyncBadge();
         toast('加载完成');
     } catch (e) {
         toast('加载失败: ' + e.message, 'error');
