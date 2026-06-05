@@ -7,12 +7,168 @@ let aiType = 'choice';
 let aiMode = 'batch';
 let aiAnalysisStyle = 'default';
 
-export function openAIModal() {
-    const saved = JSON.parse(localStorage.getItem('kikkua_ai_config') || '{}');
-    if (saved.apiKey) document.getElementById('aiApiKey').value = saved.apiKey;
-    if (saved.baseUrl) document.getElementById('aiBaseUrl').value = saved.baseUrl;
-    if (saved.model) document.getElementById('aiModel').value = saved.model;
+// ═══════════════════════════════════════
+// AI Provider 配置
+// ═══════════════════════════════════════
 
+const AI_PROVIDERS = {
+    deepseek: {
+        name: 'DeepSeek',
+        baseUrl: 'https://api.deepseek.com',
+        keyPrefix: 'sk-',
+        models: ['deepseek-chat', 'deepseek-reasoner'],
+        defaultModel: 'deepseek-chat',
+    },
+    mimo: {
+        name: '小米 MiMo',
+        baseUrl: 'https://token-plan-cn.xiaomimimo.com/v1',
+        keyPrefix: 'tp-',
+        models: ['mimo-v2.5', 'mimo-v2.5-pro'],
+        defaultModel: 'mimo-v2.5-pro',
+    },
+};
+
+function getAIConfig() {
+    return {
+        provider: localStorage.getItem('kikkua_ai_provider') || 'deepseek',
+        apiKey: localStorage.getItem('kikkua_ai_key') || '',
+        model: localStorage.getItem('kikkua_ai_model') || '',
+    };
+}
+
+// ═══════════════════════════════════════
+// Settings Modal
+// ═══════════════════════════════════════
+
+export function showSettings() {
+    const modal = document.getElementById('aiSettingsModal');
+    if (!modal) return;
+
+    const { provider, apiKey, model } = getAIConfig();
+    const selectedModel = model || AI_PROVIDERS[provider].defaultModel;
+
+    // Set provider
+    modal.querySelectorAll('[data-provider]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.provider === provider);
+    });
+
+    // Set key
+    const keyInput = document.getElementById('aiSettingsKey');
+    if (keyInput) keyInput.value = apiKey;
+
+    // Update model options
+    updateSettingsModels(provider, selectedModel);
+
+    // Clear test result
+    const testResult = document.getElementById('aiTestResult');
+    if (testResult) { testResult.innerHTML = ''; testResult.className = 'test-result'; }
+
+    modal.classList.add('show');
+}
+
+export function hideSettings() {
+    const modal = document.getElementById('aiSettingsModal');
+    if (modal) modal.classList.remove('show');
+}
+
+export function saveSettings() {
+    const modal = document.getElementById('aiSettingsModal');
+    if (!modal) return;
+
+    const provider = modal.querySelector('[data-provider].active')?.dataset?.provider || 'deepseek';
+    const key = document.getElementById('aiSettingsKey')?.value?.trim() || '';
+    const model = document.getElementById('aiSettingsModel')?.value || AI_PROVIDERS[provider].defaultModel;
+
+    localStorage.setItem('kikkua_ai_provider', provider);
+    localStorage.setItem('kikkua_ai_key', key);
+    localStorage.setItem('kikkua_ai_model', model);
+
+    hideSettings();
+}
+
+function updateSettingsModels(provider, selectedModel) {
+    const config = AI_PROVIDERS[provider];
+    const modelSelect = document.getElementById('aiSettingsModel');
+    const keyInput = document.getElementById('aiSettingsKey');
+
+    if (modelSelect) {
+        modelSelect.innerHTML = config.models.map(m =>
+            `<option value="${m}" ${m === selectedModel ? 'selected' : ''}>${m}</option>`
+        ).join('');
+    }
+
+    if (keyInput) {
+        keyInput.placeholder = `${config.name} Key (${config.keyPrefix}...)`;
+    }
+}
+
+export function switchProvider(provider) {
+    const config = AI_PROVIDERS[provider];
+    if (!config) return;
+
+    document.querySelectorAll('#aiSettingsModal [data-provider]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.provider === provider);
+    });
+    updateSettingsModels(provider, config.defaultModel);
+}
+
+export async function testConnection() {
+    const provider = document.querySelector('#aiSettingsModal [data-provider].active')?.dataset?.provider || 'deepseek';
+    const key = document.getElementById('aiSettingsKey')?.value?.trim() || '';
+    const model = document.getElementById('aiSettingsModel')?.value || AI_PROVIDERS[provider].defaultModel;
+    const config = AI_PROVIDERS[provider];
+    const testBtn = document.getElementById('aiTestBtn');
+    const testResult = document.getElementById('aiTestResult');
+
+    if (!key) {
+        testResult.innerHTML = '❌ 请先输入 API Key';
+        testResult.className = 'test-result error';
+        return;
+    }
+
+    if (!key.startsWith(config.keyPrefix)) {
+        testResult.innerHTML = `❌ Key 格式错误，应以 ${config.keyPrefix} 开头`;
+        testResult.className = 'test-result error';
+        return;
+    }
+
+    testBtn.disabled = true;
+    testBtn.textContent = '⏳ 测试中...';
+    testResult.innerHTML = '正在连接...';
+    testResult.className = 'test-result';
+
+    try {
+        const resp = await fetch(config.baseUrl + '/v1/chat/completions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+            body: JSON.stringify({
+                model,
+                messages: [{ role: 'user', content: 'Hi' }],
+                max_tokens: 5,
+            }),
+        });
+        if (resp.ok) {
+            testResult.innerHTML = '✅ 连接成功！';
+            testResult.className = 'test-result success';
+        } else {
+            const err = await resp.text();
+            testResult.innerHTML = `❌ 连接失败 (${resp.status})`;
+            testResult.className = 'test-result error';
+        }
+    } catch (e) {
+        testResult.innerHTML = '❌ 网络错误：' + e.message;
+        testResult.className = 'test-result error';
+    } finally {
+        testBtn.disabled = false;
+        testBtn.textContent = '🔗 测试连接';
+    }
+}
+
+// ═══════════════════════════════════════
+// AI Modal
+// ═══════════════════════════════════════
+
+export function openAIModal() {
     document.getElementById('aiStatus').className = 'ai-status';
     document.getElementById('aiStatusText').textContent = '';
     document.getElementById('btnGenerateAI').disabled = false;
@@ -21,10 +177,6 @@ export function openAIModal() {
 
 export function closeAIModal() {
     document.getElementById('aiModal').classList.remove('show');
-}
-
-export function toggleAIConfig() {
-    document.getElementById('aiConfigPanel').classList.toggle('show');
 }
 
 export function selectAIType(el) {
@@ -222,15 +374,18 @@ export async function copyPrompt() {
 }
 
 export async function generateAI() {
-    const apiKey = document.getElementById('aiApiKey').value.trim();
-    const baseUrl = document.getElementById('aiBaseUrl').value.trim().replace(/\/+$/, '');
-    const model = document.getElementById('aiModel').value;
+    const { provider, apiKey, model: savedModel } = getAIConfig();
+    const config = AI_PROVIDERS[provider];
+    const baseUrl = config.baseUrl;
+    const model = savedModel || config.defaultModel;
     const content = document.getElementById('aiKnowledgeInput').value.trim();
 
-    if (!apiKey) { setAIStatus('error', '请先配置 API Key'); document.getElementById('aiConfigPanel').classList.add('show'); return; }
+    if (!apiKey) {
+        closeAIModal();
+        showSettings();
+        return;
+    }
     if (!content) { setAIStatus('error', '请输入知识内容'); return; }
-
-    localStorage.setItem('kikkua_ai_config', JSON.stringify({ apiKey, baseUrl, model }));
 
     const prompt = buildPrompt();
     setAIStatus('loading', '正在生成，请稍候...');

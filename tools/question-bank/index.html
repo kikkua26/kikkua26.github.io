@@ -173,27 +173,9 @@
 <!-- AI modal -->
 <div class="modal-mask" id="aiModal">
   <div class="modal">
-    <h3 style="display:flex;align-items:center;gap:8px">✨ AI 生成题目</h3>
-
-    <div class="ai-config-toggle" id="aiConfigToggle">⚙ API 配置</div>
-    <div class="ai-config-panel" id="aiConfigPanel">
-      <div class="ai-config-grid">
-        <label>API Key</label>
-        <div class="ai-config-cell"><input type="password" class="ai-input" id="aiApiKey" placeholder="sk-..."></div>
-        <label>Base URL</label>
-        <div class="ai-config-cell"><input type="text" class="ai-input" id="aiBaseUrl" value="https://api.deepseek.com" placeholder="https://api.deepseek.com"></div>
-        <label>模型</label>
-        <div class="ai-config-cell">
-          <select class="ai-input" id="aiModel">
-            <option value="deepseek-v4-flash">deepseek-v4-flash（快速）</option>
-            <option value="deepseek-v4-pro">deepseek-v4-pro（高质量）</option>
-          </select>
-        </div>
-      </div>
-      <div class="ai-hint">
-        没有 API Key？前往 <a href="https://platform.deepseek.com" target="_blank">platform.deepseek.com</a> 注册获取
-      </div>
-    </div>
+    <h3 style="display:flex;align-items:center;gap:8px">✨ AI 生成题目
+      <button class="btn ai-settings-btn" id="aiSettingsBtn" title="AI 配置">⚙️ AI 配置</button>
+    </h3>
 
     <div class="ai-section">
       <div class="ai-section-title">题型</div>
@@ -244,6 +226,63 @@
       <button class="btn" id="btnCancelAI">取消</button>
       <button class="btn" id="btnCopyPrompt">📋 复制提示词</button>
       <button class="btn ok" id="btnGenerateAI">生成</button>
+    </div>
+  </div>
+</div>
+
+<!-- AI Settings Modal -->
+<div class="modal-mask" id="aiSettingsModal">
+  <div class="modal ai-settings-modal">
+    <div class="settings-header">
+      <h3>⚙️ AI 配置</h3>
+      <button class="btn-close" id="aiSettingsClose">✕</button>
+    </div>
+    <p class="settings-desc">配置 AI 提供商和 API Key</p>
+
+    <div class="settings-section">
+      <label class="settings-label">AI 提供商</label>
+      <div class="provider-cards">
+        <div class="provider-card active" data-provider="deepseek">
+          <div class="provider-icon">🔮</div>
+          <div class="provider-name">DeepSeek</div>
+          <div class="provider-desc">sk- 开头</div>
+        </div>
+        <div class="provider-card" data-provider="mimo">
+          <div class="provider-icon">🤖</div>
+          <div class="provider-name">小米 MiMo</div>
+          <div class="provider-desc">tp- 开头</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <label class="settings-label">API Key</label>
+      <div class="key-input-wrap">
+        <input type="password" id="aiSettingsKey" class="settings-input" placeholder="DeepSeek Key (sk-...)">
+        <button class="btn-eye" id="aiToggleKey" title="显示/隐藏">👁</button>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <label class="settings-label">模型</label>
+      <select id="aiSettingsModel" class="settings-input">
+        <option value="deepseek-chat">deepseek-chat</option>
+        <option value="deepseek-reasoner">deepseek-reasoner</option>
+      </select>
+    </div>
+
+    <div class="settings-section">
+      <button class="btn btn-test" id="aiTestBtn">🔗 测试连接</button>
+      <div class="test-result" id="aiTestResult"></div>
+    </div>
+
+    <div class="settings-hint">
+      没有 API Key？前往 <a href="https://platform.deepseek.com" target="_blank">platform.deepseek.com</a> 注册获取
+    </div>
+
+    <div class="settings-actions">
+      <button class="btn" id="aiSettingsCancel">取消</button>
+      <button class="btn ok" id="aiSettingsSave">保存设置</button>
     </div>
   </div>
 </div>

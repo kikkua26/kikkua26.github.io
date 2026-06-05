@@ -9,7 +9,7 @@ import { clearSelection } from './selection.js';
 import { hideCtx, showBtnCtx } from './context-menu.js';
 import { exportStandardCSV, exportKikkuaCSV, exportXLSX, downloadTemplate } from './export-csv.js';
 import { handleFileImport, doTextImport } from './import.js';
-import { openAIModal, closeAIModal, toggleAIConfig, selectAIType, selectAIMode, selectAnalysisStyle, copyPrompt, generateAI } from './ai.js';
+import { openAIModal, closeAIModal, showSettings, hideSettings, saveSettings, switchProvider, testConnection, selectAIType, selectAIMode, selectAnalysisStyle, copyPrompt, generateAI } from './ai.js';
 import { openApkgModal, closeApkgModal, parseApkg, exportApkg } from './apkg.js';
 import { saveToCache } from './cache.js';
 
@@ -98,7 +98,7 @@ export function bindAllEvents() {
     document.getElementById('btnCancelAI').addEventListener('click', closeAIModal);
     document.getElementById('btnCopyPrompt').addEventListener('click', copyPrompt);
     document.getElementById('btnGenerateAI').addEventListener('click', generateAI);
-    document.getElementById('aiConfigToggle').addEventListener('click', toggleAIConfig);
+    document.getElementById('aiSettingsBtn').addEventListener('click', () => { closeAIModal(); showSettings(); });
     document.getElementById('aiTypeChips').addEventListener('click', e => {
         const chip = e.target.closest('.ai-chip');
         if (chip) selectAIType(chip);
@@ -110,6 +110,21 @@ export function bindAllEvents() {
     document.getElementById('aiAnalysisChips').addEventListener('click', e => {
         const chip = e.target.closest('.ai-chip');
         if (chip) selectAnalysisStyle(chip);
+    });
+
+    // ── AI Settings modal ──
+    document.getElementById('aiSettingsClose').addEventListener('click', hideSettings);
+    document.getElementById('aiSettingsCancel').addEventListener('click', hideSettings);
+    document.getElementById('aiSettingsSave').addEventListener('click', saveSettings);
+    document.getElementById('aiToggleKey').addEventListener('click', () => {
+        const input = document.getElementById('aiSettingsKey');
+        input.type = input.type === 'password' ? 'text' : 'password';
+    });
+    document.getElementById('aiTestBtn').addEventListener('click', testConnection);
+    document.getElementById('aiSettingsModal').addEventListener('click', e => {
+        if (e.target === e.currentTarget) hideSettings();
+        const card = e.target.closest('[data-provider]');
+        if (card) switchProvider(card.dataset.provider);
     });
 
     // ── APKG modal ──
