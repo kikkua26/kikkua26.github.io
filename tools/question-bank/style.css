@@ -91,6 +91,9 @@ body {
 .btn.danger { color: var(--danger); }
 .btn.danger:hover { background: var(--danger-bg); border-color: rgba(231,76,92,.2); }
 
+.buy-btn { background: var(--accent); border-color: transparent; color: #fff; font-weight: 600; text-decoration: none; }
+.buy-btn:hover { background: var(--accent-hover); box-shadow: 0 4px 14px rgba(108,92,231,.25); }
+
 .toolbar select, #optCount {
     padding: 6px 10px;
     border: 1px solid var(--border);
@@ -451,6 +454,9 @@ td.has-preview:hover .preview-btn { opacity: .5; }
 .apkg-status.success { color: var(--accent); }
 .apkg-status.error { color: var(--danger); }
 .apkg-status.loading { color: var(--text-3); }
+.apkg-buy-hint { margin-top: 14px; padding: 10px 14px; background: var(--accent-bg, rgba(108,92,231,.06)); border-radius: var(--radius-sm); font-size: 12.5px; color: var(--text-2); text-align: center; }
+.apkg-buy-hint a { color: var(--accent); font-weight: 600; text-decoration: none; }
+.apkg-buy-hint a:hover { text-decoration: underline; }
 
 /* ── context menu ── */
 .ctx-menu {
