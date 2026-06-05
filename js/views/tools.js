@@ -131,6 +131,9 @@ export function renderTools() {
                 <div class="header-inner">
                     <div class="header-left">
                         <a href="/" class="back-btn" title="返回首页">${ICONS.back}</a>
+                        <button class="pro-menu-btn" id="proMenuBtn" title="切换工具列表">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+                        </button>
                         <h1 class="header-title">工具箱</h1>
                     </div>
                     <div class="header-right">
@@ -159,6 +162,33 @@ export function renderTools() {
             </div>
         </div>`;
 
+    // Sidebar toggle on mobile
+    const menuBtn = document.getElementById('proMenuBtn');
+    const proTabs = app.querySelector('.pro-tabs');
+    const proLayout = app.querySelector('.pro-layout');
+
+    if (menuBtn && proTabs) {
+        // Create overlay element for mobile
+        const overlay = document.createElement('div');
+        overlay.className = 'pro-overlay';
+        proLayout.appendChild(overlay);
+
+        const closeSidebar = () => {
+            proTabs.classList.remove('open');
+            menuBtn.classList.remove('active');
+            overlay.classList.remove('visible');
+        };
+
+        menuBtn.addEventListener('click', () => {
+            const opening = !proTabs.classList.contains('open');
+            proTabs.classList.toggle('open');
+            menuBtn.classList.toggle('active');
+            overlay.classList.toggle('visible', opening);
+        });
+
+        overlay.addEventListener('click', closeSidebar);
+    }
+
     // Tab switching with password protection
     app.querySelectorAll('.pro-tab').forEach(tab => {
         tab.addEventListener('click', async () => {
@@ -168,6 +198,13 @@ export function renderTools() {
             if (isProtected && !verifiedTools.has(toolId)) {
                 const verified = await showPasswordDialog(toolId);
                 if (!verified) return;
+            }
+
+            // Close sidebar on mobile after selecting a tool
+            if (proTabs && proTabs.classList.contains('open')) {
+                proTabs.classList.remove('open');
+                menuBtn?.classList.remove('active');
+                app.querySelector('.pro-overlay')?.classList.remove('visible');
             }
 
             navigate('/tools?tool=' + toolId);
