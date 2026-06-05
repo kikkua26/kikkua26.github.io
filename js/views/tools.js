@@ -3,7 +3,7 @@ import { ICONS } from '../icons.js';
 import { navigate } from '../navigation.js';
 import { SITE } from '../config.js';
 
-const TV = '?v=7'; // cache buster for tool iframes
+const TV = '?v=8'; // cache buster for tool iframes
 
 // SHA-256 hash of password (kikkua2649)
 const PROTECTED_HASH = '2f9ce55a6be0183a94b0271738254dad35a34467b0fc852fd65654485f751c25';

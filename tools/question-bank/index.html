@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>题库编辑器</title>
 <link rel="stylesheet" href="../shared/base.css">
-<link rel="stylesheet" href="style.css?v=13">
+<link rel="stylesheet" href="style.css?v=14">
 </head>
 <body>
 
@@ -76,7 +76,7 @@
 
 <!-- Text import modal -->
 <div class="modal-mask" id="textImportModal">
-  <div class="modal" style="min-width:560px;width:640px">
+  <div class="modal text-import-modal">
     <h3>📋 导入 AI 生成结果</h3>
     <div class="ai-guide">
       <div class="ai-guide-title">使用步骤</div>
@@ -98,7 +98,7 @@
 <input type="file" id="fileInput" accept=".csv,.xlsx,.xls" style="display:none">
 
 <div class="modal-mask" id="exportModal">
-  <div class="modal" style="min-width:300px">
+  <div class="modal export-modal">
     <h3>导出</h3>
     <label><input type="radio" name="exportFmt" value="kikkua" checked> CSV · kikkua 格式</label>
     <label><input type="radio" name="exportFmt" value="standard"> CSV · 标准格式</label>

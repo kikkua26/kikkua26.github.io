@@ -493,6 +493,10 @@ td.has-preview:hover .preview-btn { opacity: .5; }
 }
 .signature:hover { opacity: .65; }
 
+/* ── Text import modal ── */
+.text-import-modal { min-width: 560px; width: 640px; }
+.export-modal { min-width: 300px; }
+
 /* ── AI modal ── */
 .ai-btn { color: var(--accent) !important; border-color: rgba(108,92,231,.25) !important; }
 .ai-btn:hover { background: var(--accent-glow) !important; border-color: var(--accent) !important; }
@@ -640,6 +644,8 @@ select.ai-input { cursor: pointer; }
 
     /* Modals — fit small screens */
     .modal { min-width: 0; width: 92vw; max-width: 92vw; max-height: 85vh; padding: 16px; overflow-y: auto; }
+    .text-import-modal { min-width: 0; width: 92vw; max-width: 92vw; }
+    .export-modal { min-width: 0; }
     .apkg-modal { min-width: 0; width: 92vw; max-width: 92vw; }
     .row-form-modal { width: 95vw; max-width: 95vw; height: 80vh; }
     .preview-modal { width: 95vw; max-width: 95vw; height: 80vh; }
