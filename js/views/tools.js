@@ -83,6 +83,7 @@ function showPasswordDialog(toolId) {
 
 export function renderTools() {
     const app = $('#app');
+    const isMobile = window.innerWidth <= 767;
     let activeTool = TOOLS[0].id;
     const params = new URLSearchParams(location.search);
     if (params.get('tool')) activeTool = params.get('tool');
@@ -142,7 +143,7 @@ export function renderTools() {
                 </div>
             </header>
             <div class="pro-layout">
-                <div class="pro-tabs">
+                <div class="pro-tabs"${isMobile ? ' style="display:none"' : ''}>
                     ${TOOLS.map(t => {
                         const isLocked = t.protected && !verifiedTools.has(t.id);
                         return `
@@ -166,12 +167,6 @@ export function renderTools() {
     const menuBtn = document.getElementById('proMenuBtn');
     const proTabs = app.querySelector('.pro-tabs');
     const proLayout = app.querySelector('.pro-layout');
-    const isMobile = window.matchMedia('(max-width: 767px)').matches;
-
-    // Force hide sidebar on mobile immediately (don't wait for CSS)
-    if (proTabs && isMobile) {
-        proTabs.style.display = 'none';
-    }
 
     if (menuBtn && proTabs) {
         // Create overlay element for mobile
@@ -179,25 +174,27 @@ export function renderTools() {
         overlay.className = 'pro-overlay';
         proLayout.appendChild(overlay);
 
+        const openSidebar = () => {
+            proTabs.style.display = 'flex';
+            proTabs.style.flexDirection = 'column';
+            proTabs.classList.add('open');
+            menuBtn.classList.add('active');
+            overlay.classList.add('visible');
+        };
+
         const closeSidebar = () => {
-            proTabs.classList.remove('open');
             proTabs.style.display = 'none';
+            proTabs.classList.remove('open');
             menuBtn.classList.remove('active');
             overlay.classList.remove('visible');
         };
 
         menuBtn.addEventListener('click', () => {
-            const opening = !proTabs.classList.contains('open');
-            if (opening) {
-                proTabs.classList.add('open');
-                proTabs.style.display = 'flex';
-                proTabs.style.flexDirection = 'column';
+            if (proTabs.classList.contains('open')) {
+                closeSidebar();
             } else {
-                proTabs.classList.remove('open');
-                proTabs.style.display = 'none';
+                openSidebar();
             }
-            menuBtn.classList.toggle('active');
-            overlay.classList.toggle('visible', opening);
         });
 
         overlay.addEventListener('click', closeSidebar);
@@ -216,6 +213,7 @@ export function renderTools() {
 
             // Close sidebar on mobile after selecting a tool
             if (proTabs && proTabs.classList.contains('open')) {
+                proTabs.style.display = 'none';
                 proTabs.classList.remove('open');
                 menuBtn?.classList.remove('active');
                 app.querySelector('.pro-overlay')?.classList.remove('visible');
