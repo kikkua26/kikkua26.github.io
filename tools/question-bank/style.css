@@ -614,6 +614,44 @@ select.ai-input { cursor: pointer; }
 }
 
 @media (max-width:768px) {
-    .header { flex-wrap: wrap; }
-    .app { padding: 12px; }
+    .app { padding: 8px; }
+
+    .toolbar {
+        gap: 4px;
+        padding: 6px 8px;
+    }
+    .toolbar .sep { display: none; }
+    .toolbar .btn { padding: 4px 8px; font-size: 10.5px; }
+    .toolbar-right {
+        margin-left: 0;
+        width: 100%;
+        justify-content: flex-end;
+        padding-top: 4px;
+        border-top: 1px solid var(--border);
+        margin-top: 4px;
+    }
+
+    .preview-toolbar {
+        flex-wrap: wrap;
+        gap: 3px;
+        padding: 4px 8px;
+    }
+    .preview-toolbar .btn { padding: 3px 6px; font-size: 10.5px; }
+}
+
+@media (max-width:480px) {
+    .toolbar {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+    .toolbar::-webkit-scrollbar { display: none; }
+    .toolbar-right {
+        flex-shrink: 0;
+        width: auto;
+        padding-top: 0;
+        border-top: none;
+        margin-top: 0;
+    }
 }

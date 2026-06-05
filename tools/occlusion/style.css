@@ -117,5 +117,14 @@ body {
 
 @media (max-width:768px) {
     .side-panel { display:none; }
-    .toolbar h1 { font-size:14px; }
+    .toolbar { flex-wrap:wrap; gap:6px; padding:6px 10px; }
+    .toolbar h1 { font-size:13px; min-width:0; flex-shrink:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .toolbar-actions { gap:6px; flex-shrink:0; }
+    .btn { padding:4px 8px; font-size:10px; }
+}
+
+@media (max-width:480px) {
+    .toolbar { flex-direction:column; align-items:stretch; gap:6px; }
+    .toolbar h1 { text-align:center; }
+    .toolbar-actions { justify-content:center; }
 }
