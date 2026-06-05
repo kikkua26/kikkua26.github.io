@@ -259,6 +259,8 @@
     color: var(--terracotta);
     text-decoration: underline;
     text-underline-offset: 2px;
+    word-break: break-all;
+    overflow-wrap: break-word;
 }
 
 .docs-body a:hover {
