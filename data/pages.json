@@ -6,7 +6,9 @@
       "group": "入门指南",
       "icon": "📖",
       "order": 1,
-      "tags": ["入门"],
+      "tags": [
+        "入门"
+      ],
       "file": "about.md",
       "updatedAt": "2026-05-24"
     },
@@ -26,7 +28,9 @@
       "group": "工具教程",
       "icon": "📘",
       "order": 3,
-      "tags": ["教程"],
+      "tags": [
+        "教程"
+      ],
       "file": "tutorial.md",
       "updatedAt": "2026-05-24"
     },
@@ -36,7 +40,10 @@
       "group": "牌组介绍",
       "icon": "💊",
       "order": 10,
-      "tags": ["方剂学", "牌组"],
+      "tags": [
+        "方剂学",
+        "牌组"
+      ],
       "file": "fangji-intro.md",
       "updatedAt": "2026-05-24"
     },
@@ -46,7 +53,11 @@
       "group": "工具教程",
       "icon": "🖼",
       "order": 20,
-      "tags": ["工具", "遮挡块", "教程"],
+      "tags": [
+        "工具",
+        "遮挡块",
+        "教程"
+      ],
       "file": "occlusion-guide.md",
       "updatedAt": "2026-06-05"
     },
@@ -56,7 +67,11 @@
       "group": "工具教程",
       "icon": "📋",
       "order": 21,
-      "tags": ["工具", "题库", "教程"],
+      "tags": [
+        "工具",
+        "题库",
+        "教程"
+      ],
       "file": "question-bank-guide.md",
       "updatedAt": "2026-06-05"
     }
