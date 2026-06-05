@@ -50,6 +50,33 @@ export function mdToHtml(text) {
             const code = b.replace(/^```\w*\n?/, '').replace(/\n?```$/, '');
             return `<pre><code>${code.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code></pre>`;
         }
+        if (/^\|/.test(b)) {
+            const rows = b.split(/\n/).filter(r => r.trim());
+            if (rows.length >= 2 && /^\|[\s:-]+\|/.test(rows[1])) {
+                const parseCells = r => r.replace(/^\||\|$/g, '').split('|').map(c => c.trim());
+                const headers = parseCells(rows[0]);
+                const aligns = parseCells(rows[1]).map(c => {
+                    if (/^:-+:$/.test(c)) return 'center';
+                    if (/^-+:$/.test(c)) return 'right';
+                    return 'left';
+                });
+                let html = '<table><thead><tr>';
+                headers.forEach((h, i) => {
+                    html += `<th style="text-align:${aligns[i] || 'left'}">${inline(h)}</th>`;
+                });
+                html += '</tr></thead><tbody>';
+                rows.slice(2).forEach(r => {
+                    const cells = parseCells(r);
+                    html += '<tr>';
+                    cells.forEach((c, i) => {
+                        html += `<td style="text-align:${aligns[i] || 'left'}">${inline(c)}</td>`;
+                    });
+                    html += '</tr>';
+                });
+                html += '</tbody></table>';
+                return html;
+            }
+        }
         return `<p>${inline(b.replace(/\n/g, '<br>'))}</p>`;
     }).join('');
 }

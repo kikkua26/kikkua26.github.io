@@ -270,6 +270,36 @@
     color: var(--ink-dark);
 }
 
+/* ── Tables ── */
+
+.docs-body table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 13.5px;
+    line-height: 1.6;
+}
+.docs-body thead th {
+    background: var(--paper-warm, #f5f0e8);
+    font-weight: 600;
+    color: var(--ink-dark);
+    padding: 8px 12px;
+    border: 1px solid var(--border, #e4dbcf);
+    text-align: left;
+    white-space: nowrap;
+}
+.docs-body tbody td {
+    padding: 7px 12px;
+    border: 1px solid var(--border, #e4dbcf);
+    vertical-align: top;
+}
+.docs-body tbody tr:nth-child(even) {
+    background: rgba(0,0,0,.015);
+}
+.docs-body tbody tr:hover {
+    background: rgba(0,0,0,.03);
+}
+
 /* ── Callout boxes ── */
 
 .callout {
