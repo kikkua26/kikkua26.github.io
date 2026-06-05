@@ -37,22 +37,23 @@
     .pro-layout { position: relative; }
 
     .pro-tabs {
+        display: none;
         position: fixed;
         top: 56px;
-        left: -200px;
+        left: 0;
         width: 200px;
         height: calc(100vh - 56px);
         height: calc(100dvh - 56px);
         z-index: 998;
-        /* No transition on close — prevents flash on page load */
+        transition: left 0.25s var(--ease-out);
         box-shadow: 4px 0 24px rgba(44, 33, 22, 0.1);
         padding: 12px 0;
         background: var(--bg-secondary);
         overflow-y: auto;
     }
     .pro-tabs.open {
-        left: 0;
-        transition: left 0.25s var(--ease-out);
+        display: flex;
+        flex-direction: column;
     }
 
     /* Overlay */

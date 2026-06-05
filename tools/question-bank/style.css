@@ -639,12 +639,15 @@ select.ai-input { cursor: pointer; }
     .preview-toolbar .btn { padding: 3px 6px; font-size: 10.5px; }
 
     /* Modals — fit small screens */
-    .modal { min-width: 0; width: 92vw; padding: 20px; }
+    .modal { min-width: 0; width: 92vw; max-width: 92vw; max-height: 85vh; padding: 16px; overflow-y: auto; }
     .apkg-modal { min-width: 0; width: 92vw; max-width: 92vw; }
     .row-form-modal { width: 95vw; max-width: 95vw; height: 80vh; }
     .preview-modal { width: 95vw; max-width: 95vw; height: 80vh; }
     .preview-body { flex-direction: column; }
     .preview-editor { border-right: none; border-bottom: 1px solid var(--border); }
+
+    .modal .btns { flex-wrap: wrap; gap: 6px; }
+    .modal .btns .btn { flex: 1; min-width: 0; justify-content: center; }
 
     .form-row { flex-direction: column; align-items: stretch; gap: 4px; }
     .form-label { width: auto; text-align: left; font-size: 11px; }
@@ -652,6 +655,9 @@ select.ai-input { cursor: pointer; }
 
     .ai-config-grid { grid-template-columns: 1fr; }
     .ai-config-grid label { justify-content: flex-start; padding: 6px 10px; }
+
+    .ai-chips { gap: 4px; }
+    .ai-chip { padding: 5px 10px; font-size: 11px; }
 
     .ctx-menu { min-width: 0; }
 }
