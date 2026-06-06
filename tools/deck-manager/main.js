@@ -9,6 +9,15 @@ let decks = [], dataSha = '', currentDeckIdx = -1;
 let tplNames = [];
 let tagTree = [];
 let csvMeta = {};
+
+// Collect all unique tags from all decks + tagTree
+function getAllTags() {
+    const set = new Set();
+    decks.forEach(d => (d.tags || []).forEach(t => set.add(t)));
+    function walkTree(nodes) { nodes.forEach(n => { set.add(n.path); if (n.children) walkTree(n.children); }); }
+    walkTree(tagTree);
+    return [...set].sort();
+}
 const LS_KEY = 'kikkua_decks_draft';
 
 function saveLocal() { localStorage.setItem(LS_KEY, JSON.stringify(decks)); }
@@ -265,8 +274,10 @@ async function selectDeck(i) {
             <div class="field"><label>章节字段</label><select data-deck-field="chapterField">${chapterOpts}</select></div>
         </div>
         <div class="field"><label>标签</label>
-            <div class="tag-list" data-deck-tags>${(d.tags || []).map(t => '<span class="tag-chip">' + esc(t) + '<span class="tag-remove" data-remove-tag="' + esc(t) + '">×</span></span>').join('')}
-                <span class="tag-add" data-add-tag>+ 添加</span>
+            <div class="tag-input-wrap" data-deck-tags>
+                ${(d.tags || []).map(t => '<span class="tag-chip">' + esc(t) + '<span class="tag-remove" data-remove-tag="' + esc(t) + '">×</span></span>').join('')}
+                <input class="tag-text-input" placeholder="输入标签，回车添加（支持 :: 分级）" data-tag-input>
+                <div class="tag-suggestions" data-tag-suggestions></div>
             </div>
         </div>
         <div class="field"><label>简述</label><input value="${esc(d.summary || '')}" data-deck-field="summary" placeholder="卡片列表中显示的简短介绍"></div>
@@ -424,7 +435,7 @@ function setupEvents() {
             return;
         }
 
-        // Tag actions
+        // Tag chip remove
         const removeTag = e.target.closest('[data-remove-tag]');
         if (removeTag && currentDeckIdx >= 0) {
             decks[currentDeckIdx].tags = (decks[currentDeckIdx].tags || []).filter(t => t !== removeTag.dataset.removeTag);
@@ -432,17 +443,58 @@ function setupEvents() {
             selectDeck(currentDeckIdx);
             return;
         }
-        const addTag = e.target.closest('[data-add-tag]');
-        if (addTag && currentDeckIdx >= 0) {
-            const currentTags = [...(decks[currentDeckIdx].tags || [])];
-            tagSelectorDialog(currentTags).then(newTags => {
-                if (newTags !== null) {
-                    decks[currentDeckIdx].tags = newTags;
-                    saveLocal();
-                    selectDeck(currentDeckIdx);
-                }
-            });
+
+        // Tag suggestion click
+        const suggestion = e.target.closest('[data-pick-tag]');
+        if (suggestion && currentDeckIdx >= 0) {
+            const val = suggestion.dataset.pickTag;
+            const tags = decks[currentDeckIdx].tags || [];
+            if (!tags.includes(val)) { tags.push(val); decks[currentDeckIdx].tags = tags; saveLocal(); }
+            selectDeck(currentDeckIdx);
             return;
+        }
+    });
+
+    // Tag input keyboard
+    document.addEventListener('keydown', e => {
+        const input = e.target.closest('[data-tag-input]');
+        if (!input || currentDeckIdx < 0) return;
+        const val = input.value.trim();
+        if ((e.key === 'Enter' || e.key === ',') && val) {
+            e.preventDefault();
+            const tags = decks[currentDeckIdx].tags || [];
+            if (!tags.includes(val)) { tags.push(val); decks[currentDeckIdx].tags = tags; saveLocal(); }
+            selectDeck(currentDeckIdx);
+        } else if (e.key === 'Backspace' && !val && decks[currentDeckIdx].tags?.length) {
+            decks[currentDeckIdx].tags.pop();
+            saveLocal();
+            selectDeck(currentDeckIdx);
+        }
+    });
+
+    // Tag input — show suggestions
+    document.addEventListener('input', e => {
+        const input = e.target.closest('[data-tag-input]');
+        if (!input || currentDeckIdx < 0) return;
+        const val = input.value.trim().toLowerCase();
+        const sugBox = input.parentElement.querySelector('[data-tag-suggestions]');
+        if (!sugBox) return;
+        if (!val) { sugBox.innerHTML = ''; return; }
+        const existing = new Set(decks[currentDeckIdx].tags || []);
+        const allTags = getAllTags();
+        const matches = allTags.filter(t => t.toLowerCase().includes(val) && !existing.has(t)).slice(0, 8);
+        sugBox.innerHTML = matches.map(t =>
+            `<div class="tag-sug-item" data-pick-tag="${esc(t)}">${esc(t)}</div>`
+        ).join('');
+    });
+
+    // Hide suggestions on blur
+    document.addEventListener('focusout', e => {
+        if (e.target.closest('[data-tag-input]')) {
+            setTimeout(() => {
+                const sugBox = e.target.closest('.tag-input-wrap')?.querySelector('[data-tag-suggestions]');
+                if (sugBox) sugBox.innerHTML = '';
+            }, 200);
         }
     });
 }

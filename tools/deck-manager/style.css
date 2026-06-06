@@ -59,20 +59,33 @@ body {
 .edit-actions { display: flex; gap: 8px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
 
 /* ── Tags ── */
-.tag-list { display: flex; flex-wrap: wrap; gap: 6px; padding: 4px 0; }
+.tag-input-wrap {
+    display: flex; flex-wrap: wrap; gap: 6px; padding: 6px 8px;
+    border: 1px solid var(--border); border-radius: 6px; background: var(--bg);
+    min-height: 36px; align-items: center; position: relative; cursor: text;
+}
+.tag-input-wrap:focus-within { border-color: var(--accent); }
 .tag-chip {
     display: inline-flex; align-items: center; gap: 3px;
-    padding: 2px 8px; background: var(--bg); border: 1px solid var(--border);
+    padding: 2px 8px; background: var(--surface); border: 1px solid var(--border);
     border-radius: 4px; font-size: 12px;
 }
-.tag-remove { cursor: pointer; color: var(--text3); margin-left: 2px; }
+.tag-remove { cursor: pointer; color: var(--text3); margin-left: 2px; font-size: 14px; line-height: 1; }
 .tag-remove:hover { color: var(--accent); }
-.tag-add {
-    display: inline-flex; align-items: center; padding: 2px 8px;
-    border: 1px dashed var(--border); border-radius: 4px; font-size: 12px;
-    cursor: pointer; color: var(--accent);
+.tag-text-input {
+    border: none; outline: none; background: none; font-size: 13px;
+    flex: 1; min-width: 120px; padding: 2px 0; font-family: inherit;
 }
-.tag-add:hover { border-color: var(--accent); background: var(--accent-bg); }
+.tag-suggestions {
+    position: absolute; top: 100%; left: 0; right: 0; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 6px; box-shadow: 0 4px 16px rgba(0,0,0,.1);
+    z-index: 10; max-height: 160px; overflow-y: auto; display: block;
+}
+.tag-suggestions:empty { display: none; }
+.tag-sug-item {
+    padding: 6px 12px; font-size: 13px; cursor: pointer; transition: background .1s;
+}
+.tag-sug-item:hover { background: var(--accent-bg); }
 
 /* ── CSV Section ── */
 .csv-section { border-top: 1px solid var(--border); padding-top: 14px; margin-top: 14px; }
