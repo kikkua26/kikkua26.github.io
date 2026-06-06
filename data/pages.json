@@ -27,7 +27,7 @@
       "title": "kikkua 模板使用教程",
       "group": "工具教程",
       "icon": "📘",
-      "order": 3,
+      "order": 4,
       "tags": [
         "教程"
       ],
@@ -37,9 +37,9 @@
     {
       "id": "fangji-intro",
       "title": "方剂学牌组介绍",
-      "group": "牌组介绍",
+      "group": "中综卡牌",
       "icon": "💊",
-      "order": 10,
+      "order": 3,
       "tags": [
         "方剂学",
         "牌组"
@@ -52,7 +52,7 @@
       "title": "遮挡块工具使用教程",
       "group": "工具教程",
       "icon": "🖼",
-      "order": 20,
+      "order": 5,
       "tags": [
         "工具",
         "遮挡块",
@@ -66,7 +66,7 @@
       "title": "题库编辑器使用教程",
       "group": "工具教程",
       "icon": "📋",
-      "order": 21,
+      "order": 6,
       "tags": [
         "工具",
         "题库",
