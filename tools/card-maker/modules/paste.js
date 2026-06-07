@@ -24,10 +24,9 @@ export function applyQuickPaste() {
     let text = input.value.trim();
     if (!text) { import('./utils.js').then(m => m.toast('请粘贴内容', 'error')); return; }
 
-    // Clean AI artifacts
+    // Clean AI artifacts like [reference:X] and markdown code blocks
     text = text.replace(/\[reference:\d+\]/g, '');
     text = text.replace(/```json\s*/g, '').replace(/```\s*/g, '');
-    text = text.replace(/^﻿/, ''); // BOM
 
     let data;
     try {
