@@ -214,7 +214,6 @@ ${outputFormat}
 ## 输出约束
 - 严格只在 \`\`\`json 代码块中输出${isSingle ? 'JSON' : 'JSON数组'}，禁止输出任何解释、说明、引用标记（如[reference:X]）
 - **格式要求**：确保输出合法的JSON——英文双引号包裹字符串，内部双引号用 \\" 转义，无多余逗号，括号正确闭合
-- **引号规范**：引用原文时用中文引号「」或『』，不要在英文双引号内嵌套英文双引号
 
 ## 内容质量
 ${multiNoteRule}
@@ -436,10 +435,14 @@ export function applyBatchImport() {
     toast(`已导入 ${parts.join('、')}`, 'success');
 }
 
+function replaceBraces(str) {
+    return str.replace(/\{\{/g, '[[').replace(/\}\}/g, ']]');
+}
+
 function serializeFields(obj) {
-    if (typeof obj === 'string') return obj;
+    if (typeof obj === 'string') return replaceBraces(obj);
     if (typeof obj === 'object') {
-        return Object.entries(obj).map(([k, v]) => `${k}::${v}`).join('<br>###');
+        return Object.entries(obj).map(([k, v]) => `${k}::${replaceBraces(String(v))}`).join('<br>###');
     }
     return '';
 }

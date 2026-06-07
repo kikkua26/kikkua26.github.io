@@ -54,12 +54,12 @@ export function parseDataObject(obj) {
     const extended = [];
     if (obj['知识解析']) {
         if (typeof obj['知识解析'] === 'string') parseSubfieldString(obj['知识解析']).forEach(f => knowledge.push(f));
-        else if (typeof obj['知识解析'] === 'object') Object.entries(obj['知识解析']).forEach(([k, v]) => knowledge.push({ name: k, content: String(v) }));
+        else if (typeof obj['知识解析'] === 'object') Object.entries(obj['知识解析']).forEach(([k, v]) => knowledge.push({ name: k, content: String(v).replace(/\{\{/g, '[[').replace(/\}\}/g, ']]') }));
     }
     if (obj['拓展解析'] || obj['知识拓展']) {
         const val = obj['拓展解析'] || obj['知识拓展'];
         if (typeof val === 'string') parseSubfieldString(val).forEach(f => extended.push(f));
-        else if (typeof val === 'object') Object.entries(val).forEach(([k, v]) => extended.push({ name: k, content: String(v) }));
+        else if (typeof val === 'object') Object.entries(val).forEach(([k, v]) => extended.push({ name: k, content: String(v).replace(/\{\{/g, '[[').replace(/\}\}/g, ']]') }));
     }
     fillFormFromParsed({ chapter, mainField, knowledge, extended });
 }
@@ -68,7 +68,8 @@ export function parseSubfieldString(raw) {
     if (!raw) return [];
     return raw.split(/<br>###|\n###|\n(?=[^：:\n]+[：:])/).map(s => {
         const m = s.trim().match(/^(.+?)[：:]\s*(.*)$/);
-        return m ? { name: m[1].trim(), content: m[2].trim() } : { name: '', content: s.trim() };
+        if (m) return { name: m[1].trim(), content: m[2].trim().replace(/\{\{/g, '[[').replace(/\}\}/g, ']]') };
+        return { name: '', content: s.trim().replace(/\{\{/g, '[[').replace(/\}\}/g, ']]') };
     }).filter(f => f.name || f.content);
 }
 
