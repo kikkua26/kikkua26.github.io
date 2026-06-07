@@ -201,6 +201,16 @@ const SYSTEM_PROMPT = `你是一个知识卡片结构化助手。根据用户输
 - 内容应来源于权威教材、文献，确保准确完整
 - 内容中不要包含任何引用标记或来源标注`;
 
+function getExtraRequirements(inputId) {
+    const el = rootEl.querySelector(inputId || '#cmAIExtra');
+    return el?.value?.trim() || '';
+}
+
+function buildUserMessage(content, extraInputId) {
+    const extra = getExtraRequirements(extraInputId);
+    return extra ? `${content}\n\n【补充要求】${extra}` : content;
+}
+
 export async function copyPrompt() {
     const contentInput = rootEl.querySelector('#cmAIContent');
     const content = contentInput?.value?.trim();
@@ -210,7 +220,7 @@ export async function copyPrompt() {
         return;
     }
 
-    const fullPrompt = `[System]\n${SYSTEM_PROMPT}\n\n[User]\n${content}`;
+    const fullPrompt = `[System]\n${SYSTEM_PROMPT}\n\n[User]\n${buildUserMessage(content)}`;
 
     try {
         await navigator.clipboard.writeText(fullPrompt);
@@ -284,7 +294,7 @@ export async function copyBatchPrompt() {
         return;
     }
 
-    const fullPrompt = `[System]\n${BATCH_SYSTEM_PROMPT}\n\n[User]\n${content}`;
+    const fullPrompt = `[System]\n${BATCH_SYSTEM_PROMPT}\n\n[User]\n${buildUserMessage(content, '#cmBatchExtra')}`;
 
     try {
         await navigator.clipboard.writeText(fullPrompt);
@@ -322,7 +332,7 @@ export async function batchAIParse() {
     if (btn) { btn.disabled = true; btn.textContent = '⏳ AI 思考中...'; }
 
     try {
-        const result = await callAI(content, apiKey, provider, model);
+        const result = await callAI(buildUserMessage(content, '#cmBatchExtra'), apiKey, provider, model);
         const jsonInput = rootEl.querySelector('#cmBatchInput');
         if (jsonInput) {
             jsonInput.value = JSON.stringify(result, null, 2);
@@ -457,7 +467,7 @@ export async function aiParse() {
 
     btn.disabled = true; btn.textContent = '⏳ AI 思考中...';
     try {
-        const result = await callAI(content, apiKey, provider, model);
+        const result = await callAI(buildUserMessage(content), apiKey, provider, model);
         // Write JSON result to the JSON textarea
         if (jsonInput) {
             jsonInput.value = JSON.stringify(result, null, 2);
