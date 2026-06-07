@@ -192,6 +192,7 @@ const SYSTEM_PROMPT = `你是一个知识卡片结构化助手。根据用户输
 
 规则：
 - 严格只输出JSON，禁止输出任何解释、说明、引用标记（如[reference:X]）、markdown代码块标记
+- **格式要求**：确保输出合法的JSON格式——所有字符串必须用英文双引号包裹，字符串内部的双引号用 \" 转义，不能有多余的逗号（尤其最后一个字段后），不能有注释，确保所有括号正确闭合
 - 如果用户提供了章节信息则保留，否则根据内容推断
 - **全覆盖**：逐一识别并提取输入内容中的每一个知识点，不遗漏任何要点。如果输入内容包含多个知识点，请将所有知识点都整理进来
 - **提炼精简**：对原始内容进行提炼和归纳，去除冗余表述，保留核心要点，使内容适合记忆和复习。善用简洁的短语、关键词、口诀等形式辅助记忆
@@ -269,10 +270,11 @@ const BATCH_SYSTEM_PROMPT = `你是一个知识卡片批量结构化助手。根
 
 规则：
 - 严格只输出JSON数组，禁止输出任何解释、说明、引用标记（如[reference:X]）、markdown代码块标记
+- **格式要求**：确保输出合法的JSON格式——所有字符串必须用英文双引号包裹，字符串内部的双引号用 \" 转义，不能有多余的逗号（尤其最后一个字段后），不能有注释，确保所有括号正确闭合
 - **全覆盖**：逐一识别并提取输入内容中的每一个知识点，确保不遗漏任何要点。每个独立知识点生成一个对象
 - **提炼精简**：对原始内容进行提炼和归纳，去除冗余表述，保留核心要点，使内容适合记忆和复习。善用简洁的短语、关键词、口诀等形式辅助记忆
 - **重点标记**：对内容中的关键术语、核心定义、重要数据等用 [[……]] 标记，用于后续制作挖空卡片。例如：麻黄的功效是[[发汗解表]]、[[宣肺平喘]]
-- **名词解释**：对专业术语或概念，在正文中用【*术语::解释*】的格式内联标注，不单独设字段。例如：此方具有[[辛温解表]]之功，【*辛温::指用温性药物驱散寒邪*】
+- **名词解释**：对专业术语或概念，在正文中用【*术语::解释*】的格式内联标注，不单独设字段。例如：此方具有【*辛温::指用温性药物驱散寒邪*】解表之功，
 - 如果用户提供了章节信息则保留，否则根据内容推断
 - 知识解析：全面覆盖该知识点的核心内容，字段名自行拟定
 - 拓展解析：全面覆盖补充信息，字段名控制在2个字
@@ -503,11 +505,42 @@ async function callAI(text, apiKey, providerKey, model) {
     // Clean AI artifacts
     content = content.replace(/\[reference:\d+\]/g, '');
     content = content.replace(/```json\s*/g, '').replace(/```\s*/g, '');
+    content = content.replace(/^﻿/, ''); // BOM
 
     // Try to extract JSON object or array
     const objMatch = content.match(/\{[\s\S]*\}/);
     const arrMatch = content.match(/\[[\s\S]*\]/);
     const m = objMatch || arrMatch;
     if (!m) throw new Error('AI 未返回有效的 JSON');
-    return JSON.parse(m[0]);
+
+    return parseJsonSafe(m[0]);
+}
+
+function parseJsonSafe(str) {
+    // Try direct parse first
+    try { return JSON.parse(str); } catch {}
+
+    // Auto-fix common AI JSON errors
+    let fixed = str;
+
+    // Chinese quotes → standard quotes
+    fixed = fixed.replace(/“/g, '"').replace(/”/g, '"');
+    fixed = fixed.replace(/‘/g, "'").replace(/’/g, "'");
+
+    // Remove single-line comments
+    fixed = fixed.replace(/\/\/.*$/gm, '');
+
+    // Remove trailing commas before } or ]
+    fixed = fixed.replace(/,\s*([\]}])/g, '$1');
+
+    // Fix unescaped newlines inside strings (heuristic)
+    fixed = fixed.replace(/"([^"]*)\n([^"]*)"/g, (match, a, b) => {
+        // Only fix if it looks like a broken string value
+        if (!a.endsWith('\\')) return '"' + a + '\\n' + b + '"';
+        return match;
+    });
+
+    try { return JSON.parse(fixed); } catch (e) {
+        throw new Error('AI 返回的 JSON 格式错误，请检查后手动修正: ' + e.message);
+    }
 }
