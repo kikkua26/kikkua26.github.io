@@ -215,18 +215,18 @@ export async function copyPrompt() {
     const contentInput = rootEl.querySelector('#cmAIContent');
     const content = contentInput?.value?.trim();
 
-    if (!content) {
-        showAIStatus('error', '请先输入要解析的内容');
-        return;
+    let fullPrompt;
+    if (content) {
+        fullPrompt = `[System]\n${SYSTEM_PROMPT}\n\n[User]\n${buildUserMessage(content)}`;
+    } else {
+        // No content — copy system prompt + instruction to wait
+        fullPrompt = `${SYSTEM_PROMPT}\n\n请理解以上系统规则。接下来我会提供知识内容，请等待我发送后再按规则整理为JSON。收到请回复「已准备好，等待内容」。`;
     }
-
-    const fullPrompt = `[System]\n${SYSTEM_PROMPT}\n\n[User]\n${buildUserMessage(content)}`;
 
     try {
         await navigator.clipboard.writeText(fullPrompt);
-        showAIStatus('success', '✅ 已复制到剪切板！请粘贴到 AI 对话中');
+        showAIStatus('success', content ? '✅ 已复制到剪切板！请粘贴到 AI 对话中' : '✅ 已复制系统提示词！粘贴到 AI 对话后，再发送知识内容');
     } catch {
-        // Fallback for older browsers
         const ta = document.createElement('textarea');
         ta.value = fullPrompt;
         ta.style.cssText = 'position:fixed;left:-9999px;';
@@ -234,7 +234,7 @@ export async function copyPrompt() {
         ta.select();
         document.execCommand('copy');
         ta.remove();
-        showAIStatus('success', '✅ 已复制到剪切板！请粘贴到 AI 对话中');
+        showAIStatus('success', content ? '✅ 已复制到剪切板！请粘贴到 AI 对话中' : '✅ 已复制系统提示词！粘贴到 AI 对话后，再发送知识内容');
     }
 }
 
@@ -289,16 +289,17 @@ export function hideBatchModal() {
 export async function copyBatchPrompt() {
     const contentInput = rootEl.querySelector('#cmBatchContent');
     const content = contentInput?.value?.trim();
-    if (!content) {
-        showBatchStatus('error', '请先输入要批量制作的内容');
-        return;
-    }
 
-    const fullPrompt = `[System]\n${BATCH_SYSTEM_PROMPT}\n\n[User]\n${buildUserMessage(content, '#cmBatchExtra')}`;
+    let fullPrompt;
+    if (content) {
+        fullPrompt = `[System]\n${BATCH_SYSTEM_PROMPT}\n\n[User]\n${buildUserMessage(content, '#cmBatchExtra')}`;
+    } else {
+        fullPrompt = `${BATCH_SYSTEM_PROMPT}\n\n请理解以上系统规则。接下来我会提供知识内容，请等待我发送后再按规则整理为JSON数组。收到请回复「已准备好，等待内容」。`;
+    }
 
     try {
         await navigator.clipboard.writeText(fullPrompt);
-        showBatchStatus('success', '✅ 已复制到剪切板！请粘贴到 AI 对话中');
+        showBatchStatus('success', content ? '✅ 已复制到剪切板！请粘贴到 AI 对话中' : '✅ 已复制系统提示词！粘贴到 AI 对话后，再发送知识内容');
     } catch {
         const ta = document.createElement('textarea');
         ta.value = fullPrompt;
@@ -307,7 +308,7 @@ export async function copyBatchPrompt() {
         ta.select();
         document.execCommand('copy');
         ta.remove();
-        showBatchStatus('success', '✅ 已复制到剪切板！请粘贴到 AI 对话中');
+        showBatchStatus('success', content ? '✅ 已复制到剪切板！请粘贴到 AI 对话中' : '✅ 已复制系统提示词！粘贴到 AI 对话后，再发送知识内容');
     }
 }
 
