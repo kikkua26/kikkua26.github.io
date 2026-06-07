@@ -6,9 +6,7 @@
       "group": "入门指南",
       "icon": "📖",
       "order": 1,
-      "tags": [
-        "入门"
-      ],
+      "tags": ["入门"],
       "file": "about.md",
       "updatedAt": "2026-05-24"
     },
@@ -24,54 +22,81 @@
     },
     {
       "id": "tutorial",
-      "title": "kikkua 模板使用教程",
-      "group": "工具教程",
+      "title": "模板使用教程",
+      "group": "使用教程",
       "icon": "📘",
-      "order": 4,
-      "tags": [
-        "教程"
-      ],
+      "order": 10,
+      "tags": ["教程"],
       "file": "tutorial.md",
-      "updatedAt": "2026-05-24"
+      "updatedAt": "2026-06-07"
+    },
+    {
+      "id": "tutorial-card-types",
+      "title": "单张卡片制作",
+      "group": "使用教程",
+      "icon": "✏️",
+      "order": 11,
+      "tags": ["教程", "制卡"],
+      "file": "tutorial-card-types.md",
+      "updatedAt": "2026-06-07"
+    },
+    {
+      "id": "tutorial-csv-batch",
+      "title": "表格批量制卡",
+      "group": "使用教程",
+      "icon": "📊",
+      "order": 12,
+      "tags": ["教程", "批量"],
+      "file": "tutorial-csv-batch.md",
+      "updatedAt": "2026-06-07"
+    },
+    {
+      "id": "tutorial-ai-batch",
+      "title": "AI 批量制卡",
+      "group": "使用教程",
+      "icon": "🤖",
+      "order": 13,
+      "tags": ["教程", "AI", "批量"],
+      "file": "tutorial-ai-batch.md",
+      "updatedAt": "2026-06-07"
+    },
+    {
+      "id": "tutorial-settings",
+      "title": "模板设置与配置",
+      "group": "使用教程",
+      "icon": "⚙️",
+      "order": 14,
+      "tags": ["教程", "设置"],
+      "file": "tutorial-settings.md",
+      "updatedAt": "2026-06-07"
     },
     {
       "id": "fangji-intro",
       "title": "方剂学牌组介绍",
-      "group": "中综卡牌",
+      "group": "牌组介绍",
       "icon": "💊",
-      "order": 3,
-      "tags": [
-        "方剂学",
-        "牌组"
-      ],
+      "order": 20,
+      "tags": ["方剂学", "牌组"],
       "file": "fangji-intro.md",
       "updatedAt": "2026-05-24"
     },
     {
       "id": "occlusion-guide",
-      "title": "遮挡块工具使用教程",
+      "title": "遮挡块工具教程",
       "group": "工具教程",
       "icon": "🖼",
-      "order": 5,
-      "tags": [
-        "工具",
-        "遮挡块",
-        "教程"
-      ],
+      "order": 30,
+      "tags": ["工具", "遮挡块", "教程"],
       "file": "occlusion-guide.md",
       "updatedAt": "2026-06-05"
     },
     {
       "id": "question-bank-guide",
-      "title": "题库编辑器使用教程",
+      "title": "题库编辑器教程",
       "group": "工具教程",
       "icon": "📋",
-      "order": 6,
-      "tags": [
-        "工具",
-        "题库",
-        "教程"
-      ],
+      "order": 31,
+      "tags": ["工具", "题库", "教程"],
       "file": "question-bank-guide.md",
       "updatedAt": "2026-06-05"
     }
