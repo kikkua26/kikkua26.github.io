@@ -180,29 +180,58 @@ export async function testConnection() {
 // Copy Prompt (no API needed)
 // ═══════════════════════════════════════
 
-const SYSTEM_PROMPT = `你是一个知识卡片结构化助手。根据用户输入的内容（文字或图片），提取并整理为JSON格式。
+function buildSystemPrompt(mode) {
+    const isSingle = mode === 'single';
+    const role = isSingle
+        ? '你是一个知识卡片结构化助手。根据用户输入的内容（文字或图片），提取并整理为JSON格式。'
+        : '你是一个知识卡片批量结构化助手。根据用户输入的内容（文字或图片），逐一提取所有知识点，整理为JSON数组格式。';
 
-输出格式（用 \`\`\`json 代码块包裹，不要任何其他文字）：
-{
+    const outputFormat = isSingle
+        ? `{
   "主字段": "核心知识点名称",
   "章节": "学科::大类::小类",
   "知识解析": { "字段名": "内容" },
   "拓展解析": { "字段名": "内容" }
-}
+}`
+        : `[
+  {
+    "章节": "学科::大类::小类",
+    "主字段": "知识点名称",
+    "知识解析": { "字段名": "内容" },
+    "拓展解析": { "字段名": "内容" }
+  }
+]`;
 
-规则：
-- 严格只在 \`\`\`json 代码块中输出JSON，禁止输出任何解释、说明、引用标记（如[reference:X]）
-- **内容不重复**：同一条数据中，各字段之间不要出现相同或高度相似的内容。知识解析和拓展解析应各有侧重，不要互相复制
-- 如果用户提供了章节信息则保留，否则根据内容推断
-- **全覆盖**：逐一识别并提取输入内容中的每一个知识点，不遗漏任何要点。如果输入内容包含多个知识点，请将所有知识点都整理进来
-- **提炼精简**：对原始内容进行提炼和归纳，去除冗余表述，保留核心要点，使内容适合记忆和复习。
-- **重点标记**：对内容中的关键术语、核心定义、重要数据等用 {{……}} 标记。例如：麻黄的功效是{{发汗解表}}、{{宣肺平喘}}
-- **名词解释**：对专业术语或概念，在正文中用【*术语::解释*】的格式内联标注，不单独设字段。例如：此方具有【*辛温::指用温性药物驱散寒邪*】解表之功，
-- **引号规范**：内容中引用原文时用中文引号「」或『』，不要在英文双引号内再嵌套英文双引号
-- 知识解析：全面覆盖该知识点的核心内容，字段名自行拟定
-- 拓展解析：全面覆盖补充信息，字段名控制在2个字
+    const multiNoteRule = isSingle
+        ? '- **全覆盖**：逐一识别并提取输入内容中的每一个知识点，不遗漏任何要点'
+        : '- **全覆盖**：逐一识别并提取输入内容中的每一个知识点，确保不遗漏任何要点。每个独立知识点生成一个对象';
+
+    return `${role}
+
+输出格式（用 \`\`\`json 代码块包裹，不要任何其他文字）：
+${outputFormat}
+
+## 输出约束
+- 严格只在 \`\`\`json 代码块中输出${isSingle ? 'JSON' : 'JSON数组'}，禁止输出任何解释、说明、引用标记（如[reference:X]）
+- **格式要求**：确保输出合法的JSON——英文双引号包裹字符串，内部双引号用 \\" 转义，无多余逗号，括号正确闭合
+- **引号规范**：引用原文时用中文引号「」或『』，不要在英文双引号内嵌套英文双引号
+
+## 内容质量
+${multiNoteRule}
+- **提炼精简**：对原始内容进行提炼和归纳，去除冗余表述，保留核心要点，使内容适合记忆和复习
+- **内容不重复**：同一条数据中各字段之间不要出现相同或高度相似的内容，知识解析和拓展解析应各有侧重
+
+## 标记规范
+- **重点标记**：关键术语、核心定义、重要数据用 {{……}} 标记。例如：麻黄的功效是{{发汗解表}}、{{宣肺平喘}}
+- **名词解释**：专业术语在正文中用【*术语::解释*】格式内联标注，不单独设字段。例如：此方具有【*辛温::指用温性药物驱散寒邪*】解表之功
+
+## 字段组织
+- **章节**：用户提供了章节信息则保留，否则根据内容推断
+- **知识解析**：全面覆盖该知识点的核心内容，字段名自行拟定
+- **拓展解析**：全面覆盖补充信息，字段名控制在2个字
 - 如果用户指定了字段，按用户要求的字段来组织，并尽量补充相关知识
 - 内容应来源于权威教材、文献，确保准确完整`;
+}
 
 function getExtraRequirements(inputId) {
     const el = rootEl.querySelector(inputId || '#cmAIExtra');
@@ -217,13 +246,13 @@ function buildUserMessage(content, extraInputId) {
 export async function copyPrompt() {
     const contentInput = rootEl.querySelector('#cmAIContent');
     const content = contentInput?.value?.trim();
+    const systemPrompt = buildSystemPrompt('single');
 
     let fullPrompt;
     if (content) {
-        fullPrompt = `[System]\n${SYSTEM_PROMPT}\n\n[User]\n${buildUserMessage(content)}`;
+        fullPrompt = `[System]\n${systemPrompt}\n\n[User]\n${buildUserMessage(content)}`;
     } else {
-        // No content — copy system prompt + instruction to wait
-        fullPrompt = `${SYSTEM_PROMPT}\n\n请理解以上系统规则，并确认以下几点：\n1. 你将如何组织知识解析和拓展解析的字段结构\n2. 重点标记和名词解释的格式你是否理解\n3. 回复「已准备好，等待内容」，然后等待我发送知识内容`;
+        fullPrompt = `${systemPrompt}\n\n请理解以上系统规则，并确认以下几点：\n1. 你将如何组织知识解析和拓展解析的字段结构\n2. 重点标记和名词解释的格式你是否理解\n3. 回复「已准备好，等待内容」，然后等待我发送知识内容`;
     }
 
     try {
@@ -256,34 +285,6 @@ function showAIStatus(type, msg) {
 // Batch Import
 // ═══════════════════════════════════════
 
-const BATCH_SYSTEM_PROMPT = `你是一个知识卡片批量结构化助手。根据用户输入的内容（文字或图片），逐一提取所有知识点，整理为JSON数组格式。
-
-输出格式（用 \`\`\`json 代码块包裹，不要任何其他文字）：
-[
-  {
-    "章节": "学科::大类::小类",
-    "主字段": "知识点名称",
-    "知识解析": { "字段名": "内容" },
-    "拓展解析": { "字段名": "内容" }
-  }
-]
-
-规则：
-- 严格只在 \`\`\`json 代码块中输出JSON数组，禁止输出任何解释、说明、引用标记（如[reference:X]）
-- **格式要求**：确保输出合法的JSON格式——所有字符串必须用英文双引号包裹，字符串内部的双引号用 \" 转义，不能有多余的逗号（尤其最后一个字段后），不能有注释，确保所有括号正确闭合
-- **内容不重复**：同一条数据中，各字段之间不要出现相同或高度相似的内容。知识解析和拓展解析应各有侧重，不要互相复制
-- **全覆盖**：逐一识别并提取输入内容中的每一个知识点，确保不遗漏任何要点。每个独立知识点生成一个对象
-- **提炼精简**：对原始内容进行提炼和归纳，去除冗余表述，保留核心要点，使内容适合记忆和复习。善用简洁的短语、关键词、口诀等形式辅助记忆
-- **重点标记**：对内容中的关键术语、核心定义、重要数据等用 {{……}} 标记，用于后续制作挖空卡片。例如：麻黄的功效是{{发汗解表}}、{{宣肺平喘}}
-- **名词解释**：对专业术语或概念，在正文中用【*术语::解释*】的格式内联标注，不单独设字段。例如：此方具有{{辛温解表}}之功，【*辛温::指用温性药物驱散寒邪*】
-- **引号规范**：内容中引用原文时用中文引号「」或『』，不要在英文双引号内再嵌套英文双引号
-- 如果用户提供了章节信息则保留，否则根据内容推断
-- 知识解析：全面覆盖该知识点的核心内容，字段名自行拟定
-- 拓展解析：全面覆盖补充信息，字段名控制在2个字
-- 如果用户指定了字段，按用户要求的字段来组织，并尽量补充相关知识
-- 内容应来源于权威教材、文献，确保准确完整
-- 内容中不要包含任何引用标记或来源标注`;
-
 export function showBatchModal() {
     const modal = rootEl.querySelector('#cmBatchModal');
     if (modal) modal.classList.remove('hidden');
@@ -297,12 +298,13 @@ export function hideBatchModal() {
 export async function copyBatchPrompt() {
     const contentInput = rootEl.querySelector('#cmBatchContent');
     const content = contentInput?.value?.trim();
+    const systemPrompt = buildSystemPrompt('batch');
 
     let fullPrompt;
     if (content) {
-        fullPrompt = `[System]\n${BATCH_SYSTEM_PROMPT}\n\n[User]\n${buildUserMessage(content, '#cmBatchExtra')}`;
+        fullPrompt = `[System]\n${systemPrompt}\n\n[User]\n${buildUserMessage(content, '#cmBatchExtra')}`;
     } else {
-        fullPrompt = `${BATCH_SYSTEM_PROMPT}\n\n请理解以上系统规则，并确认以下几点：\n1. 你将如何组织知识解析和拓展解析的字段结构\n2. 重点标记和名词解释的格式你是否理解\n3. 回复「已准备好，等待内容」，然后等待我发送知识内容`;
+        fullPrompt = `${systemPrompt}\n\n请理解以上系统规则，并确认以下几点：\n1. 你将如何组织知识解析和拓展解析的字段结构\n2. 重点标记和名词解释的格式你是否理解\n3. 回复「已准备好，等待内容」，然后等待我发送知识内容`;
     }
 
     try {
@@ -341,7 +343,7 @@ export async function batchAIParse() {
     if (btn) { btn.disabled = true; btn.textContent = '⏳ AI 思考中...'; }
 
     try {
-        const result = await callAI(buildUserMessage(content, '#cmBatchExtra'), apiKey, provider, model);
+        const result = await callAI(buildUserMessage(content, '#cmBatchExtra'), apiKey, provider, model, 'batch');
         const jsonInput = rootEl.querySelector('#cmBatchInput');
         if (jsonInput) {
             jsonInput.value = JSON.stringify(result, null, 2);
@@ -477,7 +479,7 @@ export async function aiParse() {
 
     btn.disabled = true; btn.textContent = '⏳ AI 思考中...';
     try {
-        const result = await callAI(buildUserMessage(content), apiKey, provider, model);
+        const result = await callAI(buildUserMessage(content), apiKey, provider, model, 'single');
         // Write JSON result to the JSON textarea
         if (jsonInput) {
             jsonInput.value = JSON.stringify(result, null, 2);
@@ -489,7 +491,7 @@ export async function aiParse() {
     btn.disabled = false; btn.textContent = '🤖 AI 解析';
 }
 
-async function callAI(text, apiKey, providerKey, model) {
+async function callAI(text, apiKey, providerKey, model, mode = 'single') {
     const provider = AI_PROVIDERS[providerKey];
 
     const resp = await fetch(`${provider.baseUrl}/chat/completions`, {
@@ -497,7 +499,7 @@ async function callAI(text, apiKey, providerKey, model) {
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
         body: JSON.stringify({
             model,
-            messages: [{ role: 'system', content: SYSTEM_PROMPT }, { role: 'user', content: text }],
+            messages: [{ role: 'system', content: buildSystemPrompt(mode) }, { role: 'user', content: text }],
             temperature: 0.3, max_tokens: 2000,
         }),
     });
