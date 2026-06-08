@@ -690,18 +690,25 @@ function setupContextMenu() {
         } else if (action === 'rename') {
             const oldName = ctxChapterPath.split('::').pop();
             const parentPath = ctxChapterPath.split('::').slice(0, -1).join('::');
-            const newName = prompt('新名称：', oldName);
-            if (!newName || newName === oldName) { hideChapterMenu(); return; }
-            const newPath = parentPath ? parentPath + '::' + newName : newName;
-            nb._chapters = nb._chapters.map(c => c === ctxChapterPath ? newPath : (c.startsWith(ctxChapterPath + '::') ? newPath + c.slice(ctxChapterPath.length) : c));
+            const newPath = prompt('重命名路径（可修改任意部分，如 aa::bb::cc）：', ctxChapterPath);
+            if (!newPath || newPath.trim() === ctxChapterPath) { hideChapterMenu(); return; }
+            const trimmed = newPath.trim();
+            nb._chapters = nb._chapters.map(c => c === ctxChapterPath ? trimmed : (c.startsWith(ctxChapterPath + '::') ? trimmed + c.slice(ctxChapterPath.length) : c));
             if (nb._order[parentPath]) {
-                nb._order[parentPath] = nb._order[parentPath].map(k => k === oldName ? newName.trim() : k);
+                nb._order[parentPath] = nb._order[parentPath].filter(k => k !== oldName);
             }
-            if (nb._order[ctxChapterPath]) { nb._order[newPath] = nb._order[ctxChapterPath]; delete nb._order[ctxChapterPath]; }
+            const newParentPath = trimmed.split('::').slice(0, -1).join('::');
+            const newName = trimmed.split('::').pop();
+            if (!nb._order[newParentPath]) nb._order[newParentPath] = [];
+            if (!nb._order[newParentPath].includes(newName)) nb._order[newParentPath].push(newName);
+            if (nb._order[ctxChapterPath]) { nb._order[trimmed] = nb._order[ctxChapterPath]; delete nb._order[ctxChapterPath]; }
+            // auto-expand new parent path
+            let acc = '';
+            for (const p of trimmed.split('::')) { acc = acc ? acc + '::' + p : p; state.expandedChapters.add(acc); }
             const notes = activeNotes();
             for (const n of notes) {
-                if (n.chapter === ctxChapterPath) n.chapter = newPath;
-                else if (n.chapter?.startsWith(ctxChapterPath + '::')) n.chapter = newPath + n.chapter.slice(ctxChapterPath.length);
+                if (n.chapter === ctxChapterPath) n.chapter = trimmed;
+                else if (n.chapter?.startsWith(ctxChapterPath + '::')) n.chapter = trimmed + n.chapter.slice(ctxChapterPath.length);
             }
             flushData(); renderAll();
         } else if (action === 'moveUp' || action === 'moveDown') {
