@@ -315,7 +315,7 @@ function buildNoteFields(note, fieldNames) {
         '知识解析': note.knowledgeAnalysis || '',
         '知识拓展': note.extendedAnalysis || '',
         '知识名称': note.mainField || '',
-        '等级': '',
+        '等级': note.level || '',
         '提要': '',
         '用户笔记': '',
     };

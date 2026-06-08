@@ -25,6 +25,7 @@ export function autoSaveForm() {
         const fd = getFormData();
         note.chapter = fd.chapter;
         note.mainField = fd.mainField;
+        note.level = fd.level;
         note.knowledgeAnalysis = fd.knowledgeAnalysis;
         note.extendedAnalysis = fd.extendedAnalysis;
         flushData();
@@ -37,6 +38,8 @@ export function clearForm(keepChapter) {
     state.batchSet.clear();
     const ch = $('#cmInputChapter'); if (ch && !keepChapter) ch.value = '';
     const mf = $('#cmInputMain'); if (mf) mf.value = '';
+    // Reset level to default (2)
+    rootEl.querySelectorAll('input[name="cmLevel"]').forEach(r => r.checked = r.value === '2');
     const kf = $('#cmKnowledgeFields'); if (kf) kf.innerHTML = '';
     const ef = $('#cmExtendedFields'); if (ef) ef.innerHTML = '';
     const del = $('#cmBtnDelete'); if (del) del.style.display = 'none';
@@ -57,6 +60,10 @@ export function loadForm(note) {
     if (chEl) chEl.value = note.chapter || '';
     if (mfEl) mfEl.value = note.mainField || '';
 
+    // Set level radio
+    const level = note.level || '2';
+    rootEl.querySelectorAll('input[name="cmLevel"]').forEach(r => r.checked = r.value === level);
+
     const kf = rootEl.querySelector('#cmKnowledgeFields');
     kf.innerHTML = '';
     const kFields = parseSubfields(note.knowledgeAnalysis);
@@ -74,9 +81,11 @@ export function loadForm(note) {
 }
 
 export function getFormData() {
+    const levelEl = rootEl.querySelector('input[name="cmLevel"]:checked');
     return {
         chapter: rootEl.querySelector('#cmInputChapter').value.trim(),
         mainField: rootEl.querySelector('#cmInputMain').value.trim(),
+        level: levelEl ? levelEl.value : '2',
         knowledgeAnalysis: serializeSubfields(collectSubfields('knowledge')),
         extendedAnalysis: serializeSubfields(collectSubfields('extended')),
     };

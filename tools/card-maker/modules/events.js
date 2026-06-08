@@ -140,6 +140,12 @@ export function setupEvents() {
         autoSaveForm();
     }));
 
+    // Level radio change → auto-save + preview
+    rootEl.querySelectorAll('input[name="cmLevel"]').forEach(r => r.addEventListener('change', () => {
+        autoSaveForm();
+        setTimeout(updatePreview, 30);
+    }));
+
     // Keyboard
     rootEl.addEventListener('keydown', e => {
         if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveNote(); }

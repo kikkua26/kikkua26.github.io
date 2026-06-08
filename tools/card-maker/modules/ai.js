@@ -190,6 +190,7 @@ function buildSystemPrompt(mode) {
         ? `{
   "主字段": "知识点名称",
   "章节": "学科::大类::小类",
+  "等级": 1,
   "知识解析": { "字段名": "内容" },
   "拓展解析": { "字段名": "内容" }
 }`
@@ -197,6 +198,7 @@ function buildSystemPrompt(mode) {
   {
     "章节": "学科::大类::小类",
     "主字段": "知识点名称",
+    "等级": 1,
     "知识解析": { "字段名": "内容" },
     "拓展解析": { "字段名": "内容" }
   }
@@ -269,6 +271,7 @@ ${scopeRule}
 
 ## 字段组织
 - **章节**：用户提供了章节信息则保留，否则根据内容推断。允许不同级数，如"学科::大类"或仅"学科"
+- **等级**：根据知识点的重要性填写，必须是整数 1、2 或 3。1=核心必记（定义、关键功效、核心机制等必须掌握的内容），2=重点掌握（重要但可推导的内容），3=了解即可（拓展性、背景性内容）
 - **知识解析**（核心必记）：放该知识点最重要的内容，如定义、组成、功效、主治、核心机制等，是必须掌握的部分。字段名使用单个双字词（如"定义""功效""组成"），同一批次中尽量保持一致
 - **拓展解析**（辅助了解）：放拓展和补充内容，如临床应用、鉴别对比、方解分析、使用注意、相关方剂等，帮助加深理解但非必须记忆。字段名控制在2个字（如"应用""对比""注意"）
 - 如果用户指定了字段，按用户要求的字段来组织，并尽量补充相关知识
@@ -447,6 +450,7 @@ export function applyBatchImport() {
 
         const chapter = item['章节'] || '';
         const mainField = item['主字段'];
+        const level = String(item['等级'] || '2');
         const knowledgeAnalysis = item['知识解析'] ? serializeFields(item['知识解析']) : '';
         const extendedAnalysis = item['拓展解析'] ? serializeFields(item['拓展解析']) : '';
 
@@ -471,6 +475,7 @@ export function applyBatchImport() {
             id: genId(),
             mainField,
             chapter,
+            level,
             knowledgeAnalysis,
             extendedAnalysis,
         });

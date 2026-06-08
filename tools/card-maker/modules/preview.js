@@ -35,7 +35,7 @@ export async function updatePreview() {
     const record = {
         '主字段': fd.mainField || ' ',
         '章节': fd.chapter || '',
-        '等级': '',
+        '等级': fd.level || '',
         '提要': '',
         '用户笔记': '',
         '知识解析': fd.knowledgeAnalysis || '',

@@ -34,6 +34,7 @@ export function parseCSV(text) {
     const headers = parseLine(lines[0]).map(h => h.trim());
     const idxM = Math.max(0, headers.indexOf('主字段'));
     const idxC = Math.max(1, headers.indexOf('章节'));
+    const idxL = headers.indexOf('等级');
     const idxK = Math.max(2, headers.indexOf('知识解析'));
     const idxE = Math.max(3, headers.indexOf('拓展解析'));
 
@@ -43,7 +44,8 @@ export function parseCSV(text) {
         const mf = (cols[idxM] || '').trim();
         const ch = (cols[idxC] || '').trim();
         if (!mf && !ch) continue;
-        notes.push({ id: genId(), mainField: mf, chapter: ch, knowledgeAnalysis: (cols[idxK] || '').trim(), extendedAnalysis: (cols[idxE] || '').trim() });
+        const lv = idxL >= 0 ? (cols[idxL] || '').trim() || '2' : '2';
+        notes.push({ id: genId(), mainField: mf, chapter: ch, level: lv, knowledgeAnalysis: (cols[idxK] || '').trim(), extendedAnalysis: (cols[idxE] || '').trim() });
     }
     return notes;
 }
@@ -53,8 +55,8 @@ export function generateCSV(notes) {
         const s = String(v || '');
         return /[,"\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
     };
-    const rows = ['主字段,章节,知识解析,拓展解析'];
-    for (const n of notes) rows.push([escCsv(n.mainField), escCsv(n.chapter), escCsv(n.knowledgeAnalysis), escCsv(n.extendedAnalysis)].join(','));
+    const rows = ['主字段,章节,等级,知识解析,拓展解析'];
+    for (const n of notes) rows.push([escCsv(n.mainField), escCsv(n.chapter), escCsv(n.level), escCsv(n.knowledgeAnalysis), escCsv(n.extendedAnalysis)].join(','));
     return '﻿' + rows.join('\n');
 }
 

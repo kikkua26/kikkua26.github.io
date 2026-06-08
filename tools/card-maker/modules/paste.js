@@ -50,6 +50,7 @@ export function applyQuickPaste() {
 export function parseDataObject(obj) {
     const chapter = obj['章节'] || obj['chapter'] || obj['Chapter'] || '';
     const mainField = obj['主字段'] || obj['Front'] || obj['mainField'] || obj['知识名称'] || '';
+    const level = String(obj['等级'] || '2');
     const knowledge = [];
     const extended = [];
     if (obj['知识解析']) {
@@ -61,7 +62,7 @@ export function parseDataObject(obj) {
         if (typeof val === 'string') parseSubfieldString(val).forEach(f => extended.push(f));
         else if (typeof val === 'object') Object.entries(val).forEach(([k, v]) => extended.push({ name: k, content: String(v).replace(/【【/g, '[[').replace(/】】/g, ']]') }));
     }
-    fillFormFromParsed({ chapter, mainField, knowledge, extended });
+    fillFormFromParsed({ chapter, mainField, level, knowledge, extended });
 }
 
 export function parseSubfieldString(raw) {
@@ -78,6 +79,10 @@ function fillFormFromParsed(data) {
     const mfEl = rootEl.querySelector('#cmInputMain');
     if (chEl) chEl.value = data.chapter || '';
     if (mfEl) mfEl.value = data.mainField || '';
+
+    // Set level radio
+    const level = data.level || '2';
+    rootEl.querySelectorAll('input[name="cmLevel"]').forEach(r => r.checked = r.value === level);
 
     const kf = rootEl.querySelector('#cmKnowledgeFields');
     kf.innerHTML = '';
