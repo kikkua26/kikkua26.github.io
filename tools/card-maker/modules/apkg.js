@@ -172,16 +172,26 @@ export async function exportApkg(deckName) {
         }
     };
 
-    // 支持子牌组（按章节分）
+    // 获取目录排序信息，用于自动编号
+    const nb = state.notebooks[state.activeNotebook];
+    const order = nb?._order || {};
+
+    // 支持子牌组（按章节分，自动编号）
     const chapterDecks = {};
     for (const note of notes) {
         if (note.chapter) {
             const parts = note.chapter.split('::');
-            let path = '';
+            let rawPath = '';
+            let numberedPath = '';
             for (const part of parts) {
-                const parentPath = path;
-                path = path ? path + '::' + part : part;
-                const deckPath = deckName ? deckName + '::' + path : path;
+                const parentPath = rawPath;
+                rawPath = rawPath ? rawPath + '::' + part : part;
+                // 查找该段在父目录中的排序位置，生成编号
+                const siblings = order[parentPath] || [];
+                const idx = siblings.indexOf(part);
+                const prefix = idx >= 0 ? String(idx + 1).padStart(2, '0') + ' ' : '';
+                numberedPath = numberedPath ? numberedPath + '::' + prefix + part : prefix + part;
+                const deckPath = deckName ? deckName + '::' + numberedPath : numberedPath;
                 if (!chapterDecks[deckPath]) {
                     const subId = now + 100 + Object.keys(chapterDecks).length;
                     chapterDecks[deckPath] = {
@@ -263,12 +273,24 @@ export async function exportApkg(deckName) {
         const sfld = stripHtml(fieldValues[0] || '');
         const csum = sha1hex(sfld);
 
-        // 确定牌组
+        // 确定牌组（将章节路径转为编号路径后匹配）
         let did = deckId;
-        if (note.chapter && chapterDecks[deckName + '::' + note.chapter]) {
-            did = chapterDecks[deckName + '::' + note.chapter].id;
-        } else if (note.chapter && !deckName && chapterDecks[note.chapter]) {
-            did = chapterDecks[note.chapter].id;
+        if (note.chapter) {
+            const parts = note.chapter.split('::');
+            let rawPath = '';
+            let numberedPath = '';
+            for (const part of parts) {
+                const parentPath = rawPath;
+                rawPath = rawPath ? rawPath + '::' + part : part;
+                const siblings = order[parentPath] || [];
+                const idx = siblings.indexOf(part);
+                const prefix = idx >= 0 ? String(idx + 1).padStart(2, '0') + ' ' : '';
+                numberedPath = numberedPath ? numberedPath + '::' + prefix + part : prefix + part;
+            }
+            const fullDeckPath = deckName ? deckName + '::' + numberedPath : numberedPath;
+            if (chapterDecks[fullDeckPath]) {
+                did = chapterDecks[fullDeckPath].id;
+            }
         }
 
         // 插入笔记
