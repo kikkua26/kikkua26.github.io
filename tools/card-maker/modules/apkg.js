@@ -172,26 +172,70 @@ export async function exportApkg(deckName) {
         }
     };
 
-    // 获取目录排序信息，用于自动编号
+    // 获取目录排序信息，补全未手动排序的章节
     const nb = state.notebooks[state.activeNotebook];
-    const order = nb?._order || {};
+    const rawOrder = nb?._order || {};
+
+    // 收集所有章节路径，按父级分组
+    const allChildren = {};
+    for (const note of notes) {
+        if (!note.chapter) continue;
+        const parts = note.chapter.split('::');
+        let path = '';
+        for (const part of parts) {
+            const parentPath = path;
+            path = path ? path + '::' + part : part;
+            if (!allChildren[parentPath]) allChildren[parentPath] = new Set();
+            allChildren[parentPath].add(part);
+        }
+    }
+    // 同时从 _chapters 补充（空目录也可能需要编号）
+    const chapters = nb?._chapters || [];
+    for (const ch of chapters) {
+        const parts = ch.split('::');
+        let path = '';
+        for (const part of parts) {
+            const parentPath = path;
+            path = path ? path + '::' + part : part;
+            if (!allChildren[parentPath]) allChildren[parentPath] = new Set();
+            allChildren[parentPath].add(part);
+        }
+    }
+
+    // 构建完整排序：手动排过的在前，剩余的按出现顺序追加
+    const completeOrder = {};
+    for (const [parent, children] of Object.entries(allChildren)) {
+        const manual = rawOrder[parent] || [];
+        const remaining = [...children].filter(c => !manual.includes(c));
+        completeOrder[parent] = [...manual, ...remaining];
+    }
+
+    // 将章节路径转为编号路径的辅助函数
+    function toNumberedPath(chapter) {
+        const parts = chapter.split('::');
+        let rawPath = '';
+        let numberedPath = '';
+        for (const part of parts) {
+            const parentPath = rawPath;
+            rawPath = rawPath ? rawPath + '::' + part : part;
+            const siblings = completeOrder[parentPath] || [];
+            const idx = siblings.indexOf(part);
+            const prefix = idx >= 0 ? String(idx + 1).padStart(2, '0') + ' ' : '';
+            numberedPath = numberedPath ? numberedPath + '::' + prefix + part : prefix + part;
+        }
+        return numberedPath;
+    }
 
     // 支持子牌组（按章节分，自动编号）
     const chapterDecks = {};
     for (const note of notes) {
         if (note.chapter) {
-            const parts = note.chapter.split('::');
-            let rawPath = '';
-            let numberedPath = '';
+            const numbered = toNumberedPath(note.chapter);
+            const parts = numbered.split('::');
+            let path = '';
             for (const part of parts) {
-                const parentPath = rawPath;
-                rawPath = rawPath ? rawPath + '::' + part : part;
-                // 查找该段在父目录中的排序位置，生成编号
-                const siblings = order[parentPath] || [];
-                const idx = siblings.indexOf(part);
-                const prefix = idx >= 0 ? String(idx + 1).padStart(2, '0') + ' ' : '';
-                numberedPath = numberedPath ? numberedPath + '::' + prefix + part : prefix + part;
-                const deckPath = deckName ? deckName + '::' + numberedPath : numberedPath;
+                path = path ? path + '::' + part : part;
+                const deckPath = deckName ? deckName + '::' + path : path;
                 if (!chapterDecks[deckPath]) {
                     const subId = now + 100 + Object.keys(chapterDecks).length;
                     chapterDecks[deckPath] = {
@@ -276,18 +320,8 @@ export async function exportApkg(deckName) {
         // 确定牌组（将章节路径转为编号路径后匹配）
         let did = deckId;
         if (note.chapter) {
-            const parts = note.chapter.split('::');
-            let rawPath = '';
-            let numberedPath = '';
-            for (const part of parts) {
-                const parentPath = rawPath;
-                rawPath = rawPath ? rawPath + '::' + part : part;
-                const siblings = order[parentPath] || [];
-                const idx = siblings.indexOf(part);
-                const prefix = idx >= 0 ? String(idx + 1).padStart(2, '0') + ' ' : '';
-                numberedPath = numberedPath ? numberedPath + '::' + prefix + part : prefix + part;
-            }
-            const fullDeckPath = deckName ? deckName + '::' + numberedPath : numberedPath;
+            const numbered = toNumberedPath(note.chapter);
+            const fullDeckPath = deckName ? deckName + '::' + numbered : numbered;
             if (chapterDecks[fullDeckPath]) {
                 did = chapterDecks[fullDeckPath].id;
             }
