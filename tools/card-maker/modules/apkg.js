@@ -172,58 +172,38 @@ export async function exportApkg(deckName) {
         }
     };
 
-    // 获取目录排序信息，补全未手动排序的章节
-    const nb = state.notebooks[state.activeNotebook];
-    const rawOrder = nb?._order || {};
-
-    // 收集所有章节路径，按父级分组
+    // 从笔记中收集所有章节路径，按父级分组后排序，生成编号映射
     const allChildren = {};
     for (const note of notes) {
         if (!note.chapter) continue;
         const parts = note.chapter.split('::');
         let path = '';
         for (const part of parts) {
-            const parentPath = path;
+            const parent = path;
             path = path ? path + '::' + part : part;
-            if (!allChildren[parentPath]) allChildren[parentPath] = new Set();
-            allChildren[parentPath].add(part);
+            if (!allChildren[parent]) allChildren[parent] = new Set();
+            allChildren[parent].add(part);
         }
     }
-    // 同时从 _chapters 补充（空目录也可能需要编号）
-    const chapters = nb?._chapters || [];
-    for (const ch of chapters) {
-        const parts = ch.split('::');
-        let path = '';
-        for (const part of parts) {
-            const parentPath = path;
-            path = path ? path + '::' + part : part;
-            if (!allChildren[parentPath]) allChildren[parentPath] = new Set();
-            allChildren[parentPath].add(part);
-        }
-    }
-
-    // 构建完整排序：手动排过的在前，剩余的按字母序排列
-    const completeOrder = {};
+    // 每个父级下的子目录按字母序排列，生成连续编号
+    const orderMap = {};
     for (const [parent, children] of Object.entries(allChildren)) {
-        const manual = rawOrder[parent] || [];
-        const remaining = [...children].filter(c => !manual.includes(c)).sort();
-        completeOrder[parent] = [...manual, ...remaining];
+        orderMap[parent] = [...children].sort();
     }
 
-    // 将章节路径转为编号路径的辅助函数
+    // 将章节路径转为编号路径
     function toNumberedPath(chapter) {
         const parts = chapter.split('::');
-        let rawPath = '';
-        let numberedPath = '';
+        let raw = '', numbered = '';
         for (const part of parts) {
-            const parentPath = rawPath;
-            rawPath = rawPath ? rawPath + '::' + part : part;
-            const siblings = completeOrder[parentPath] || [];
+            const parent = raw;
+            raw = raw ? raw + '::' + part : part;
+            const siblings = orderMap[parent] || [];
             const idx = siblings.indexOf(part);
             const prefix = idx >= 0 ? String(idx + 1).padStart(2, '0') + ' ' : '';
-            numberedPath = numberedPath ? numberedPath + '::' + prefix + part : prefix + part;
+            numbered = numbered ? numbered + '::' + prefix + part : prefix + part;
         }
-        return numberedPath;
+        return numbered;
     }
 
     // 支持子牌组（按章节分，自动编号）
