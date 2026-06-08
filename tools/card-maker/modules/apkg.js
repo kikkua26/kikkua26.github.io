@@ -202,11 +202,11 @@ export async function exportApkg(deckName) {
         }
     }
 
-    // 构建完整排序：手动排过的在前，剩余的按出现顺序追加
+    // 构建完整排序：手动排过的在前，剩余的按字母序排列
     const completeOrder = {};
     for (const [parent, children] of Object.entries(allChildren)) {
         const manual = rawOrder[parent] || [];
-        const remaining = [...children].filter(c => !manual.includes(c));
+        const remaining = [...children].filter(c => !manual.includes(c)).sort();
         completeOrder[parent] = [...manual, ...remaining];
     }
 
