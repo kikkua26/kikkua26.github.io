@@ -172,20 +172,28 @@ export async function exportApkg(deckName) {
         }
     };
 
-    // 从笔记中收集所有章节路径，按章节路径排序后建立编号映射
-    const sortedNotes = [...notes].filter(n => n.chapter).sort((a, b) => a.chapter.localeCompare(b.chapter));
+    // 使用 _order 作为章节顺序（CSV 导入时已填充），未在 _order 中的按字母序补充
+    const nb = state.notebooks[state.activeNotebook];
+    const rawOrder = nb?._order || {};
+
     const allChildren = {};
-    for (const note of sortedNotes) {
+    for (const note of notes) {
+        if (!note.chapter) continue;
         const parts = note.chapter.split('::');
         let path = '';
         for (const part of parts) {
             const parent = path;
             path = path ? path + '::' + part : part;
-            if (!allChildren[parent]) allChildren[parent] = [];
-            if (!allChildren[parent].includes(part)) allChildren[parent].push(part);
+            if (!allChildren[parent]) allChildren[parent] = new Set();
+            allChildren[parent].add(part);
         }
     }
-    const orderMap = allChildren;
+    const orderMap = {};
+    for (const [parent, children] of Object.entries(allChildren)) {
+        const manual = rawOrder[parent] || [];
+        const remaining = [...children].filter(c => !manual.includes(c)).sort();
+        orderMap[parent] = [...manual, ...remaining];
+    }
 
     // 将章节路径转为编号路径
     function toNumberedPath(chapter) {

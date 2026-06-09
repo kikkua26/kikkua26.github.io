@@ -75,6 +75,24 @@ export function importCSV(file, renderAll) {
             const imported = parseCSV(text);
             if (!imported.length) { toast('CSV 中未解析到有效笔记', 'error'); return; }
             const notes = activeNotes();
+            const nb = state.notebooks[state.activeNotebook];
+            if (!nb._chapters) nb._chapters = [];
+            if (!nb._order) nb._order = {};
+
+            // 按 CSV 中的顺序填充 _order（保留教材章节顺序）
+            for (const im of imported) {
+                if (!im.chapter) continue;
+                const parts = im.chapter.split('::');
+                let path = '';
+                for (const part of parts) {
+                    const parent = path;
+                    path = path ? path + '::' + part : part;
+                    if (!nb._chapters.includes(path)) nb._chapters.push(path);
+                    if (!nb._order[parent]) nb._order[parent] = [];
+                    if (!nb._order[parent].includes(part)) nb._order[parent].push(part);
+                }
+            }
+
             let added = 0, updated = 0;
             for (const im of imported) {
                 const ei = notes.findIndex(n => n.mainField === im.mainField && n.chapter === im.chapter);
