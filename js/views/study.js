@@ -126,7 +126,7 @@ async function loadStudyData(state) {
 
     if (!records.length) { showComplete(state); return; }
 
-    state.records = [...records].sort((a, b) => (a[chapterField] || '').localeCompare(b[chapterField] || ''));
+    state.records = records;
 
     state.directory = [];
     buildDirectory(state);
