@@ -48,5 +48,19 @@
     "detail": "测试",
     "purchaseUrl": "测试",
     "summary": "测试"
+  },
+  {
+    "name": "中医基础理论",
+    "totalCards": 511,
+    "tags": [
+      "中医专业::中综考研::中基",
+      "中医专业::中综考研",
+      "中医学专业"
+    ],
+    "template": "kikkua高级模板",
+    "chapterField": "章节",
+    "detail": "2026最新中基《中医基础理论》",
+    "purchaseUrl": "",
+    "summary": "2026最新中基《中医基础理论》"
   }
 ]
