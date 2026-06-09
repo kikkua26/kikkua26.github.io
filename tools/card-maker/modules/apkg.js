@@ -172,7 +172,7 @@ export async function exportApkg(deckName) {
         }
     };
 
-    // 从笔记中收集所有章节路径，按父级分组后排序，生成编号映射
+    // 从笔记中收集所有章节路径，按父级分组，按首次出现顺序排列
     const allChildren = {};
     for (const note of notes) {
         if (!note.chapter) continue;
@@ -181,15 +181,12 @@ export async function exportApkg(deckName) {
         for (const part of parts) {
             const parent = path;
             path = path ? path + '::' + part : part;
-            if (!allChildren[parent]) allChildren[parent] = new Set();
-            allChildren[parent].add(part);
+            if (!allChildren[parent]) allChildren[parent] = [];
+            if (!allChildren[parent].includes(part)) allChildren[parent].push(part);
         }
     }
-    // 每个父级下的子目录按字母序排列，生成连续编号
-    const orderMap = {};
-    for (const [parent, children] of Object.entries(allChildren)) {
-        orderMap[parent] = [...children].sort();
-    }
+    // 直接用首次出现顺序作为编号顺序
+    const orderMap = allChildren;
 
     // 将章节路径转为编号路径
     function toNumberedPath(chapter) {
