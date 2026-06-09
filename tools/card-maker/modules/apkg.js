@@ -206,37 +206,40 @@ export async function exportApkg(deckName) {
         return numbered;
     }
 
-    // 支持子牌组（按章节分，自动编号）
-    const chapterDecks = {};
+    // 收集所有编号后的章节路径（含各级父路径），排序后创建牌组
+    const allDeckPaths = new Set();
     for (const note of notes) {
-        if (note.chapter) {
-            const numbered = toNumberedPath(note.chapter);
-            const parts = numbered.split('::');
-            let path = '';
-            for (const part of parts) {
-                path = path ? path + '::' + part : part;
-                const deckPath = deckName ? deckName + '::' + path : path;
-                if (!chapterDecks[deckPath]) {
-                    const subId = now + 100 + Object.keys(chapterDecks).length;
-                    chapterDecks[deckPath] = {
-                        id: subId,
-                        name: deckPath,
-                        mod: Math.floor(now / 1000),
-                        usn: -1,
-                        lrnToday: [0, 0],
-                        revToday: [0, 0],
-                        newToday: [0, 0],
-                        timeToday: [0, 0],
-                        collapsed: false,
-                        browserCollapsed: false,
-                        desc: "",
-                        dyn: 0,
-                        conf: 1
-                    };
-                    decks[subId] = chapterDecks[deckPath];
-                }
-            }
+        if (!note.chapter) continue;
+        const numbered = toNumberedPath(note.chapter);
+        const parts = numbered.split('::');
+        let path = '';
+        for (const part of parts) {
+            path = path ? path + '::' + part : part;
+            allDeckPaths.add(path);
         }
+    }
+    const sortedDeckPaths = [...allDeckPaths].sort();
+
+    const chapterDecks = {};
+    for (const path of sortedDeckPaths) {
+        const deckPath = deckName ? deckName + '::' + path : path;
+        const subId = now + 100 + Object.keys(chapterDecks).length;
+        chapterDecks[deckPath] = {
+            id: subId,
+            name: deckPath,
+            mod: Math.floor(now / 1000),
+            usn: -1,
+            lrnToday: [0, 0],
+            revToday: [0, 0],
+            newToday: [0, 0],
+            timeToday: [0, 0],
+            collapsed: false,
+            browserCollapsed: false,
+            desc: "",
+            dyn: 0,
+            conf: 1
+        };
+        decks[subId] = chapterDecks[deckPath];
     }
 
     // 配置
