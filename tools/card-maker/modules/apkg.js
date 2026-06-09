@@ -172,10 +172,10 @@ export async function exportApkg(deckName) {
         }
     };
 
-    // 从笔记中收集所有章节路径，按父级分组，按首次出现顺序排列
+    // 从笔记中收集所有章节路径，按章节路径排序后建立编号映射
+    const sortedNotes = [...notes].filter(n => n.chapter).sort((a, b) => a.chapter.localeCompare(b.chapter));
     const allChildren = {};
-    for (const note of notes) {
-        if (!note.chapter) continue;
+    for (const note of sortedNotes) {
         const parts = note.chapter.split('::');
         let path = '';
         for (const part of parts) {
@@ -185,7 +185,6 @@ export async function exportApkg(deckName) {
             if (!allChildren[parent].includes(part)) allChildren[parent].push(part);
         }
     }
-    // 直接用首次出现顺序作为编号顺序
     const orderMap = allChildren;
 
     // 将章节路径转为编号路径
