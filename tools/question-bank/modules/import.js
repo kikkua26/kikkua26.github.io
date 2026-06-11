@@ -1,4 +1,4 @@
-// kikkua · 题库编辑器 — CSV/Excel 导入
+// kikkua · 题库编辑器 — CSV/Excel/JSON 导入
 
 import { OPT_LETTERS } from './constants.js';
 import { loadScript } from './utils.js';
@@ -72,12 +72,42 @@ export function stripCodeBlock(text) {
     return text.replace(/^```(?:\w+)?\s*\n?/i, '').replace(/\n?```\s*$/i, '').trim();
 }
 
+function parseJsonSafe(str) {
+    try { return JSON.parse(str); } catch {}
+    let fixed = str;
+    fixed = fixed.replace(/\u201c/g, '"').replace(/\u201d/g, '"');
+    fixed = fixed.replace(/,\s*([\]}])/g, '$1');
+    try { return JSON.parse(fixed); } catch (e) {
+        throw new Error('JSON 格式错误: ' + e.message);
+    }
+}
+
+function jsonToAOA(data) {
+    if (!Array.isArray(data)) data = [data];
+    if (data.length === 0) throw new Error('JSON 数据为空');
+    const headers = Object.keys(data[0]);
+    const aoa = [headers, ...data.map(item => headers.map(h => String(item[h] ?? '')))];
+    return aoa;
+}
+
 export function doTextImport() {
     let text = document.getElementById('textInputArea').value.trim();
-    if (!text) { alert('请输入 CSV 数据'); return; }
-    text = stripCodeBlock(text);
+    if (!text) { alert('请输入数据'); return; }
+    text = stripCodeBlock(text).replace(/^﻿/, '');
     document.getElementById('textImportModal').classList.remove('show');
-    const lines = text.replace(/^﻿/, '').split(/\r?\n/).filter(l => l.trim());
-    const aoa = lines.map(parseCSVLine);
-    importAOA(aoa);
+
+    const trimmed = text.trim();
+    if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+        try {
+            const jsonData = parseJsonSafe(trimmed);
+            const aoa = jsonToAOA(jsonData);
+            importAOA(aoa);
+        } catch (e) {
+            alert('JSON 导入失败: ' + e.message);
+        }
+    } else {
+        const lines = text.split(/\r?\n/).filter(l => l.trim());
+        const aoa = lines.map(parseCSVLine);
+        importAOA(aoa);
+    }
 }
