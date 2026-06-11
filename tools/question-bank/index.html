@@ -152,8 +152,13 @@
 <!-- AI modal -->
 <div class="modal-mask" id="aiModal">
   <div class="modal ai-modal-full">
-    <h3 style="display:flex;align-items:center;gap:8px">✨ AI 生成题目
-      <button class="btn ai-settings-btn" id="aiSettingsBtn" title="AI 配置">⚙️ AI 配置</button>
+    <h3 class="ai-modal-header">
+      <span>✨ AI 生成题目</span>
+      <div class="ai-header-actions">
+        <div class="ai-help-btn" title="使用步骤：&#10;① 复制提示词 → 粘贴到 AI 对话&#10;② AI 返回结果 → 复制 JSON&#10;③ 粘贴到输出框 → 点击导入">?</div>
+        <a href="https://chat.deepseek.com" target="_blank" rel="noopener" class="btn ai-chat-btn">💬 免费对话</a>
+        <button class="btn ai-settings-btn" id="aiSettingsBtn" title="AI 配置">⚙️ 配置</button>
+      </div>
     </h3>
 
     <div class="ai-config-grid">
@@ -174,10 +179,6 @@
         </div>
       </div>
       <div class="ai-config-row">
-        <span class="ai-config-label">章节</span>
-        <input type="text" class="ai-input ai-input-sm" id="aiChapter" placeholder="可选，如：中医基础理论::绪论">
-      </div>
-      <div class="ai-config-row">
         <span class="ai-config-label">解析</span>
         <div class="ai-chips" id="aiAnalysisChips">
           <div class="ai-chip active" data-style="default">默认</div>
@@ -189,13 +190,18 @@
       </div>
     </div>
 
+    <div class="ai-chapter-row">
+      <label class="ai-chapter-label" for="aiChapter">章节</label>
+      <input type="text" class="ai-input" id="aiChapter" placeholder="可选，如：中医基础理论::绪论（留空则自动归类）">
+    </div>
+
     <div class="ai-io-area">
       <div class="ai-io-section ai-io-input">
         <div class="ai-io-header">
           <span class="ai-io-title">📝 输入</span>
           <span class="ai-io-hint" id="aiBatchHint">多题模式：覆盖所有知识点</span>
         </div>
-        <textarea class="ai-input" id="aiKnowledgeInput" rows="4" placeholder="粘贴知识点、课文段落、笔记等任何内容，AI 会据此生成题目...（留空时复制提示词会先让 AI 理解规则）"></textarea>
+        <textarea class="ai-input" id="aiKnowledgeInput" rows="5" placeholder="粘贴知识点、课文段落、笔记等任何内容，AI 会据此生成题目...&#10;&#10;（留空时复制提示词会先让 AI 理解规则，确认后再发送内容）"></textarea>
       </div>
       <div class="ai-io-arrow">↓</div>
       <div class="ai-io-section ai-io-output">
@@ -203,7 +209,7 @@
           <span class="ai-io-title">📋 输出</span>
           <span class="ai-io-hint">可手动粘贴 AI 结果</span>
         </div>
-        <textarea class="ai-input ai-result-area" id="aiResultArea" rows="4" placeholder="将 AI 返回的 JSON 结果粘贴到此处，或点击「生成」自动填入"></textarea>
+        <textarea class="ai-input ai-result-area" id="aiResultArea" rows="5" placeholder="将 AI 返回的 JSON 结果粘贴到此处&#10;或点击「✨ 生成」自动填入"></textarea>
       </div>
     </div>
 
@@ -212,7 +218,7 @@
       <span id="aiStatusText"></span>
     </div>
 
-    <div class="btns">
+    <div class="btns ai-btns">
       <button class="btn" id="btnCancelAI">取消</button>
       <button class="btn" id="btnCopyPrompt">📋 复制提示词</button>
       <button class="btn" id="btnImportResult">📥 导入数据</button>
