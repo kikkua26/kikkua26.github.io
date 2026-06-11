@@ -156,32 +156,29 @@
       <button class="btn ai-settings-btn" id="aiSettingsBtn" title="AI 配置">⚙️ AI 配置</button>
     </h3>
 
-    <div class="ai-row-inline">
-      <div class="ai-section" style="margin-bottom:0">
-        <div class="ai-section-title">题型</div>
+    <div class="ai-config-grid">
+      <div class="ai-config-row">
+        <span class="ai-config-label">题型</span>
         <div class="ai-chips" id="aiTypeChips">
           <div class="ai-chip active" data-type="choice">选择题</div>
           <div class="ai-chip" data-type="cloze">挖空题</div>
           <div class="ai-chip" data-type="short">问答题</div>
         </div>
       </div>
-      <div class="ai-section" style="margin-bottom:0">
-        <div class="ai-section-title">生成模式</div>
+      <div class="ai-config-row">
+        <span class="ai-config-label">模式</span>
         <div class="ai-chips" id="aiModeChips">
           <div class="ai-chip" data-mode="single">单题</div>
           <div class="ai-chip active" data-mode="batch">多题</div>
           <div class="ai-chip" data-mode="organize">整理</div>
         </div>
       </div>
-    </div>
-
-    <div class="ai-row-inline">
-      <div class="ai-section" style="margin-bottom:0;flex:1">
-        <div class="ai-section-title">章节（可选）</div>
-        <input type="text" class="ai-input" id="aiChapter" placeholder="如：中医基础理论::绪论">
+      <div class="ai-config-row">
+        <span class="ai-config-label">章节</span>
+        <input type="text" class="ai-input ai-input-sm" id="aiChapter" placeholder="可选，如：中医基础理论::绪论">
       </div>
-      <div class="ai-section" style="margin-bottom:0">
-        <div class="ai-section-title">解析风格</div>
+      <div class="ai-config-row">
+        <span class="ai-config-label">解析</span>
         <div class="ai-chips" id="aiAnalysisChips">
           <div class="ai-chip active" data-style="default">默认</div>
           <div class="ai-chip" data-style="simple">通俗</div>
@@ -192,15 +189,22 @@
       </div>
     </div>
 
-    <div class="ai-section">
-      <div class="ai-section-title">📝 知识内容</div>
-      <textarea class="ai-input" id="aiKnowledgeInput" rows="5" placeholder="粘贴知识点、课文段落、笔记等任何内容，AI 会据此生成题目...（留空时复制提示词会先让 AI 理解规则）"></textarea>
-      <div class="ai-hint" id="aiBatchHint">AI 会完整覆盖所有知识点生成题目，确保不遗漏。</div>
-    </div>
-
-    <div class="ai-section">
-      <div class="ai-section-title">📋 AI 返回结果</div>
-      <textarea class="ai-input ai-result-area" id="aiResultArea" rows="5" placeholder="将 AI 返回的 JSON 结果粘贴到此处，或点击「生成」自动填入"></textarea>
+    <div class="ai-io-area">
+      <div class="ai-io-section ai-io-input">
+        <div class="ai-io-header">
+          <span class="ai-io-title">📝 输入</span>
+          <span class="ai-io-hint" id="aiBatchHint">多题模式：覆盖所有知识点</span>
+        </div>
+        <textarea class="ai-input" id="aiKnowledgeInput" rows="4" placeholder="粘贴知识点、课文段落、笔记等任何内容，AI 会据此生成题目...（留空时复制提示词会先让 AI 理解规则）"></textarea>
+      </div>
+      <div class="ai-io-arrow">↓</div>
+      <div class="ai-io-section ai-io-output">
+        <div class="ai-io-header">
+          <span class="ai-io-title">📋 输出</span>
+          <span class="ai-io-hint">可手动粘贴 AI 结果</span>
+        </div>
+        <textarea class="ai-input ai-result-area" id="aiResultArea" rows="4" placeholder="将 AI 返回的 JSON 结果粘贴到此处，或点击「生成」自动填入"></textarea>
+      </div>
     </div>
 
     <div class="ai-status" id="aiStatus">
@@ -212,7 +216,7 @@
       <button class="btn" id="btnCancelAI">取消</button>
       <button class="btn" id="btnCopyPrompt">📋 复制提示词</button>
       <button class="btn" id="btnImportResult">📥 导入数据</button>
-      <button class="btn ok" id="btnGenerateAI">生成</button>
+      <button class="btn ok" id="btnGenerateAI">✨ 生成</button>
     </div>
   </div>
 </div>
