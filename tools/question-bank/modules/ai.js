@@ -436,18 +436,12 @@ export async function copyPrompt() {
         ? '你是一个专业的题目整理助手，只输出 JSON 格式数据，绝不输出任何多余文字。必须完整保留所有题目，不得遗漏。'
         : '你是一个专业的题目出题助手，只输出 JSON 格式数据，绝不输出任何多余文字。';
 
+    const prompt = buildPrompt();
     let fullPrompt;
     if (content) {
-        const prompt = buildPrompt();
         fullPrompt = `[System]\n${systemMsg}\n\n[User]\n${prompt}`;
     } else {
-        const confirmMsg = `${systemMsg}
-
-请理解以上系统规则，并确认以下几点：
-1. 输出格式为 JSON 数组，用 \`\`\`json 代码块包裹
-2. 各题型的字段结构你是否理解
-3. 回复「已准备好，等待内容」，然后等待我发送知识内容`;
-        fullPrompt = confirmMsg;
+        fullPrompt = `[System]\n${systemMsg}\n\n[User]\n${prompt}\n\n请理解以上规则并确认：\n1. 输出格式为 JSON 数组，用 \`\`\`json 代码块包裹\n2. 各题型的字段结构你是否理解\n3. 回复「已准备好，等待内容」，然后等待我发送知识内容`;
     }
 
     try {
