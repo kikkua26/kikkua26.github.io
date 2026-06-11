@@ -193,7 +193,7 @@ export function selectAIMode(el) {
         ? 'AI 会从内容中选取最核心的知识点，生成 1 道题。'
         : aiMode === 'batch'
         ? 'AI 会完整覆盖所有知识点生成题目，按难度分布。'
-        : '整理模式：粘贴格式混乱的题目，AI 会自动整理为标准格式并导入。建议每次控制在 50 题以内，效果最佳。';
+        : '整理模式：粘贴格式混乱的题目，AI 自动整理为标准格式';
 
     const knowledgeInput = document.getElementById('aiKnowledgeInput');
     if (aiMode === 'organize') {
