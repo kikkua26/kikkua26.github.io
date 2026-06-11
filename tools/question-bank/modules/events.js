@@ -8,8 +8,8 @@ import { openForm, closeForm, saveForm, navForm, getEditingTr, refreshFormIfOpen
 import { clearSelection } from './selection.js';
 import { hideCtx, showBtnCtx } from './context-menu.js';
 import { exportStandardCSV, exportKikkuaCSV, exportXLSX, downloadTemplate } from './export-csv.js';
-import { handleFileImport, doTextImport } from './import.js';
-import { openAIModal, closeAIModal, showSettings, hideSettings, saveSettings, switchProvider, testConnection, selectAIType, selectAIMode, selectAnalysisStyle, copyPrompt, generateAI } from './ai.js';
+import { handleFileImport } from './import.js';
+import { openAIModal, closeAIModal, showSettings, hideSettings, saveSettings, switchProvider, testConnection, selectAIType, selectAIMode, selectAnalysisStyle, copyPrompt, generateAI, importResult } from './ai.js';
 import { openApkgModal, closeApkgModal, parseApkg, exportApkg } from './apkg.js';
 import { saveToCache } from './cache.js';
 
@@ -73,10 +73,6 @@ export function bindAllEvents() {
         else exportStandardCSV();
     });
 
-    // ── Text import modal ──
-    document.getElementById('btnCancelTextImport').addEventListener('click', () => document.getElementById('textImportModal').classList.remove('show'));
-    document.getElementById('btnDoTextImport').addEventListener('click', doTextImport);
-
     // ── Row form modal ──
     document.getElementById('btnCancelForm').addEventListener('click', closeForm);
     document.getElementById('btnCancelForm2').addEventListener('click', closeForm);
@@ -98,6 +94,7 @@ export function bindAllEvents() {
     document.getElementById('btnCancelAI').addEventListener('click', closeAIModal);
     document.getElementById('btnCopyPrompt').addEventListener('click', copyPrompt);
     document.getElementById('btnGenerateAI').addEventListener('click', generateAI);
+    document.getElementById('btnImportResult').addEventListener('click', importResult);
     document.getElementById('aiSettingsBtn').addEventListener('click', () => { closeAIModal(); showSettings(); });
     document.getElementById('aiTypeChips').addEventListener('click', e => {
         const chip = e.target.closest('.ai-chip');

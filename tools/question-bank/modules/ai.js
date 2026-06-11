@@ -432,19 +432,27 @@ ${content}`;
 
 export async function copyPrompt() {
     const content = document.getElementById('aiKnowledgeInput').value.trim();
-    if (!content) { setAIStatus('error', '请输入知识内容'); return; }
-
-    const prompt = buildPrompt();
     const systemMsg = aiMode === 'organize'
         ? '你是一个专业的题目整理助手，只输出 JSON 格式数据，绝不输出任何多余文字。必须完整保留所有题目，不得遗漏。'
         : '你是一个专业的题目出题助手，只输出 JSON 格式数据，绝不输出任何多余文字。';
 
-    const fullPrompt = `[System]\n${systemMsg}\n\n[User]\n${prompt}`;
+    let fullPrompt;
+    if (content) {
+        const prompt = buildPrompt();
+        fullPrompt = `[System]\n${systemMsg}\n\n[User]\n${prompt}`;
+    } else {
+        const confirmMsg = `${systemMsg}
+
+请理解以上系统规则，并确认以下几点：
+1. 输出格式为 JSON 数组，用 \`\`\`json 代码块包裹
+2. 各题型的字段结构你是否理解
+3. 回复「已准备好，等待内容」，然后等待我发送知识内容`;
+        fullPrompt = confirmMsg;
+    }
 
     try {
         await navigator.clipboard.writeText(fullPrompt);
-        setAIStatus('success', '已复制到剪切板！请粘贴到 AI 对话中，生成后回来导入');
-        setTimeout(() => { closeAIModal(); openTextImport(); }, 800);
+        setAIStatus('success', content ? '已复制提示词！请粘贴到 AI 对话中' : '已复制系统提示词！请粘贴到 AI 对话，AI 确认后再发送内容');
     } catch {
         const ta = document.createElement('textarea');
         ta.value = fullPrompt;
@@ -452,8 +460,7 @@ export async function copyPrompt() {
         ta.select();
         document.execCommand('copy');
         ta.remove();
-        setAIStatus('success', '已复制到剪切板！请粘贴到 AI 对话中，生成后回来导入');
-        setTimeout(() => { closeAIModal(); openTextImport(); }, 800);
+        setAIStatus('success', content ? '已复制提示词！请粘贴到 AI 对话中' : '已复制系统提示词！请粘贴到 AI 对话，AI 确认后再发送内容');
     }
 }
 
@@ -536,10 +543,10 @@ export async function generateAI() {
         const header = aoa[0].map(h => String(h).trim().toLowerCase());
         if (!header.some(h => validHeaders.includes(h))) throw new Error('AI 返回的数据不包含有效字段');
 
-        importAOA(aoa);
-        const rowCount = aoa.length - 1;
-        setAIStatus('success', `成功生成 ${rowCount} 道题并导入表格`);
-        setTimeout(closeAIModal, 1200);
+        const resultArea = document.getElementById('aiResultArea');
+        if (resultArea) resultArea.value = JSON.stringify(jsonData, null, 2);
+        const rowCount = Array.isArray(jsonData) ? jsonData.length : 1;
+        setAIStatus('success', `AI 生成完成，共 ${rowCount} 道题，请检查后点击「导入数据」`);
     } catch (err) {
         setAIStatus('error', err.message);
     } finally {
@@ -547,8 +554,35 @@ export async function generateAI() {
     }
 }
 
-export function openTextImport() {
-    document.getElementById('textInputArea').value = '';
-    document.getElementById('textImportModal').classList.add('show');
-    document.getElementById('textInputArea').focus();
+export function importResult() {
+    const resultArea = document.getElementById('aiResultArea');
+    let text = resultArea?.value?.trim();
+    if (!text) { setAIStatus('error', '请先粘贴 AI 返回的数据，或点击「生成」自动生成'); return; }
+
+    text = stripCodeBlock(text).replace(/^﻿/, '');
+
+    try {
+        let aoa;
+        const trimmed = text.trim();
+        if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+            const jsonData = parseJsonSafe(trimmed);
+            aoa = jsonToAOA(jsonData);
+        } else {
+            const lines = text.split(/\r?\n/).filter(l => l.trim());
+            aoa = lines.map(parseCSVLine);
+        }
+
+        const validHeaders = ['type','question','clozetext','answertext','answer','analysis','reference','chapter',
+            'optiona','optionb','optionc','optiond','optione','optionf','optiong'];
+        const header = aoa[0].map(h => String(h).trim().toLowerCase());
+        if (!header.some(h => validHeaders.includes(h))) throw new Error('数据不包含有效字段');
+
+        importAOA(aoa);
+        const rowCount = aoa.length - 1;
+        setAIStatus('success', `成功导入 ${rowCount} 道题`);
+        resultArea.value = '';
+        setTimeout(closeAIModal, 1200);
+    } catch (e) {
+        setAIStatus('error', '导入失败: ' + e.message);
+    }
 }
