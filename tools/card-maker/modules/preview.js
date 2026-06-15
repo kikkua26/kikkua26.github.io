@@ -23,6 +23,13 @@ export async function loadTemplate() {
 }
 
 let previewSeq = 0;
+let showFront = false;
+
+export function flipPreview() {
+    showFront = !showFront;
+    updatePreview();
+}
+
 export async function updatePreview() {
     const iframe = rootEl.querySelector('#cmPreviewFrame');
     const infoEl = rootEl.querySelector('#cmPreviewInfo');
@@ -59,10 +66,10 @@ export async function updatePreview() {
     const backWithFields = replaceFields(tmpl.back, record);
     const backWithFront = backWithFields.replace(/\{\{FrontSide\}\}/gi, frontBody);
 
-    let backHTML = wrapWithCSS(backWithFront, tmpl.css);
-    backHTML = backHTML.replace(/<\/head>/i, '<script>function decryptBack(){}function decryptFront(){}</script></head>');
+    let targetHTML = showFront ? wrappedFront : wrapWithCSS(backWithFront, tmpl.css);
+    targetHTML = targetHTML.replace(/<\/head>/i, '<script>function decryptBack(){}function decryptFront(){}</script></head>');
 
-    iframe.srcdoc = backHTML;
+    iframe.srcdoc = targetHTML;
 }
 
 export function previewIfNeeded() {

@@ -6,7 +6,7 @@ import { genId } from './utils.js';
 import { buildChapterTree } from './tree.js';
 import { renderAll } from './render.js';
 import { clearForm, loadForm, getFormData, addSubfield, removeSubfield, autoSaveForm, wrapCloze } from './form.js';
-import { updatePreview } from './preview.js';
+import { updatePreview, flipPreview } from './preview.js';
 import { showQuickPaste, hideQuickPaste, applyQuickPaste } from './paste.js';
 import { aiParse, copyPrompt, showSettings, hideSettings, saveSettings, testConnection, showBatchModal, hideBatchModal, copyBatchPrompt, batchAIParse, applyBatchImport } from './ai.js';
 import { showApkgModal, hideApkgModal, handleApkgUpload, handleApkgExport } from './apkg.js';
@@ -84,6 +84,9 @@ export function setupEvents() {
     });
     on('#cmBtnDelete', 'click', deleteNote);
     on('#cmBtnNew', 'click', () => { clearForm(false); rootEl.querySelector('#cmInputMain')?.focus(); });
+    on('#cmBtnFlip', 'click', flipPreview);
+    on('#cmBtnPrev', 'click', () => navigateNote(-1));
+    on('#cmBtnNext', 'click', () => navigateNote(1));
 
     on('#cmBtnNewNb', 'click', () => {
         const name = prompt('新笔记本名称：', '笔记本_' + new Date().toLocaleDateString('zh-CN'));
@@ -164,6 +167,9 @@ export function setupEvents() {
             const ta = e.target.closest('.cm-sf-content');
             if (ta) { e.preventDefault(); wrapCloze(ta); }
         }
+        if (e.key === ' ' && !e.target.matches('input, textarea, select')) { e.preventDefault(); flipPreview(); }
+        if ((e.ctrlKey || e.metaKey) && e.key === 'ArrowLeft') { e.preventDefault(); navigateNote(-1); }
+        if ((e.ctrlKey || e.metaKey) && e.key === 'ArrowRight') { e.preventDefault(); navigateNote(1); }
     });
 
     // Auto-preview and auto-save on form input (debounced)
@@ -592,6 +598,17 @@ function deleteNote() {
     const idx = notes.findIndex(n => n.id === state.currentNoteId);
     if (idx >= 0) { notes.splice(idx, 1); flushData(); toast('笔记已删除', 'success'); }
     clearForm(false);
+}
+
+function navigateNote(dir) {
+    const notes = activeNotes().filter(n => n.mainField || n.chapter);
+    if (!notes.length) return;
+    if (!state.currentNoteId) { loadForm(notes[0]); return; }
+    const idx = notes.findIndex(n => n.id === state.currentNoteId);
+    if (idx < 0) { loadForm(notes[0]); return; }
+    const next = idx + dir;
+    if (next < 0 || next >= notes.length) return;
+    loadForm(notes[next]);
 }
 
 function deleteBatch() {

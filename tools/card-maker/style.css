@@ -187,22 +187,83 @@ body {
 .cm-search-wrap input { width: 100%; padding: 4px 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 11px; }
 .cm-chapter-header { font-weight: 600; font-size: 12px; }
 
+/* ── Form Area ── */
+.cm-form-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
 /* ── Form Header ── */
 .cm-form-header {
-    display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 16px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
 }
-.cm-form-header-left { display: flex; align-items: center; gap: 10px; }
-.cm-form-icon { font-size: 24px; }
-.cm-form-title { font-size: 16px; font-weight: 600; display: block; }
-.cm-form-hint { font-size: 11px; color: var(--text3); display: block; margin-top: 2px; }
+.cm-form-header-left { display: flex; align-items: center; gap: 8px; }
 .cm-form-header-right { display: flex; align-items: center; gap: 4px; }
+.cm-form-info { margin-left: 4px; }
+.cm-form-title { font-size: 14px; font-weight: 600; display: block; line-height: 1.2; }
+.cm-form-hint { font-size: 10px; color: var(--text3); display: block; }
 
-/* Ghost button style */
-.btn-ghost {
-    background: transparent; color: var(--text2); border: 1px solid transparent;
+/* Navigation buttons */
+.cm-nav-btn {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg);
+    color: var(--text2);
+    cursor: pointer;
+    transition: all .15s;
 }
-.btn-ghost:hover { background: var(--bg); border-color: var(--border); }
+.cm-nav-btn:hover { background: var(--accent-bg); border-color: var(--accent); color: var(--accent); }
+.cm-nav-btn:active { transform: scale(0.95); }
+
+/* Icon buttons */
+.cm-icon-btn {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text3);
+    cursor: pointer;
+    transition: all .15s;
+}
+.cm-icon-btn:hover { background: var(--bg); color: var(--text); }
+.cm-icon-btn.cm-danger:hover { background: #fee2e2; color: #dc2626; }
+
+/* Save button */
+.cm-save-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    height: 28px;
+    padding: 0 10px;
+    border: none;
+    border-radius: 6px;
+    background: var(--accent, #0d9488);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all .15s;
+}
+.cm-save-btn:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 2px 8px rgba(13,148,136,.3); }
+.cm-save-btn:active { transform: scale(0.97); }
+.cm-header-sep { width: 1px; height: 16px; background: var(--border); margin: 0 4px; }
 
 /* ── Form ── */
 .cm-field-hint { font-weight: 400; color: var(--text3); font-size: 10px; }
@@ -210,14 +271,38 @@ body {
 
 /* ── Preview ── */
 .cm-preview-header {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
 }
 .cm-preview-title { font-size: 13px; font-weight: 600; }
+.cm-preview-actions { display: flex; align-items: center; gap: 6px; }
 .cm-preview-badge {
-    font-size: 9px; padding: 2px 6px; background: var(--accent-bg);
-    color: var(--accent); border-radius: 10px; font-weight: 500;
+    font-size: 9px;
+    padding: 2px 6px;
+    background: var(--accent-bg);
+    color: var(--accent);
+    border-radius: 10px;
+    font-weight: 500;
 }
+.cm-flip-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    height: 24px;
+    padding: 0 8px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    background: var(--bg);
+    color: var(--text2);
+    font-size: 11px;
+    cursor: pointer;
+    transition: all .15s;
+}
+.cm-flip-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
 .cm-preview-info { font-size: 10px; margin-bottom: 8px; line-height: 1.4; color: var(--text3); }
 
 #cmBtnAddRoot { padding: 1px 6px; font-size: 14px; line-height: 1; background: var(--accent); color: #fff; border: none; border-radius: 3px; cursor: pointer; }

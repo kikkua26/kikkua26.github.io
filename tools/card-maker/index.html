@@ -52,25 +52,42 @@
             <!-- Right: form + preview side by side -->
             <div class="cm-content">
                 <div class="cm-content-split">
-                    <div class="cm-content-scroll" id="cmContentScroll">
-                        <div class="cm-form-card">
-                            <!-- Form Header -->
-                            <div class="cm-form-header">
-                                <div class="cm-form-header-left">
-                                    <span class="cm-form-icon">📝</span>
-                                    <div>
-                                        <span id="cmFormTitle" class="cm-form-title">新建笔记</span>
-                                        <span class="cm-form-hint" id="cmFormHint">填写信息后保存</span>
-                                    </div>
-                                </div>
-                                <div class="cm-form-header-right">
-                                    <button class="btn btn-ghost btn-xs" data-action="cm-quick-paste" title="AI 解析填入">🤖 AI</button>
-                                    <button class="btn btn-ghost btn-xs" id="cmBtnClear" title="清空表单">清空</button>
-                                    <button class="btn btn-ghost btn-xs hidden" id="cmBtnDelete" title="删除笔记">🗑 删除</button>
-                                    <button class="btn btn-primary btn-xs" id="cmBtnSave" title="保存 (Ctrl+S)">💾 保存</button>
+                    <div class="cm-form-area">
+                        <!-- Form Header (fixed) -->
+                        <div class="cm-form-header">
+                            <div class="cm-form-header-left">
+                                <div class="cm-form-info">
+                                    <span id="cmFormTitle" class="cm-form-title">新建笔记</span>
+                                    <span class="cm-form-hint" id="cmFormHint">填写信息后保存</span>
                                 </div>
                             </div>
+                            <div class="cm-form-header-right">
+                                <button class="cm-icon-btn" data-action="cm-quick-paste" title="AI 解析填入">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a4 4 0 0 1 4 4v2a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4z"/><path d="M16 11h2a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2h-2"/><path d="M8 11H6a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h2"/></svg>
+                                </button>
+                                <button class="cm-icon-btn" id="cmBtnClear" title="清空表单">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+                                </button>
+                                <button class="cm-icon-btn cm-danger hidden" id="cmBtnDelete" title="删除笔记">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+                                </button>
+                                <div class="cm-header-sep"></div>
+                                <button class="cm-save-btn" id="cmBtnSave" title="保存 (Ctrl+S)">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg>
+                                    保存
+                                </button>
+                                <button class="cm-nav-btn" id="cmBtnPrev" title="上一张 (Ctrl+←)">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+                                </button>
+                                <button class="cm-nav-btn" id="cmBtnNext" title="下一张 (Ctrl+→)">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+                                </button>
+                            </div>
+                        </div>
 
+                        <!-- Scrollable form body -->
+                        <div class="cm-content-scroll" id="cmContentScroll">
+                            <div class="cm-form-card">
                             <!-- Chapter -->
                             <div class="field">
                                 <label>📁 章节路径</label>
@@ -118,14 +135,21 @@
                                 <div id="cmExtendedFields"></div>
                                 <button class="cm-add-btn" data-action="add-extended">＋ 添加拓展解析字段</button>
                             </div>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Preview panel -->
                     <div class="cm-preview-panel">
                         <div class="cm-preview-header">
-                            <span class="cm-preview-title">🎴 卡片预览</span>
-                            <span class="cm-preview-badge">实时</span>
+                            <span class="cm-preview-title">卡片预览</span>
+                            <div class="cm-preview-actions">
+                                <button class="cm-flip-btn" id="cmBtnFlip" title="翻面 (Space)">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+                                    翻面
+                                </button>
+                                <span class="cm-preview-badge">实时</span>
+                            </div>
                         </div>
                         <div class="cm-preview-info" id="cmPreviewInfo">加载中...</div>
                         <iframe id="cmPreviewFrame" class="cm-preview-frame"></iframe>
