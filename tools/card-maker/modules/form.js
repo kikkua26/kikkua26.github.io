@@ -112,9 +112,25 @@ export function addSubfield(type, isInit, name, content) {
         <div class="cm-sf-inputs">
             <input class="cm-sf-name" placeholder="字段名称" value="${esc(name || '')}">
             <textarea class="cm-sf-content" placeholder="字段内容..." rows="2">${esc(content || '')}</textarea>
-        </div><button class="cm-sf-remove" data-action="remove-subfield" title="移除">✕</button>`;
+        </div>
+        <button class="cm-sf-cloze" data-action="wrap-cloze" title="挖空 [[]]">[[]]</button>
+        <button class="cm-sf-remove" data-action="remove-subfield" title="移除">✕</button>`;
     c.appendChild(div);
     if (!isInit && !name && !content) setTimeout(() => div.querySelector('.cm-sf-name')?.focus(), 100);
+}
+
+export function wrapCloze(textarea) {
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = textarea.value;
+    const selected = text.substring(start, end);
+    const replacement = `[[${selected || '...'}]]`;
+    textarea.value = text.substring(0, start) + replacement + text.substring(end);
+    textarea.selectionStart = start + 2;
+    textarea.selectionEnd = start + 2 + (selected || '...').length;
+    textarea.focus();
+    textarea.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
 export function removeSubfield(btn) {

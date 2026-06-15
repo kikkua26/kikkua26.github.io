@@ -5,7 +5,7 @@ import { activeNotes, nbMeta, flushData, saveDraft, loadDraft, clearDraft } from
 import { genId } from './utils.js';
 import { buildChapterTree } from './tree.js';
 import { renderAll } from './render.js';
-import { clearForm, loadForm, getFormData, addSubfield, removeSubfield, autoSaveForm } from './form.js';
+import { clearForm, loadForm, getFormData, addSubfield, removeSubfield, autoSaveForm, wrapCloze } from './form.js';
 import { updatePreview } from './preview.js';
 import { showQuickPaste, hideQuickPaste, applyQuickPaste } from './paste.js';
 import { aiParse, copyPrompt, showSettings, hideSettings, saveSettings, testConnection, showBatchModal, hideBatchModal, copyBatchPrompt, batchAIParse, applyBatchImport } from './ai.js';
@@ -63,6 +63,9 @@ export function setupEvents() {
             addSubfield('knowledge', false);
         } else if (action === 'add-extended') {
             addSubfield('extended', false);
+        } else if (action === 'wrap-cloze') {
+            const textarea = e.target.closest('.cm-subfield')?.querySelector('.cm-sf-content');
+            wrapCloze(textarea);
         } else if (action === 'cm-quick-paste') {
             showQuickPaste();
         }
@@ -157,6 +160,10 @@ export function setupEvents() {
     rootEl.addEventListener('keydown', e => {
         if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveNote(); }
         if ((e.ctrlKey || e.metaKey) && e.key === 'n') { e.preventDefault(); clearForm(false); rootEl.querySelector('#cmInputMain')?.focus(); }
+        if ((e.ctrlKey || e.metaKey) && e.key === '[') {
+            const ta = e.target.closest('.cm-sf-content');
+            if (ta) { e.preventDefault(); wrapCloze(ta); }
+        }
     });
 
     // Auto-preview and auto-save on form input (debounced)

@@ -89,6 +89,8 @@ body {
 .cm-sf-inputs input:focus, .cm-sf-inputs textarea:focus { outline: none; border-color: var(--accent); background: #fff; }
 .cm-sf-remove { width: 20px; height: 20px; border-radius: 50%; border: none; background: transparent; cursor: pointer; color: #c5cad3; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; transition: .15s; }
 .cm-sf-remove:hover { color: var(--accent); background: var(--accent-bg); }
+.cm-sf-cloze { width: auto; height: 20px; padding: 0 5px; border-radius: 3px; border: 1px solid #e8eaef; background: #fafbfc; cursor: pointer; color: #8b92a0; font-size: 10px; font-family: monospace; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; transition: .15s; }
+.cm-sf-cloze:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-bg); }
 .cm-sf-drag { flex-shrink: 0; cursor: grab; color: #c5cad3; font-size: 10px; letter-spacing: 2px; user-select: none; padding: 2px 3px; align-self: stretch; display: flex; align-items: center; }
 .cm-sf-drag:active { cursor: grabbing; }
 .cm-subfield.cm-dragging { opacity: 0.4; }
