@@ -46,6 +46,17 @@ export function importAOA(aoa) {
     ensureEmptyRows();
 }
 
+function decodeWithEncodingFallback(buffer) {
+    const encodings = ['utf-8', 'gbk', 'gb18030', 'big5', 'iso-8859-1'];
+    for (const enc of encodings) {
+        try {
+            const text = new TextDecoder(enc, { fatal: true }).decode(buffer);
+            if (!text.includes('\uFFFD')) return text;
+        } catch {}
+    }
+    return new TextDecoder('utf-8').decode(buffer);
+}
+
 export function handleFileImport(e) {
     const file = e.target.files[0]; if (!file) return;
     const name = file.name.toLowerCase();
@@ -61,9 +72,10 @@ export function handleFileImport(e) {
     } else if (name.endsWith('.csv')) {
         const reader = new FileReader();
         reader.onload = ev => {
-            importAOA(ev.target.result.replace(/^﻿/, '').split(/\r?\n/).filter(l => l.trim()).map(parseCSVLine));
+            const text = decodeWithEncodingFallback(ev.target.result);
+            importAOA(text.replace(/^﻿/, '').split(/\r?\n/).filter(l => l.trim()).map(parseCSVLine));
         };
-        reader.readAsText(file);
+        reader.readAsArrayBuffer(file);
     } else { alert('不支持的文件格式，请使用 .csv 或 .xlsx'); }
     e.target.value = '';
 }

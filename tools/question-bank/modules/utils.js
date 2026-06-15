@@ -29,7 +29,8 @@ export function sanitizeHtml(html) {
 
 export function download(name, content, type) {
     const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([content], { type }));
+    const opts = type === 'text/csv' ? { type: type + ';charset=utf-8' } : { type };
+    a.href = URL.createObjectURL(new Blob([content], opts));
     a.download = name; a.click();
     URL.revokeObjectURL(a.href);
 }
