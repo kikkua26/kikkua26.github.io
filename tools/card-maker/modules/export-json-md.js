@@ -51,40 +51,98 @@ export async function exportMarkdownZip() {
     await loadScript('/tools/question-bank/lib/jszip.min.js?v=1');
     const zip = new JSZip();
 
-    // 按章节分组
+    // 构建章节顺序（复用 APKG 逻辑）
+    const nb = state.notebooks[state.activeNotebook];
+    const rawOrder = nb?._order || {};
+    const allChildren = {};
+    for (const note of notes) {
+        if (!note.chapter) continue;
+        const parts = note.chapter.split('::');
+        let path = '';
+        for (const part of parts) {
+            const parent = path;
+            path = path ? path + '::' + part : part;
+            if (!allChildren[parent]) allChildren[parent] = new Set();
+            allChildren[parent].add(part);
+        }
+    }
+    const orderMap = {};
+    for (const [parent, children] of Object.entries(allChildren)) {
+        const manual = rawOrder[parent] || [];
+        const remaining = [...children].filter(c => !manual.includes(c)).sort();
+        orderMap[parent] = [...manual, ...remaining];
+    }
+
+    // 将章节路径转为编号路径
+    function toNumberedPath(chapter) {
+        const parts = chapter.split('::');
+        let raw = '', numbered = '';
+        for (const part of parts) {
+            const parent = raw;
+            raw = raw ? raw + '::' + part : part;
+            const siblings = orderMap[parent] || [];
+            const idx = siblings.indexOf(part);
+            const prefix = idx >= 0 ? String(idx + 1).padStart(2, '0') + ' ' : '';
+            numbered = numbered ? numbered + '::' + prefix + part : prefix + part;
+        }
+        return numbered;
+    }
+
+    // 按编号章节分组
     const chapters = {};
     for (const n of notes) {
         const ch = n.chapter || '未分类';
-        if (!chapters[ch]) chapters[ch] = [];
-        chapters[ch].push(n);
+        const numbered = toNumberedPath(ch);
+        if (!chapters[numbered]) chapters[numbered] = [];
+        chapters[numbered].push(n);
     }
+
+    // 按编号排序
+    const sortedChapters = Object.keys(chapters).sort();
 
     // 生成目录索引（带链接）
     let indexMd = `# ${state.activeNotebook || '笔记本'}\n\n`;
-    indexMd += `> 共 ${notes.length} 条笔记，${Object.keys(chapters).length} 个章节\n\n`;
-    const fileMap = {};
-    for (const chapter of Object.keys(chapters)) {
-        fileIndex++;
-        const parts = chapter.split('::');
-        const folder = parts.slice(0, -1).map(p => sanitizeFilename(p)).join('/');
-        const filename = (folder ? folder + '/' : '') + padNum(fileIndex) + '_' + sanitizeFilename(parts[parts.length - 1]) + '.md';
-        fileMap[chapter] = { filename, title: parts[parts.length - 1], count: chapters[chapter].length };
-    }
-    indexMd += generateIndexMd(fileMap);
-    zip.file('README.md', indexMd);
+    indexMd += `> 共 ${notes.length} 条笔记，${sortedChapters.length} 个章节\n\n`;
 
-    // 为每个章节生成 md 文件
-    for (const [chapter, chapterNotes] of Object.entries(chapters)) {
-        const { filename, title } = fileMap[chapter];
-        let md = `# ${title}\n\n`;
-        md += `> 完整路径: ${chapter}\n>\n> 本章节共 ${chapterNotes.length} 条笔记\n\n`;
-
-        for (const n of chapterNotes) {
-            md += renderNoteMd(n);
+    // 构建目录树并生成索引
+    const tree = {};
+    for (const numbered of sortedChapters) {
+        const parts = numbered.split('::');
+        let node = tree;
+        for (let i = 0; i < parts.length; i++) {
+            const p = parts[i];
+            if (!node[p]) node[p] = i === parts.length - 1 ? { _notes: chapters[numbered] } : {};
+            else if (i === parts.length - 1) node[p]._notes = chapters[numbered];
+            node = node[p];
         }
-
-        zip.file(filename, md);
     }
+
+    // 生成文件并添加链接
+    function buildIndexAndFiles(node, folderPath) {
+        let md = '';
+        for (const [name, child] of Object.entries(node)) {
+            if (name === '_notes') continue;
+            if (child._notes) {
+                fileIndex++;
+                const filename = folderPath + padNum(fileIndex) + '_' + sanitizeFilename(name) + '.md';
+                md += `- [${name}](${filename}) (${child._notes.length}条)\n`;
+                // 生成章节 md 文件
+                let chapterMd = `# ${name}\n\n`;
+                chapterMd += `> 本章节共 ${child._notes.length} 条笔记\n\n`;
+                for (const n of child._notes) {
+                    chapterMd += renderNoteMd(n);
+                }
+                zip.file(filename, chapterMd);
+            } else {
+                md += `- **${name}**/\n`;
+                md += buildIndexAndFiles(child, folderPath + sanitizeFilename(name) + '/');
+            }
+        }
+        return md;
+    }
+
+    indexMd += buildIndexAndFiles(tree, '');
+    zip.file('README.md', indexMd);
 
     // 生成 zip 并下载
     const blob = await zip.generateAsync({ type: 'blob', mimeType: 'application/zip' });
@@ -97,38 +155,6 @@ export async function exportMarkdownZip() {
 }
 
 function padNum(n) { return String(n).padStart(3, '0'); }
-
-function generateIndexMd(fileMap) {
-    // 构建目录树
-    const tree = {};
-    for (const [chapter, info] of Object.entries(fileMap)) {
-        const parts = chapter.split('::');
-        let node = tree;
-        for (let i = 0; i < parts.length; i++) {
-            const p = parts[i];
-            if (!node[p]) node[p] = i === parts.length - 1 ? { _info: info } : {};
-            else if (i === parts.length - 1) node[p]._info = info;
-            node = node[p];
-        }
-    }
-
-    let md = '';
-    function walk(node, depth) {
-        const indent = '  '.repeat(depth);
-        for (const [name, child] of Object.entries(node)) {
-            if (name === '_info') continue;
-            if (child._info) {
-                const { filename, count } = child._info;
-                md += `${indent}- [${name}](${filename}) (${count}条)\n`;
-            } else {
-                md += `${indent}- **${name}**/\n`;
-                walk(child, depth + 1);
-            }
-        }
-    }
-    walk(tree, 0);
-    return md;
-}
 
 function renderNoteMd(note) {
     let md = '';
