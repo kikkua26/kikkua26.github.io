@@ -12,7 +12,8 @@ export function replaceFields(template, data) {
     fieldsInTemplate.forEach(field => { if (filledData[field] === undefined) filledData[field] = ''; });
     for (const [key, value] of Object.entries(filledData)) {
         const regex = new RegExp(`\\{\\{\\s*${escapeRegex(key)}\\s*\\}\\}`, 'g');
-        result = result.replace(regex, value);
+        const htmlValue = String(value).replace(/\n/g, '<br>');
+        result = result.replace(regex, htmlValue);
     }
     return result;
 }
