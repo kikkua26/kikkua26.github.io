@@ -117,7 +117,6 @@
     flex-direction: column;
     position: relative !important;
     min-height: 0;
-    overflow-x: hidden;
 }
 
 .card::before {
@@ -125,16 +124,14 @@
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%) rotate(-30deg);
-    font-size: 72px;
-    font-weight: 300;
-    font-family: 'Palatino Linotype', 'Book Antiqua', Palatino, serif;
-    color: rgba(180, 160, 140, 0.035);
+    transform: translate(-50%, -50%) rotate(-35deg);
+    font-size: 80px;
+    font-weight: 900;
+    color: rgba(139, 90, 43, 0.04);
     pointer-events: none;
     z-index: 0;
     white-space: nowrap;
-    letter-spacing: 0.5em;
-    text-transform: lowercase;
+    letter-spacing: 20px;
 }
 
 .card-header {
@@ -324,11 +321,11 @@
     border-radius: 0;
     cursor: pointer;
     transition: all 0.3s;
-    color: transparent;
+    color: var(--blank-color);
     background-color: transparent;
     user-select: none;
     -webkit-user-select: none;
-    border-bottom: 1px solid rgba(68, 64, 60, 0.35);
+    border-bottom: 1px solid var(--blank-border);
     text-decoration: none;
     word-break: break-all;
     white-space: normal;
@@ -661,16 +658,14 @@
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%) rotate(-30deg);
-    font-size: 56px;
-    font-weight: 300;
-    font-family: 'Palatino Linotype', 'Book Antiqua', Palatino, serif;
-    color: rgba(180, 160, 140, 0.04);
+    transform: translate(-50%, -50%) rotate(-35deg);
+    font-size: 60px;
+    font-weight: 900;
+    color: rgba(201, 169, 89, 0.08);
     pointer-events: none;
     z-index: -1;
     white-space: nowrap;
-    letter-spacing: 0.4em;
-    text-transform: lowercase;
+    letter-spacing: 15px;
 }
 
 .settings-panel-content > * {
@@ -1412,7 +1407,7 @@
 
 /* ===== 响应式 ===== */
 @media (max-width: 768px) {
-    .card { padding: 12px; overflow-x: hidden; }
+    .card { padding: 12px; }
     .original-field { padding: 12px; }
     .original-text { font-size: 1em; }
     .rectangle { padding: 6px 10px; }
@@ -1425,7 +1420,7 @@
 }
 
 @media (max-width: 480px) {
-    .card { padding: 8px; min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
+    .card { padding: 8px; min-height: 100vh; display: flex; flex-direction: column; }
     .original-field { padding: 10px; }
     .original-text { font-size: 0.95em; }
     .trapezoid { padding-left: 6px; padding-right: 4px; font-size: 11px; }
