@@ -56,20 +56,19 @@ export async function exportMarkdownZip() {
         chapters[ch].push(n);
     }
 
-    // 构建目录树
-    const tree = buildChapterTree(Object.keys(chapters));
-
     // 生成目录索引
     let indexMd = `# ${state.activeNotebook || '笔记本'}\n\n`;
     indexMd += `> 共 ${notes.length} 条笔记，${Object.keys(chapters).length} 个章节\n\n`;
-    indexMd += generateTreeMd(tree, 0);
+    indexMd += generateIndexMd(chapters);
     zip.file('README.md', indexMd);
 
-    // 为每个章节生成 md 文件
+    // 为每个章节生成 md 文件（按 :: 分层建立子目录）
     for (const [chapter, chapterNotes] of Object.entries(chapters)) {
-        const filename = sanitizeFilename(chapter) + '.md';
-        let md = `# ${chapter}\n\n`;
-        md += `> 本章节共 ${chapterNotes.length} 条笔记\n\n`;
+        const parts = chapter.split('::');
+        const folder = parts.slice(0, -1).map(p => sanitizeFilename(p)).join('/');
+        const filename = (folder ? folder + '/' : '') + sanitizeFilename(parts[parts.length - 1]) + '.md';
+        let md = `# ${parts[parts.length - 1]}\n\n`;
+        md += `> 完整路径: ${chapter}\n>\n> 本章节共 ${chapterNotes.length} 条笔记\n\n`;
 
         for (const n of chapterNotes) {
             md += renderNoteMd(n);
@@ -86,6 +85,35 @@ export async function exportMarkdownZip() {
     a.click();
     URL.revokeObjectURL(a.href);
     toast('已导出 Markdown 压缩包', 'success');
+}
+
+function generateIndexMd(chapters) {
+    // 构建目录树
+    const tree = {};
+    for (const ch of Object.keys(chapters)) {
+        const parts = ch.split('::');
+        let node = tree;
+        for (let i = 0; i < parts.length; i++) {
+            const p = parts[i];
+            if (!node[p]) node[p] = i === parts.length - 1 ? { _count: chapters[ch].length } : {};
+            else if (i === parts.length - 1) node[p]._count = chapters[ch].length;
+            node = node[p];
+        }
+    }
+
+    let md = '';
+    function walk(node, depth) {
+        const indent = '  '.repeat(depth);
+        for (const [name, child] of Object.entries(node)) {
+            if (name === '_count') continue;
+            const folder = child._count !== undefined ? '' : '/';
+            const count = child._count ? ` (${child._count}条)` : '';
+            md += `${indent}- ${name}${folder}${count}\n`;
+            walk(child, depth + 1);
+        }
+    }
+    walk(tree, 0);
+    return md;
 }
 
 function renderNoteMd(note) {
@@ -134,31 +162,6 @@ function formatFieldMd(field) {
 }
 
 // ── 辅助函数 ──
-
-function buildChapterTree(chapters) {
-    const root = { name: '', children: {}, notes: [] };
-    for (const ch of chapters) {
-        const parts = ch.split('::');
-        let node = root;
-        for (const p of parts) {
-            if (!node.children[p]) node.children[p] = { name: p, children: {}, notes: [] };
-            node = node.children[p];
-        }
-        node.notes.push(ch);
-    }
-    return root;
-}
-
-function generateTreeMd(node, depth) {
-    let md = '';
-    const indent = '  '.repeat(depth);
-    for (const [name, child] of Object.entries(node.children)) {
-        const filename = sanitizeFilename(child.notes[0] || name) + '.md';
-        md += `${indent}- [${name}](${filename})\n`;
-        md += generateTreeMd(child, depth + 1);
-    }
-    return md;
-}
 
 function sanitizeFilename(str) {
     return str.replace(/[<>:"/\\|?*]/g, '_').replace(/\s+/g, '_');
