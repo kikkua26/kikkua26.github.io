@@ -112,8 +112,8 @@ function cleanContent(text) {
     if (!text) return '';
     return text
         .replace(/<br\s*\/?>/gi, '\n')
-        .replace(/\[\[([^\]]*)\]\]/g, '$1')
         .replace(/<[^>]+>/g, '')
+        .replace(/\[\[([^\]]*)\]\]/g, '**$1**')
         .trim();
 }
 
@@ -122,13 +122,12 @@ function formatFieldMd(field) {
     const cleaned = cleanContent(field.content);
     const lines = cleaned.split('\n').filter(l => l.trim());
     if (lines.length <= 1) {
-        const content = cleaned || '';
-        return field.name ? `**${field.name}**: **${content}**\n\n` : `**${content}**\n\n`;
+        return field.name ? `**${field.name}**: ${cleaned || ''}\n\n` : `${cleaned || ''}\n\n`;
     }
     let md = '';
     if (field.name) md += `**${field.name}**:\n\n`;
     for (const line of lines) {
-        md += `> **${line.trim()}**\n`;
+        md += `> ${line.trim()}\n`;
     }
     md += `\n`;
     return md;
