@@ -7,8 +7,10 @@ import { esc } from './utils.js';
 // Forward references — set by main.js to avoid circular imports
 let _renderAll = () => {};
 let _updatePreview = () => {};
+let _updateNavPos = () => {};
 export function setRenderAll(fn) { _renderAll = fn; }
 export function setUpdatePreview(fn) { _updatePreview = fn; }
+export function setUpdateNavPos(fn) { _updateNavPos = fn; }
 
 // Auto-save with debounce
 let autoSaveTimer = null;
@@ -50,6 +52,7 @@ export function clearForm(keepChapter) {
     addSubfield('extended', true);
     clearDraft();
     _renderAll();
+    _updateNavPos();
     setTimeout(_updatePreview, 30);
 }
 
@@ -77,6 +80,7 @@ export function loadForm(note) {
     rootEl.querySelector('#cmBtnDelete').style.display = 'inline-flex';
     clearDraft();
     _renderAll();
+    _updateNavPos();
     setTimeout(_updatePreview, 30);
 }
 

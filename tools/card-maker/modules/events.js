@@ -14,6 +14,15 @@ import { importCSV, exportCSV } from './csv.js';
 import { exportJSON, exportMarkdownZip } from './export-json-md.js';
 import { toast } from './utils.js';
 
+export function updateNavPos() {
+    const el = rootEl.querySelector('#cmNavPos');
+    if (!el) return;
+    const notes = activeNotes().filter(n => n.mainField || n.chapter);
+    if (!notes.length || !state.currentNoteId) { el.textContent = ''; return; }
+    const idx = notes.findIndex(n => n.id === state.currentNoteId);
+    el.textContent = idx >= 0 ? `${idx + 1}/${notes.length}` : '';
+}
+
 export function setupEvents() {
     // Click delegation
     rootEl.addEventListener('click', e => {
@@ -588,6 +597,7 @@ function saveNote() {
     clearDraft();
     rootEl.querySelector('#cmBtnDelete').style.display = 'inline-flex';
     renderAll();
+    updateNavPos();
     setTimeout(updatePreview, 30);
 }
 

@@ -5,14 +5,15 @@ import { state, setRoot } from './modules/constants.js';
 import { loadData, activeNotes, loadDraft } from './modules/data.js';
 import { buildChapterTree } from './modules/tree.js';
 import { renderAll } from './modules/render.js';
-import { clearForm, setRenderAll, setUpdatePreview, getFormData } from './modules/form.js';
+import { clearForm, setRenderAll, setUpdatePreview, setUpdateNavPos, getFormData } from './modules/form.js';
 import { updatePreview } from './modules/preview.js';
-import { setupEvents } from './modules/events.js';
+import { setupEvents, updateNavPos } from './modules/events.js';
 import { setPasteRenderAll, setPasteUpdatePreview } from './modules/paste.js';
 
 // Wire forward references to avoid circular imports
 setRenderAll(renderAll);
 setUpdatePreview(updatePreview);
+setUpdateNavPos(updateNavPos);
 setPasteRenderAll(renderAll);
 setPasteUpdatePreview(updatePreview);
 

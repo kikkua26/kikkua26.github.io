@@ -227,6 +227,10 @@ body {
 }
 .cm-nav-btn:hover { background: var(--accent-bg); border-color: var(--accent); color: var(--accent); }
 .cm-nav-btn:active { transform: scale(0.95); }
+.cm-nav-pos {
+    font-size: 11px; color: var(--text3); min-width: 36px; text-align: center;
+    user-select: none; white-space: nowrap;
+}
 
 /* Icon buttons */
 .cm-icon-btn {
