@@ -603,12 +603,28 @@ function deleteNote() {
 function navigateNote(dir) {
     const notes = activeNotes().filter(n => n.mainField || n.chapter);
     if (!notes.length) return;
+    if (state.currentNoteId) saveCurrentNote();
     if (!state.currentNoteId) { loadForm(notes[0]); return; }
     const idx = notes.findIndex(n => n.id === state.currentNoteId);
     if (idx < 0) { loadForm(notes[0]); return; }
     const next = idx + dir;
     if (next < 0 || next >= notes.length) return;
     loadForm(notes[next]);
+}
+
+function saveCurrentNote() {
+    const fd = getFormData();
+    if (!fd.mainField && !fd.chapter) return;
+    const notes = activeNotes();
+    const note = notes.find(n => n.id === state.currentNoteId);
+    if (note) {
+        note.chapter = fd.chapter;
+        note.mainField = fd.mainField;
+        note.level = fd.level;
+        note.knowledgeAnalysis = fd.knowledgeAnalysis;
+        note.extendedAnalysis = fd.extendedAnalysis;
+        flushData();
+    }
 }
 
 function deleteBatch() {
