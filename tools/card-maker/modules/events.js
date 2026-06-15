@@ -11,6 +11,7 @@ import { showQuickPaste, hideQuickPaste, applyQuickPaste } from './paste.js';
 import { aiParse, copyPrompt, showSettings, hideSettings, saveSettings, testConnection, showBatchModal, hideBatchModal, copyBatchPrompt, batchAIParse, applyBatchImport } from './ai.js';
 import { showApkgModal, hideApkgModal, handleApkgUpload, handleApkgExport } from './apkg.js';
 import { importCSV, exportCSV } from './csv.js';
+import { exportJSON, exportMarkdownZip } from './export-json-md.js';
 import { toast } from './utils.js';
 
 export function setupEvents() {
@@ -93,7 +94,13 @@ export function setupEvents() {
         renderAll();
     });
 
-    on('#cmBtnExport', 'click', () => exportCSV(renderAll));
+    on('#cmBtnExport', 'click', () => {
+        const modal = rootEl.querySelector('#cmExportModal');
+        if (modal) {
+            modal.classList.remove('hidden');
+            modal.style.display = 'flex';
+        }
+    });
     on('#cmBtnImport', 'click', () => rootEl.querySelector('#cmFileInput')?.click());
     on('#cmFileInput', 'change', function () {
         if (this.files[0]) { importCSV(this.files[0], renderAll); this.value = ''; }
@@ -508,6 +515,24 @@ export function setupEvents() {
         toast(`已导入 ${parts.join('、')}`, 'success');
     });
 
+    // Export modal
+    on('#cmExportCsv', 'click', () => {
+        hideExportModal();
+        exportCSV(renderAll);
+    });
+    on('#cmExportJson', 'click', () => {
+        hideExportModal();
+        exportJSON();
+    });
+    on('#cmExportMd', 'click', () => {
+        hideExportModal();
+        exportMarkdownZip();
+    });
+    on('#cmExportCancel', 'click', hideExportModal);
+    rootEl.querySelector('#cmExportModal')?.addEventListener('click', e => {
+        if (e.target === e.currentTarget) hideExportModal();
+    });
+
     // Listen for quick-paste message from parent admin
     window.addEventListener('message', e => {
         if (e.data?.source === 'kikkua-admin' && e.data?.type === 'quick-paste') {
@@ -573,6 +598,14 @@ function deleteBatch() {
     rootEl.querySelector('#cmBtnBatch').style.display = 'none';
     toast('已删除选中笔记', 'success');
     renderAll();
+}
+
+function hideExportModal() {
+    const modal = rootEl.querySelector('#cmExportModal');
+    if (modal) {
+        modal.style.display = 'none';
+        modal.classList.add('hidden');
+    }
 }
 
 function setupContextMenu() {

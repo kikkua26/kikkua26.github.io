@@ -375,6 +375,42 @@
         <!-- Toast -->
         <div class="cm-toast" id="cmToast"></div>
         <input type="file" id="cmFileInput" accept=".csv" class="hidden">
+
+        <!-- Export Modal -->
+        <div class="cm-modal-overlay hidden" id="cmExportModal">
+            <div class="cm-modal cm-modal-box" style="max-width:400px;">
+                <div class="cm-modal-header">
+                    <h3 class="cm-modal-title">📤 导出数据</h3>
+                    <button class="btn-close" id="cmExportCancel">✕</button>
+                </div>
+                <p class="cm-modal-desc">选择导出格式</p>
+
+                <div class="settings-section">
+                    <button class="btn btn-secondary btn-sm" id="cmExportCsv" style="width:100%;justify-content:flex-start;gap:8px;">
+                        📊 CSV 格式
+                        <span style="color:var(--text3);font-size:11px;">兼容 Excel，适合数据编辑</span>
+                    </button>
+                </div>
+
+                <div class="settings-section">
+                    <button class="btn btn-secondary btn-sm" id="cmExportJson" style="width:100%;justify-content:flex-start;gap:8px;">
+                        📋 JSON 格式
+                        <span style="color:var(--text3);font-size:11px;">结构化数据，支持重新导入</span>
+                    </button>
+                </div>
+
+                <div class="settings-section">
+                    <button class="btn btn-secondary btn-sm" id="cmExportMd" style="width:100%;justify-content:flex-start;gap:8px;">
+                        📝 Markdown 压缩包
+                        <span style="color:var(--text3);font-size:11px;">按章节分目录，含索引</span>
+                    </button>
+                </div>
+
+                <div class="cm-modal-actions end">
+                    <button class="btn btn-secondary btn-sm" id="cmExportCancel">取消</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script type="module" src="main.js?v=4"></script>
