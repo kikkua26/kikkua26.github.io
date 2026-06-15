@@ -1,14 +1,14 @@
-<template id="ak-front"><!--
+<!--
     ===== 模板默认配置 =====
     用户可以修改下面的注释来设置默认值（修改后需要重新导入模板）
     
     config:revealBlanks=true      挖空开关: true=开启, false=关闭
-    config:theme=blue          主题: system=跟随系统, blue=简约蓝, pink=果粉色, mint=果冻绿, dark=深色, eye-care=护眼
+    config:theme=system           主题: system=跟随系统, blue=简约蓝, pink=果粉色, mint=果冻绿, dark=深色, eye-care=护眼
     config:fontSize=16            字体大小: 12-24
     config:otherContentMode=popup 知识扩展: popup=按钮弹窗, inline=页面显示
 -->
 <!-- config:revealBlanks=true -->
-<!-- config:theme=blue -->
+<!-- config:theme=system -->
 <!-- config:fontSize=16 -->
 <!-- config:otherContentMode=popup -->
 <!-- 正面模板 - 只显示主字段和提要 -->
@@ -73,5 +73,1158 @@
 <!-- 移除了挖空和名解相关样式 -->
 
 <script>
-function generateAuthCode(){const _0x2b5169=[navigator['userAgent'],screen['width'],screen['height'],navigator['language'],new Date()['getTime']()['toString']()['substring'](0x0,0x8)]['join']('');function _0x472a2f(_0x5b646d){let _0x111f21=0x0;for(let _0x33c546=0x0;_0x33c546<_0x5b646d['length'];_0x33c546++){const _0x4d239e=_0x5b646d['charCodeAt'](_0x33c546);_0x111f21=(_0x111f21<<0x5)-_0x111f21+_0x4d239e,_0x111f21=_0x111f21&_0x111f21;}return Math['abs'](_0x111f21);}const _0x27d7df='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789',_0x1b26ff=_0x472a2f(_0x2b5169);let _0x11a779='';for(let _0x1889ff=0x0;_0x1889ff<0xc;_0x1889ff++){const _0x5c8871=_0x1b26ff*(_0x1889ff+0x1)%_0x27d7df['length'];_0x11a779+=_0x27d7df['charAt'](_0x5c8871);}return _0x11a779['replace'](/(.{4})/g,'$1-')['slice'](0x0,-0x1);}window['ankiStorage']=(function(){const _0x5e679b='anki_sel_',_0x248e9b='anki_cfg_',_0x3de349='anki_sel_';function _0x176f6c(_0x5672d1){return _0x5e679b+btoa(encodeURIComponent(_0x5672d1))['slice'](0x0,0x32);}function _0x5a97c0(_0x31f603){return _0x3de349+_0x31f603;}return{'set':function(_0x59c246,_0x2c17e3){const _0x2c0f09=_0x176f6c(_0x59c246);try{localStorage['setItem'](_0x2c0f09,JSON['stringify'](_0x2c17e3));}catch(_0x210545){console['warn']('localStorage\x20setItem\x20failed,\x20falling\x20back\x20to\x20window\x20object\x20for\x20key:',_0x2c0f09,_0x210545),window[_0x2c0f09]=_0x2c17e3;}},'get':function(_0x207434){const _0x1c7af3=_0x176f6c(_0x207434),_0x1df8a5=_0x5a97c0(_0x207434);try{let _0x1b9938=localStorage['getItem'](_0x1c7af3);if(_0x1b9938)return JSON['parse'](_0x1b9938);_0x1b9938=localStorage['getItem'](_0x1df8a5);if(_0x1b9938){const _0x2ac532=JSON['parse'](_0x1b9938);return localStorage['setItem'](_0x1c7af3,JSON['stringify'](_0x2ac532)),localStorage['removeItem'](_0x1df8a5),_0x2ac532;}return null;}catch(_0x14880a){return console['warn']('localStorage\x20getItem\x20failed,\x20falling\x20back\x20to\x20window\x20object\x20for\x20key:',_0x1c7af3,_0x14880a),window[_0x1c7af3]||null;}},'clear':function(_0x2933dc){const _0x25cdf8=_0x176f6c(_0x2933dc),_0x459a94=_0x5a97c0(_0x2933dc);try{localStorage['removeItem'](_0x25cdf8),localStorage['removeItem'](_0x459a94);}catch(_0x425329){console['warn']('localStorage\x20removeItem\x20failed,\x20attempting\x20to\x20delete\x20from\x20window\x20object\x20for\x20key:',_0x25cdf8,_0x425329),delete window[_0x25cdf8];}},'setConfig':function(_0x5de10e,_0x3cf245){try{localStorage['setItem'](_0x248e9b+_0x5de10e,JSON['stringify'](_0x3cf245));}catch(_0x13e700){console['error']('Error\x20saving\x20config\x20to\x20localStorage:',_0x5de10e,_0x13e700);}},'getConfig':function(_0x30e113){try{const _0x34a859=localStorage['getItem'](_0x248e9b+_0x30e113);if(_0x34a859!==null)return JSON['parse'](_0x34a859);const _0x2c62f5='cfg_'+_0x30e113,_0x35d2eb=localStorage['getItem'](_0x2c62f5);if(_0x35d2eb!==null){const _0x2ca53a=JSON['parse'](_0x35d2eb);return localStorage['setItem'](_0x248e9b+_0x30e113,JSON['stringify'](_0x2ca53a)),localStorage['removeItem'](_0x2c62f5),_0x2ca53a;}return undefined;}catch(_0x1232cd){return console['error']('Error\x20reading\x20config\x20from\x20localStorage:',_0x30e113,_0x1232cd),undefined;}}};}()),(function(){function _0x583884(){const _0x48097d=document['getElementById']('chapter-display');if(_0x48097d){const _0x406a67=_0x48097d['textContent']['trim']();!_0x406a67&&(_0x48097d['style']['display']='none');}}const _0x36ad09=document['getElementById']('explanationBox'),_0x3de9da=document['getElementById']('explanationTitle'),_0x3a0b36=document['getElementById']('explanationContent'),_0x1a2a4f=document['getElementById']('closeExplanation'),_0x4afd58=(function(){let _0x215567=null,_0x34ada8=null,_0x34aaa4=null,_0x4b31ab=null;function _0x125042(_0x10059a,_0xef1ec,_0x1e5ca8,_0x595590){_0x215567=_0x10059a,_0x34ada8=_0xef1ec,_0x34aaa4=_0x1e5ca8,_0x4b31ab=_0x595590,_0x5cb723(),_0x494eb2();}function _0x5c7ee7(_0x3b7c1d){const _0x48d9b0=[];let _0x3f2090=0x0;while(_0x3f2090<_0x3b7c1d['length']){if(_0x3b7c1d['substring'](_0x3f2090,_0x3f2090+0x2)==='【*'){const _0x1ada1e=_0x3e96e9(_0x3b7c1d,_0x3f2090,'【*','*】');if(_0x1ada1e!==-0x1){const _0x128e06=_0x3b7c1d['substring'](_0x3f2090+0x2,_0x1ada1e),_0x35c519=_0x128e06['indexOf']('::');if(_0x35c519!==-0x1){const _0x33e6ab=_0x128e06['substring'](0x0,_0x35c519),_0x1e2b99=_0x128e06['substring'](_0x35c519+0x2);_0x48d9b0['push']({'start':_0x3f2090,'end':_0x1ada1e+0x2,'term':_0x33e6ab,'explanation':_0x1e2b99}),_0x3f2090=_0x1ada1e+0x2;continue;}}}_0x3f2090++;}return _0x48d9b0;}function _0x3e96e9(_0x5e9f13,_0xcb9707,_0x441e39,_0x2984cc){let _0xc94d55=0x1,_0xc41f74=_0xcb9707+_0x441e39['length'];while(_0xc41f74<_0x5e9f13['length']){if(_0x5e9f13['substring'](_0xc41f74,_0xc41f74+_0x441e39['length'])===_0x441e39)_0xc94d55++,_0xc41f74+=_0x441e39['length'];else{if(_0x5e9f13['substring'](_0xc41f74,_0xc41f74+_0x2984cc['length'])===_0x2984cc){_0xc94d55--;if(_0xc94d55===0x0)return _0xc41f74;_0xc41f74+=_0x2984cc['length'];}else _0xc41f74++;}}return-0x1;}function _0x465ee7(_0x490f41,_0x5d9082,_0x2f2e41){const _0x1d15ca=document['createElement']('span');_0x1d15ca['className']='term';const _0x3ef7e9=document['createElement']('span');_0x3ef7e9['innerHTML']=_0x490f41;while(_0x3ef7e9['firstChild']){_0x1d15ca['appendChild'](_0x3ef7e9['firstChild']);}return _0x2f2e41(_0x1d15ca,function(_0x3911ad){const _0x5e31a9=this['closest']('.blank');if(_0x5e31a9&&!_0x5e31a9['classList']['contains']('revealed')){_0x5e31a9['classList']['add']('revealed');const _0x4ed96c=_0x5e31a9['querySelectorAll']('.term');_0x4ed96c['forEach'](_0x439594=>{_0x439594['style']['visibility']='visible';}),_0x3911ad['stopPropagation']();return;}const _0x9302f3=document['querySelector']('.card'),_0x57f6d7=_0x9302f3?_0x9302f3['getBoundingClientRect']():null,_0x25781d=this['getBoundingClientRect']();let _0x2a6160=null;if(_0x57f6d7&&_0x25781d){const _0x22a43a=(_0x25781d['top']+_0x25781d['bottom'])/0x2;_0x2a6160=(_0x22a43a-_0x57f6d7['top'])/_0x57f6d7['height']*0x64;}_0x8456b0(_0x490f41,_0x5d9082,_0x2a6160),_0x3911ad['stopPropagation']();}),_0x1d15ca;}function _0x8456b0(_0x5970d8,_0x41ce71,_0x4b7cc6){if(!_0x215567||!_0x34ada8||!_0x34aaa4){console['error']('Explanation\x20module\x20not\x20initialized');return;}_0x34ada8['innerHTML']=_0x5970d8,_0x34aaa4['innerHTML']=_0x41ce71,_0x215567['style']['color']='',_0x215567['style']['background']='',_0x215567['style']['border']='',_0x34ada8['style']['color']='',_0x34ada8['style']['fontWeight']='',_0x34ada8['style']['textShadow']='',_0x4b31ab['style']['color']='',_0x4b31ab['style']['fontSize']='',_0x4b31ab['style']['fontWeight']='',_0x4b31ab['style']['textShadow']='',_0x34aaa4['style']['color']='';if(_0x4b7cc6!==undefined&&_0x4b7cc6!==null){const _0x79aa41=document['querySelector']('.card'),_0x5a70f6=_0x79aa41?_0x79aa41['getBoundingClientRect']():null;if(_0x5a70f6){_0x215567['classList']['remove']('hide'),_0x215567['classList']['add']('show');const _0x1ff198=_0x215567['offsetHeight']||0xc8,_0x59216b=window['innerHeight'];let _0x2fa394=_0x5a70f6['top']+_0x5a70f6['height']*_0x4b7cc6/0x64;const _0x1472c7=_0x2fa394+_0x1ff198;_0x1472c7>_0x59216b-0x14?(_0x2fa394=_0x5a70f6['top']+_0x5a70f6['height']*_0x4b7cc6/0x64-_0x1ff198-0xa,_0x2fa394<0x14&&(_0x2fa394=0x14)):_0x2fa394+=0x14;const _0x4d87b2=_0x5a70f6['left']+_0x5a70f6['width']/0x2;_0x215567['style']['left']=_0x4d87b2+'px',_0x215567['style']['top']=_0x2fa394+'px',_0x215567['style']['transform']='translateX(-50%)';}}else{const _0x57fb8d=document['querySelector']('.card'),_0x183976=_0x57fb8d?_0x57fb8d['getBoundingClientRect']():null;if(_0x183976){const _0x3e446a=_0x183976['left']+_0x183976['width']/0x2;_0x215567['style']['left']=_0x3e446a+'px';}_0x215567['style']['top']='20px',_0x215567['style']['transform']='translateX(-50%)';}_0x215567['classList']['add']('show');}function _0x3807f0(){_0x215567&&_0x215567['classList']['remove']('show');}function _0x5cb723(){if(!_0x4b31ab)return;const _0x13f2c1=function(_0x534639){_0x534639['stopPropagation'](),_0x534639['touches']&&_0x534639['type']['includes']('touch')&&_0x534639['preventDefault'](),_0x3807f0();};_0x4b31ab['addEventListener']('click',_0x13f2c1),_0x4b31ab['addEventListener']('touchend',_0x13f2c1);}function _0x494eb2(){document['addEventListener']('click',function(_0x3e4b12){!_0x3e4b12['target']['closest']('.term')&&!_0x3e4b12['target']['closest']('.explanation-box')&&_0x3807f0();}),document['addEventListener']('touchend',function(_0x4dd1c9){!_0x4dd1c9['target']['closest']('.term')&&!_0x4dd1c9['target']['closest']('.explanation-box')&&_0x3807f0();});}return{'init':_0x125042,'parseExplanations':_0x5c7ee7,'createTermElement':_0x465ee7,'showExplanation':_0x8456b0,'hideExplanation':_0x3807f0};}()),_0xf4f7a5=(function(){let _0x133a7e=!![];function _0x1fd7d7(_0xfda8a8=!![]){_0x133a7e=_0xfda8a8;}function _0x1e4cd7(_0x556686){const _0x12369d=[];let _0x3bb130=0x0;while(_0x3bb130<_0x556686['length']){if(_0x556686['substring'](_0x3bb130,_0x3bb130+0x2)==='[['){const _0x16d91e=_0x31f0a4(_0x556686,_0x3bb130,'[[',']]');if(_0x16d91e!==-0x1){const _0x1536ad=_0x556686['substring'](_0x3bb130+0x2,_0x16d91e);_0x12369d['push']({'start':_0x3bb130,'end':_0x16d91e+0x2,'content':_0x1536ad}),_0x3bb130=_0x16d91e+0x2;continue;}}_0x3bb130++;}return _0x12369d;}function _0x31f0a4(_0x470db8,_0x9d1b4e,_0x3fd258,_0x3e9c25){let _0x3cbd23=0x1,_0x49cae5=_0x9d1b4e+_0x3fd258['length'];while(_0x49cae5<_0x470db8['length']){if(_0x470db8['substring'](_0x49cae5,_0x49cae5+_0x3fd258['length'])===_0x3fd258)_0x3cbd23++,_0x49cae5+=_0x3fd258['length'];else{if(_0x470db8['substring'](_0x49cae5,_0x49cae5+_0x3e9c25['length'])===_0x3e9c25){_0x3cbd23--;if(_0x3cbd23===0x0)return _0x49cae5;_0x49cae5+=_0x3e9c25['length'];}else _0x49cae5++;}}return-0x1;}function _0x10e1fe(_0x219c13,_0x1bda59,_0x304c02,_0x15ebd2='other'){const _0x144ad9=document['createElement']('span');_0x144ad9['className']='blank';const _0x3d3fad=_0x304c02(_0x219c13);(!_0x133a7e||_0x15ebd2==='notes')&&_0x144ad9['classList']['add']('revealed');_0x144ad9['appendChild'](_0x3d3fad);if(!_0x144ad9['classList']['contains']('revealed')){const _0x440da2=_0x144ad9['querySelectorAll']('.term');_0x440da2['forEach'](_0x4ca4f3=>{_0x4ca4f3['style']['visibility']='hidden';});}return _0x1bda59(_0x144ad9,function(_0x590a52){_0x133a7e&&_0x15ebd2!=='notes'&&!this['classList']['contains']('revealed')&&(_0x534564(this),_0x590a52['stopPropagation']());}),_0x144ad9;}function _0x534564(_0x2b5ba8){if(!_0x2b5ba8)return;_0x2b5ba8['classList']['add']('revealed');const _0x5295d5=_0x2b5ba8['querySelectorAll']('.term');_0x5295d5['forEach'](_0x2a4c48=>{_0x2a4c48['style']['visibility']='visible';});}function _0x9d69b7(_0x4219bc){if(!_0x4219bc)return![];return _0x4219bc['classList']['contains']('revealed');}function _0x346b58(_0x5dbdbe){_0x133a7e=_0x5dbdbe;}function _0x35be91(){return _0x133a7e;}return{'init':_0x1fd7d7,'parseBlanks':_0x1e4cd7,'createBlankElement':_0x10e1fe,'revealBlank':_0x534564,'isBlankRevealed':_0x9d69b7,'setBlanksEnabled':_0x346b58,'getBlanksEnabled':_0x35be91};}());function _0x1ca578(_0x1cd858,_0xb8541f){const _0x55aca2=window['ankiStorage']['getConfig'](_0x1cd858);if(_0x55aca2!==undefined){if(typeof _0xb8541f==='boolean'){if(_0x55aca2==='true')return!![];if(_0x55aca2==='false')return![];}if(typeof _0xb8541f==='number'&&!isNaN(parseFloat(_0x55aca2)))return parseFloat(_0x55aca2);return _0x55aca2;}const _0x550ef1=new RegExp('<!--\x20config:'+_0x1cd858+'=([^\x5cs]+)\x20-->'),_0x38aece=document['documentElement']['innerHTML']||'',_0x3b20e0=_0x38aece['match'](_0x550ef1);if(_0x3b20e0&&_0x3b20e0[0x1]){let _0x3f2fcc=_0x3b20e0[0x1];if(typeof _0xb8541f==='boolean'){if(_0x3f2fcc==='true')return!![];if(_0x3f2fcc==='false')return![];}if(typeof _0xb8541f==='number'&&!isNaN(parseFloat(_0x3f2fcc)))return parseFloat(_0x3f2fcc);return _0x3f2fcc;}return _0xb8541f;}function _0x2563f0(){const _0x36ea73=['revealBlanks','theme','fontSize','otherContentMode'],_0x31f4d3={'revealBlanks':!![],'theme':'system','fontSize':0x10,'otherContentMode':'popup'};_0x36ea73['forEach'](_0x1a6e54=>{const _0x33c162=window['ankiStorage']['getConfig'](_0x1a6e54);if(_0x33c162===undefined){const _0x1ee642=new RegExp('<!--\x20config:'+_0x1a6e54+'=([^\x5cs]+)\x20-->'),_0xfbd280=document['documentElement']['innerHTML']||'',_0x1832b7=_0xfbd280['match'](_0x1ee642);let _0x403326;if(_0x1832b7&&_0x1832b7[0x1]){const _0x5ced9b=_0x1832b7[0x1];if(_0x5ced9b==='true')_0x403326=!![];else{if(_0x5ced9b==='false')_0x403326=![];else{if(!isNaN(parseFloat(_0x5ced9b)))_0x403326=parseFloat(_0x5ced9b);else _0x403326=_0x5ced9b;}}}else _0x403326=_0x31f4d3[_0x1a6e54];window['ankiStorage']['setConfig'](_0x1a6e54,_0x403326);}});}function _0x106245(_0x19885c,_0x38d6f4,_0x5182f6,_0x932f9a){let _0x1b42d4=0x1,_0x4dc368=_0x38d6f4+_0x5182f6['length'];while(_0x4dc368<_0x19885c['length']){if(_0x19885c['substring'](_0x4dc368,_0x4dc368+_0x5182f6['length'])===_0x5182f6)_0x1b42d4++,_0x4dc368+=_0x5182f6['length'];else{if(_0x19885c['substring'](_0x4dc368,_0x4dc368+_0x932f9a['length'])===_0x932f9a){_0x1b42d4--;if(_0x1b42d4===0x0)return _0x4dc368;_0x4dc368+=_0x932f9a['length'];}else _0x4dc368++;}}return-0x1;}function _0x49387e(_0x4c7e31){const _0x26af47=[];let _0x37c51d=0x0;while(_0x37c51d<_0x4c7e31['length']){if(_0x4c7e31['substring'](_0x37c51d,_0x37c51d+0x2)==='【*'){const _0x3adafa=_0x106245(_0x4c7e31,_0x37c51d,'【*','*】');if(_0x3adafa!==-0x1){const _0x5ca8ca=_0x4c7e31['substring'](_0x37c51d+0x2,_0x3adafa),_0x93949e=_0x5ca8ca['indexOf']('::');if(_0x93949e!==-0x1){const _0x4b08b6=_0x5ca8ca['substring'](0x0,_0x93949e),_0x15f15f=_0x5ca8ca['substring'](_0x93949e+0x2);_0x26af47['push']({'type':'explanation','term':_0x4b08b6,'explanation':_0x15f15f}),_0x37c51d=_0x3adafa+0x2;continue;}}}if(_0x4c7e31['substring'](_0x37c51d,_0x37c51d+0x2)==='[['){const _0x25780e=_0x106245(_0x4c7e31,_0x37c51d,'[[',']]');if(_0x25780e!==-0x1){const _0x469774=_0x4c7e31['substring'](_0x37c51d+0x2,_0x25780e);_0x26af47['push']({'type':'blank','content':_0x469774}),_0x37c51d=_0x25780e+0x2;continue;}}let _0x3dc548=_0x37c51d;while(_0x3dc548<_0x4c7e31['length']){if(_0x4c7e31['substring'](_0x3dc548,_0x3dc548+0x2)==='【*'||_0x4c7e31['substring'](_0x3dc548,_0x3dc548+0x2)==='[[')break;_0x3dc548++;}_0x3dc548>_0x37c51d&&_0x26af47['push']({'type':'text','content':_0x4c7e31['substring'](_0x37c51d,_0x3dc548)}),_0x3dc548===_0x37c51d&&(_0x3dc548=_0x37c51d+0x1),_0x37c51d=_0x3dc548;}return _0x26af47;}function _0xbec0d4(_0x161276,_0x18e330='other'){const _0x57a168=document['createDocumentFragment'](),_0x417a42=(_0x4afb59,_0xc3c020)=>{const _0x24b681=function(_0x413979){_0x413979['touches']&&_0x413979['type']['includes']('touch')&&_0x413979['preventDefault'](),_0xc3c020['call'](this,_0x413979);};_0x4afb59['addEventListener']('click',_0x24b681),_0x4afb59['addEventListener']('touchend',_0x24b681);};return _0x161276['forEach'](_0x94e6d5=>{if(_0x94e6d5['type']==='text'){const _0x47f09a=document['createElement']('span');_0x47f09a['innerHTML']=_0x94e6d5['content'];while(_0x47f09a['firstChild']){_0x57a168['appendChild'](_0x47f09a['firstChild']);}}else{if(_0x94e6d5['type']==='blank'){const _0x37c65c=_0xf4f7a5['createBlankElement'](_0x94e6d5['content'],_0x417a42,function(_0x529c6a){const _0x37b97b=_0x49387e(_0x529c6a);return _0xbec0d4(_0x37b97b,_0x18e330);},_0x18e330);_0x57a168['appendChild'](_0x37c65c);}else{if(_0x94e6d5['type']==='explanation'){const _0x21ed62=_0x4afd58['createTermElement'](_0x94e6d5['term'],_0x94e6d5['explanation'],_0x417a42);_0x57a168['appendChild'](_0x21ed62);}}}}),_0x57a168;}function _0x524ef9(_0x420da8){if(!_0x420da8)return;const _0x42498f=_0x420da8['innerHTML'];let _0x30babb;try{_0x30babb=_0x49387e(_0x42498f);}catch(_0x3b1c06){console['warn']('Error\x20parsing\x20text,\x20using\x20raw\x20content:',_0x3b1c06),_0x420da8['textContent']=_0x42498f;return;}if(!_0x30babb||_0x30babb['length']===0x0){_0x420da8['textContent']=_0x42498f;return;}_0x420da8['innerHTML']='',_0x420da8['appendChild'](_0xbec0d4(_0x30babb));}const _0x49600f=(function(){function _0x33da10(_0x574121,_0xfd1bc4,_0x4dc31b,_0x55253a='analysis'){const _0x131cd7=document['createElement']('div');_0x131cd7['className']='trapezoid-container',_0x131cd7['id']=_0x574121+'-container';if(_0x55253a==='analysis')_0x131cd7['classList']['add']('analysis-field');else _0x55253a==='other'&&_0x131cd7['classList']['add']('other-field');const _0x80b08a=document['createElement']('div');_0x80b08a['className']='trapezoid',_0x80b08a['innerHTML']='<span>'+_0xfd1bc4+'</span>';const _0xd66c62=document['createElement']('div');_0xd66c62['className']='rectangle';const _0x47a113=document['createElement']('div');_0x47a113['className']='field-content',_0x47a113['id']='front-'+_0x574121;const _0x4496bd=_0x4dc31b['includes']('[[');if(_0x4496bd&&typeof _0x49387e==='function'){const _0x2f8403=_0x49387e(_0x4dc31b);_0x47a113['appendChild'](_0xbec0d4(_0x2f8403));}else _0x47a113['innerHTML']=_0x4dc31b;return _0xd66c62['appendChild'](_0x47a113),_0x131cd7['appendChild'](_0x80b08a),_0x131cd7['appendChild'](_0xd66c62),_0x80b08a['style']['marginBottom']='-1px',_0x131cd7;}function _0x35d8f5(_0x571c83,_0x5ae4ee,_0x347a43,_0x4ef83c,_0x645304='analysis'){if(!_0x347a43||_0x347a43['trim']()==='')return null;const _0x29d9a2=_0x33da10(_0x571c83,_0x5ae4ee,_0x347a43,_0x645304);return _0x4ef83c['appendChild'](_0x29d9a2),_0x29d9a2;}return{'createFieldContainer':_0x33da10,'addField':_0x35d8f5};}()),_0x17509a=(function(){function _0x566387(_0x4fc9d3){if(!_0x4fc9d3||_0x4fc9d3['trim']()==='')return[];const _0x275599=_0x4fc9d3['split']('<br>###'),_0x134543=[];return _0x275599['forEach']((_0x412a3f,_0x425705)=>{if(_0x412a3f['trim']()==='')return;const _0x158573=_0x412a3f['split']('::');if(_0x158573['length']>=0x2){const _0xc85892=_0x158573[0x0]['trim'](),_0xea168d=_0x158573['slice'](0x1)['join']('::')['trim']();_0x134543['push']({'id':'analysis-'+_0x425705+'-'+_0xc85892['toLowerCase']()['replace'](/\s+/g,'-'),'name':_0xc85892,'content':_0xea168d});}}),_0x134543;}function _0x11dbeb(_0x37c15f,_0x239cd4,_0x20a6d3='analysis'){const _0x354770=_0x566387(_0x37c15f);_0x354770['forEach'](_0x2aa935=>{_0x49600f['addField'](_0x2aa935['id'],_0x2aa935['name'],_0x2aa935['content'],_0x239cd4,_0x20a6d3);});}return{'parseKnowledgeAnalysis':_0x566387,'renderKnowledgeAnalysis':_0x11dbeb};}()),_0x1bcb74={'applySettings':function(){const _0x2726d5=_0x1ca578('fontSize',0x10);document['documentElement']['style']['setProperty']('--base-font-size',_0x2726d5+'px'),_0x59a491();},'applyTheme':function(){const _0x337215=_0x1ca578('theme','system'),_0xeac4d7=document['documentElement'];_0xeac4d7['classList']['remove']('theme-blue','theme-pink','theme-mint','theme-dark','theme-eye-care');if(_0x337215==='system'){const _0x6aa4cd=window['matchMedia']&&window['matchMedia']('(prefers-color-scheme:\x20dark)')['matches'];_0xeac4d7['classList']['add'](_0x6aa4cd?'theme-dark':'theme-blue'),window['matchMedia']('(prefers-color-scheme:\x20dark)')['addEventListener']('change',function(_0x536b36){const _0x4b9401=_0x1ca578('theme','system');_0x4b9401==='system'&&(_0xeac4d7['classList']['remove']('theme-blue','theme-dark'),_0xeac4d7['classList']['add'](_0x536b36['matches']?'theme-dark':'theme-blue'));});}else{if(_0x337215==='blue')_0xeac4d7['classList']['add']('theme-blue');else{if(_0x337215==='pink')_0xeac4d7['classList']['add']('theme-pink');else{if(_0x337215==='mint')_0xeac4d7['classList']['add']('theme-mint');else{if(_0x337215==='dark')_0xeac4d7['classList']['add']('theme-dark');else _0x337215==='eye-care'&&_0xeac4d7['classList']['add']('theme-eye-care');}}}}}};function _0x59a491(){_0x1bcb74['applyTheme']();}function _0x1815f2(){const _0x56df30=document['getElementById']('auth-code-display');_0x56df30&&(_0x56df30['textContent']=generateAuthCode());const _0x2e9620=document['querySelector']('.card');_0x2e9620&&(_0x2e9620['style']['minHeight']=window['innerHeight']+'px');window['addEventListener']('resize',function(){_0x2e9620&&(_0x2e9620['style']['minHeight']=window['innerHeight']+'px');}),_0x2563f0(),_0x583884(),_0x4afd58['init'](_0x36ad09,_0x3de9da,_0x3a0b36,_0x1a2a4f);const _0x4be396=_0x1ca578('revealBlanks',!![]);_0xf4f7a5['init'](_0x4be396),_0x2a3f41(document['getElementById']('front-original-text')),_0x2a3f41(document['getElementById']('front-summary')),_0x39a85e(),_0x40d35b();}function _0x40d35b(){const _0x1f1d6c=document['getElementById']('front-analysis-container');if(!_0x1f1d6c)return;const _0x20cc4c=document['getElementById']('front-knowledge-analysis');if(!_0x20cc4c)return;const _0x3dec1c=_0x20cc4c['innerHTML']['trim']();if(_0x3dec1c===''){_0x1f1d6c['style']['display']='none';return;}const _0x27047d=document['querySelector']('.content');if(!_0x27047d)return;_0x1f1d6c['remove'](),_0x17509a['renderKnowledgeAnalysis'](_0x3dec1c,_0x27047d,'analysis');}_0x1815f2(),_0x524ef9(document['getElementById']('front-original-text')),_0x524ef9(document['getElementById']('front-summary')),_0x520ea9();function _0x39a85e(){const _0x4459e9=document['getElementById']('front-summary-container'),_0x2aaf78=document['getElementById']('front-summary');_0x2aaf78&&_0x2aaf78['textContent']['trim']()===''&&(_0x4459e9['style']['display']='none');}function _0x520ea9(){const _0x27e612=document['getElementById']('front-notes');if(!_0x27e612)return;const _0x3af047=_0x27e612['innerHTML'],_0x4d8593=_0x27e612['textContent']['trim'](),_0x2d97a1=/<[^>]+>/i['test'](_0x3af047);!_0x2d97a1&&_0x4d8593===''&&(_0x27e612['innerHTML']='<span\x20class=\x22notes-placeholder\x22>使用图片或文字记录笔记</span>');}function _0x105731(_0x1e82f6){const _0x5a68ee=_0x1e82f6==='back'?'notes-container':'front-notes-container',_0x59f26f=document['getElementById'](_0x5a68ee);_0x59f26f&&_0x59f26f['classList']['toggle']('collapsed');}window['toggleNotes']=_0x105731,window['toggleNotes']=_0x105731;function _0x2a3f41(_0x4b17fc){if(!_0x4b17fc)return;const _0x4dce0e=parseFloat(getComputedStyle(_0x4b17fc)['lineHeight']),_0x34e4b0=_0x4b17fc['offsetHeight'];_0x34e4b0>_0x4dce0e*1.2?_0x4b17fc['classList']['add']('multi-line'):_0x4b17fc['classList']['remove']('multi-line');}_0x1815f2(),_0x1bcb74['applySettings']();}()),window['copyWechatToClipboard']=function(_0x4d79e8){_0x4d79e8&&(_0x4d79e8['stopPropagation'](),_0x4d79e8['touches']&&_0x4d79e8['type']['includes']('touch')&&_0x4d79e8['preventDefault']());const _0x13071b='kikkua2649';navigator['clipboard']&&navigator['clipboard']['writeText']?navigator['clipboard']['writeText'](_0x13071b)['then'](function(){showCopySuccess();})['catch'](function(_0x3d40a3){console['error']('Clipboard\x20API\x20failed:',_0x3d40a3),fallbackCopy(_0x13071b);}):fallbackCopy(_0x13071b);};function setupCopyButtonEvents(){const _0x17b170=document['querySelectorAll']('[onclick*=\x22copyWechatToClipboard\x22]');_0x17b170['forEach'](_0x5d35db=>{_0x5d35db['removeAttribute']('onclick');const _0x586c70=function(_0x19cd3b){_0x19cd3b['stopPropagation'](),_0x19cd3b['touches']&&_0x19cd3b['type']['includes']('touch')&&_0x19cd3b['preventDefault'](),window['copyWechatToClipboard'](_0x19cd3b);};_0x5d35db['addEventListener']('click',_0x586c70),_0x5d35db['addEventListener']('touchend',_0x586c70);});}document['readyState']==='loading'?document['addEventListener']('DOMContentLoaded',setupCopyButtonEvents):setupCopyButtonEvents();function fallbackCopy(_0x1ffc84){const _0x47daae=document['createElement']('textarea');_0x47daae['value']=_0x1ffc84,_0x47daae['style']['position']='fixed',_0x47daae['style']['left']='-999999px',_0x47daae['style']['top']='-999999px',document['body']['appendChild'](_0x47daae),_0x47daae['focus'](),_0x47daae['select']();try{const _0x299c7a=document['execCommand']('copy');_0x299c7a?showCopySuccess():showCopyError();}catch(_0x30fb94){console['error']('Fallback\x20copy\x20failed:',_0x30fb94),showCopyError();}document['body']['removeChild'](_0x47daae);}function showCopySuccess(){if(window['anki']&&window['anki']['showToast'])window['anki']['showToast']('微信号已复制到剪贴板');else{const _0x35991c=document['createElement']('div');_0x35991c['style']['cssText']='\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20position:\x20fixed;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20top:\x2050%;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20left:\x2050%;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20transform:\x20translate(-50%,\x20-50%);\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20background:\x20rgba(0,\x200,\x200,\x200.8);\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20color:\x20white;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20padding:\x2012px\x2020px;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20border-radius:\x206px;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20font-size:\x2014px;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20z-index:\x2010000;\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20pointer-events:\x20none;\x0a\x20\x20\x20\x20\x20\x20\x20\x20',_0x35991c['textContent']='微信号已复制',document['body']['appendChild'](_0x35991c),setTimeout(()=>{document['body']['contains'](_0x35991c)&&document['body']['removeChild'](_0x35991c);},0x7d0);}}function showCopyError(){window['anki']&&window['anki']['showToast']?window['anki']['showToast']('复制失败，请手动复制'):alert('复制失败，请手动复制微信号：kikkua2649');}function applyLevelStyling(){const _0xa21636=document['getElementById']('anki-settings-button');if(_0xa21636){const _0x5027cd=_0xa21636['textContent']['trim']();_0xa21636['classList']['remove']('level-1','level-2','level-3','settings-icon');if(_0x5027cd==='1')_0xa21636['classList']['add']('level-1');else{if(_0x5027cd==='2')_0xa21636['classList']['add']('level-2');else _0x5027cd==='3'?_0xa21636['classList']['add']('level-3'):_0xa21636['style']['display']='none';}}}document['readyState']==='loading'?document['addEventListener']('DOMContentLoaded',applyLevelStyling):applyLevelStyling();
-</script></template><script>decryptFront()</script>
+// ==================== 工具函数 ====================
+// 生成设备标识授权号（用于版权保护威慑）
+function generateAuthCode() {
+    const deviceInfo = [
+        navigator.userAgent,
+        screen.width,
+        screen.height,
+        navigator.language,
+        new Date().getTime().toString().substring(0, 8)
+    ].join('');
+
+    function simpleHash(str) {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            const char = str.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash;
+        }
+        return Math.abs(hash);
+    }
+
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const hashValue = simpleHash(deviceInfo);
+    let result = '';
+
+    for (let i = 0; i < 12; i++) {
+        const index = (hashValue * (i + 1)) % chars.length;
+        result += chars.charAt(index);
+    }
+
+    return result.replace(/(.{4})/g, '$1-').slice(0, -1);
+}
+
+// ==================== 增强版存储模块 ====================
+window.ankiStorage = (function() {
+    const prefix = 'anki_sel_';
+    const configPrefix = 'anki_cfg_';
+
+    return {
+        set: function(key, data) {
+            const safeKey = prefix + btoa(encodeURIComponent(key)).slice(0, 50);
+            try {
+                localStorage.setItem(safeKey, JSON.stringify(data));
+            } catch(e) {
+                console.warn('localStorage setItem failed, falling back to window object for key:', safeKey, e);
+                window[safeKey] = data;
+            }
+        },
+        get: function(key) {
+            const safeKey = prefix + btoa(encodeURIComponent(key)).slice(0, 50);
+            try {
+                const data = localStorage.getItem(safeKey);
+                return data ? JSON.parse(data) : null;
+            } catch(e) {
+                console.warn('localStorage getItem failed, falling back to window object for key:', safeKey, e);
+                return window[safeKey] || null;
+            }
+        },
+        clear: function(key) {
+            const safeKey = prefix + btoa(encodeURIComponent(key)).slice(0, 50);
+            try {
+                localStorage.removeItem(safeKey);
+            } catch(e) {
+                console.warn('localStorage removeItem failed, attempting to delete from window object for key:', safeKey, e);
+                delete window[safeKey];
+            }
+        },
+        // Config-specific methods
+        setConfig: function(configKey, value) {
+            try {
+                localStorage.setItem(configPrefix + configKey, JSON.stringify(value));
+            } catch (e) {
+                console.error('Error saving config to localStorage:', configKey, e);
+            }
+        },
+        getConfig: function(configKey) {
+            try {
+                const value = localStorage.getItem(configPrefix + configKey);
+                return value !== null ? JSON.parse(value) : undefined; // Return undefined if not found
+            } catch (e) {
+                console.error('Error reading config from localStorage:', configKey, e);
+                return undefined;
+            }
+        }
+    };
+})();
+
+// 正面模板的JavaScript
+(function() {
+    // 隐藏空的章节
+    function hideEmptyChapter() {
+        const chapter = document.getElementById('chapter-display');
+        if (chapter) {
+            const text = chapter.textContent.trim();
+            if (!text) {
+                chapter.style.display = 'none';
+            }
+        }
+    }
+    
+    // 全局变量
+    const explanationBox = document.getElementById('explanationBox');
+    const explanationTitle = document.getElementById('explanationTitle');
+    const explanationContent = document.getElementById('explanationContent');
+    const closeExplanation = document.getElementById('closeExplanation');
+    
+    // 名词解释模块封装
+    const ExplanationModule = (function() {
+        // 私有变量
+        let explanationBox = null;
+        let explanationTitle = null;
+        let explanationContent = null;
+        let closeExplanation = null;
+        
+        // 初始化模块
+        function init(box, title, content, closeBtn) {
+            explanationBox = box;
+            explanationTitle = title;
+            explanationContent = content;
+            closeExplanation = closeBtn;
+            
+            // 设置关闭按钮事件
+            setupCloseButton();
+            
+            // 点击页面其他地方关闭解释框
+            setupDocumentClick();
+        }
+        
+        // 解析文本中的名词解释标记
+        function parseExplanations(text) {
+            const explanations = [];
+            let i = 0;
+            
+            while (i < text.length) {
+                // 检查名词解释开始
+                if (text.substring(i, i + 2) === '【*') {
+                    const endIndex = findMatchingEnd(text, i, '【*', '*】');
+                    if (endIndex !== -1) {
+                        const innerText = text.substring(i + 2, endIndex);
+                        const separatorIndex = innerText.indexOf('::');
+                        
+                        if (separatorIndex !== -1) {
+                            const term = innerText.substring(0, separatorIndex);
+                            const explanationText = innerText.substring(separatorIndex + 2);
+                            
+                            explanations.push({
+                                start: i,
+                                end: endIndex + 2,
+                                term: term,
+                                explanation: explanationText
+                            });
+                            
+                            i = endIndex + 2;
+                            continue;
+                        }
+                    }
+                }
+                i++;
+            }
+            
+            return explanations;
+        }
+        
+        // 找到匹配的结束标记
+        function findMatchingEnd(text, startIndex, startMarker, endMarker) {
+            let depth = 1;
+            let i = startIndex + startMarker.length;
+            
+            while (i < text.length) {
+                if (text.substring(i, i + startMarker.length) === startMarker) {
+                    depth++;
+                    i += startMarker.length;
+                } else if (text.substring(i, i + endMarker.length) === endMarker) {
+                    depth--;
+                    if (depth === 0) {
+                        return i;
+                    }
+                    i += endMarker.length;
+                } else {
+                    i++;
+                }
+            }
+            
+            return -1; // 没有找到匹配的结束标记
+        }
+        
+        // 创建术语元素
+        function createTermElement(term, explanation, setupElementEvents) {
+            const termSpan = document.createElement('span');
+            termSpan.className = 'term';
+            
+            // 解析术语中的HTML标签
+            const tempElement = document.createElement('span');
+            tempElement.innerHTML = term;
+            while (tempElement.firstChild) {
+                termSpan.appendChild(tempElement.firstChild);
+            }
+            
+            // 添加点击事件 - 显示解释，兼容iOS
+            setupElementEvents(termSpan, function(e) {
+                // 如果这个名词解释在未揭示的挖空内，则先揭示挖空
+                const parentBlank = this.closest('.blank');
+                if (parentBlank && !parentBlank.classList.contains('revealed')) {
+                    parentBlank.classList.add('revealed');
+                    // 恢复嵌套名解的可见性
+                    const nestedTerms = parentBlank.querySelectorAll('.term');
+                    nestedTerms.forEach(term => {
+                        term.style.visibility = 'visible';
+                    });
+                    // 阻止事件冒泡，防止触发其他事件
+                    e.stopPropagation();
+                    return;
+                }
+                
+                // 获取术语在卡片中的位置百分比
+                const card = document.querySelector('.card');
+                const cardRect = card ? card.getBoundingClientRect() : null;
+                const termRect = this.getBoundingClientRect();
+                let positionYPercent = null;
+                if (cardRect && termRect) {
+                    // 计算术语中心相对于卡片顶部的百分比
+                    const termCenterY = (termRect.top + termRect.bottom) / 2;
+                    positionYPercent = ((termCenterY - cardRect.top) / cardRect.height) * 100;
+                }
+                
+                // 显示解释框，传入位置百分比
+                showExplanation(term, explanation, positionYPercent);
+                
+                // 阻止事件冒泡，防止触发其他事件
+                e.stopPropagation();
+            });
+            
+            return termSpan;
+        }
+        
+        // 显示解释框
+        function showExplanation(term, explanation, positionYPercent) {
+            if (!explanationBox || !explanationTitle || !explanationContent) {
+                console.error('Explanation module not initialized');
+                return;
+            }
+            
+            // 设置解释标题和内容，支持HTML
+            explanationTitle.innerHTML = term;
+            explanationContent.innerHTML = explanation;
+            
+            // 移除硬编码的深色样式，让CSS控制样式
+            explanationBox.style.color = '';
+            explanationBox.style.background = '';
+            explanationBox.style.border = '';
+            explanationTitle.style.color = '';
+            explanationTitle.style.fontWeight = '';
+            explanationTitle.style.textShadow = '';
+            closeExplanation.style.color = '';
+            closeExplanation.style.fontSize = '';
+            closeExplanation.style.fontWeight = '';
+            closeExplanation.style.textShadow = '';
+            explanationContent.style.color = '';
+            
+            // 动态定位
+            if (positionYPercent !== undefined && positionYPercent !== null) {
+                const card = document.querySelector('.card');
+                const cardRect = card ? card.getBoundingClientRect() : null;
+                if (cardRect) {
+                    // 先显示弹窗以获取其高度
+                    explanationBox.classList.remove('hide');
+                    explanationBox.classList.add('show');
+                    
+                    const boxHeight = explanationBox.offsetHeight || 200;
+                    const winHeight = window.innerHeight;
+                    
+                    // 计算术语位置
+                    let topPos = cardRect.top + (cardRect.height * positionYPercent / 100);
+                    
+                    // 检查是否超出窗口底部
+                    const boxBottom = topPos + boxHeight;
+                    if (boxBottom > winHeight - 20) {
+                        // 超出底部，显示在术语上方
+                        topPos = cardRect.top + (cardRect.height * positionYPercent / 100) - boxHeight - 10;
+                        // 如果上方也不够，放到窗口顶部
+                        if (topPos < 20) {
+                            topPos = 20;
+                        }
+                    } else {
+                        // 正常显示在术语下方，偏移约20px
+                        topPos += 20;
+                    }
+                    
+                    explanationBox.style.top = topPos + 'px';
+                    // 保持水平居中
+                    explanationBox.style.transform = 'translateX(-50%)';
+                }
+            } else {
+                // 使用默认位置
+                explanationBox.style.top = '20px';
+                explanationBox.style.transform = 'translateX(-50%)';
+            }
+            
+            explanationBox.classList.add('show');
+        }
+        
+        // 隐藏解释框
+        function hideExplanation() {
+            if (explanationBox) {
+                explanationBox.classList.remove('show');
+            }
+        }
+        
+        // 设置关闭按钮事件
+        function setupCloseButton() {
+            if (!closeExplanation) return;
+            
+            const handleCloseClick = function(event) {
+                event.stopPropagation();
+                if (event.touches && event.type.includes('touch')) {
+                    event.preventDefault(); // 防止触摸事件触发两次
+                }
+                hideExplanation();
+            };
+            
+            closeExplanation.addEventListener('click', handleCloseClick);
+            closeExplanation.addEventListener('touchend', handleCloseClick);
+        }
+        
+        // 设置文档点击事件
+        function setupDocumentClick() {
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.term') && !e.target.closest('.explanation-box')) {
+                    hideExplanation();
+                }
+            });
+            // iOS 需要同时监听 touch 事件
+            document.addEventListener('touchend', function(e) {
+                if (!e.target.closest('.term') && !e.target.closest('.explanation-box')) {
+                    hideExplanation();
+                }
+            });
+        }
+        
+        // 公共API
+        return {
+            init: init,
+            parseExplanations: parseExplanations,
+            createTermElement: createTermElement,
+            showExplanation: showExplanation,
+            hideExplanation: hideExplanation
+        };
+    })();
+    
+    // 挖空模块封装
+    const BlankModule = (function() {
+        // 私有变量
+        let blanksEnabled = true;
+
+        // 初始化模块
+        function init(enabled = true) {
+            blanksEnabled = enabled;
+        }
+
+        // 解析文本中的挖空标记
+        function parseBlanks(text) {
+            const blanks = [];
+            let i = 0;
+
+            while (i < text.length) {
+                // 检查挖空开始
+                if (text.substring(i, i + 2) === '[[') {
+                    const endIndex = findMatchingEnd(text, i, '[[', ']]');
+                    if (endIndex !== -1) {
+                        const innerText = text.substring(i + 2, endIndex);
+
+                        blanks.push({
+                            start: i,
+                            end: endIndex + 2,
+                            content: innerText
+                        });
+
+                        i = endIndex + 2;
+                        continue;
+                    }
+                }
+                i++;
+            }
+
+            return blanks;
+        }
+
+        // 找到匹配的结束标记
+        function findMatchingEnd(text, startIndex, startMarker, endMarker) {
+            let depth = 1;
+            let i = startIndex + startMarker.length;
+
+            while (i < text.length) {
+                if (text.substring(i, i + startMarker.length) === startMarker) {
+                    depth++;
+                    i += startMarker.length;
+                } else if (text.substring(i, i + endMarker.length) === endMarker) {
+                    depth--;
+                    if (depth === 0) {
+                        return i;
+                    }
+                    i += endMarker.length;
+                } else {
+                    i++;
+                }
+            }
+
+            return -1; // 没有找到匹配的结束标记
+        }
+
+        // 创建挖空元素
+        function createBlankElement(content, setupElementEvents, renderNodes, fieldType = 'other') {
+            const blankSpan = document.createElement('span');
+            blankSpan.className = 'blank';
+
+            // 解析挖空内容（可能包含名词解释）
+            const innerNodes = renderNodes(content);
+
+            // 根据挖空开关和字段类型决定初始状态
+            if (!blanksEnabled || fieldType === 'notes') {
+                blankSpan.classList.add('revealed');
+            }
+
+            blankSpan.appendChild(innerNodes);
+
+            // 确保嵌套在未揭示挖空内的名解默认隐藏
+            if (!blankSpan.classList.contains('revealed')) {
+                const nestedTerms = blankSpan.querySelectorAll('.term');
+                nestedTerms.forEach(term => {
+                    term.style.visibility = 'hidden';
+                });
+            }
+
+            // 添加点击事件 - 揭示挖空内容，兼容iOS
+            setupElementEvents(blankSpan, function(e) {
+                if (blanksEnabled && fieldType !== 'notes' && !this.classList.contains('revealed')) {
+                    revealBlank(this);
+                    // 阻止事件冒泡，防止触发名词解释的点击事件
+                    e.stopPropagation();
+                }
+            });
+
+            return blankSpan;
+        }
+
+        // 揭示挖空内容
+        function revealBlank(blankElement) {
+            if (!blankElement) return;
+
+            blankElement.classList.add('revealed');
+            // 恢复嵌套名解的可见性
+            const nestedTerms = blankElement.querySelectorAll('.term');
+            nestedTerms.forEach(term => {
+                term.style.visibility = 'visible';
+            });
+        }
+        
+        // 检查挖空是否已揭示
+        function isBlankRevealed(blankElement) {
+            if (!blankElement) return false;
+            return blankElement.classList.contains('revealed');
+        }
+        
+        // 设置挖空开关状态
+        function setBlanksEnabled(enabled) {
+            blanksEnabled = enabled;
+        }
+        
+        // 获取挖空开关状态
+        function getBlanksEnabled() {
+            return blanksEnabled;
+        }
+        
+        // 公共API
+        return {
+            init: init,
+            parseBlanks: parseBlanks,
+            createBlankElement: createBlankElement,
+            revealBlank: revealBlank,
+            isBlankRevealed: isBlankRevealed,
+            setBlanksEnabled: setBlanksEnabled,
+            getBlanksEnabled: getBlanksEnabled
+        };
+    })();
+    
+    // 辅助函数：获取配置
+    function getConfig(name, defaultValue) {
+        // 1. 优先从 localStorage 读取（用户保存的设置）
+        const storedValue = window.ankiStorage.getConfig(name);
+        if (storedValue !== undefined) {
+            if (typeof defaultValue === 'boolean') {
+                if (storedValue === 'true') return true;
+                if (storedValue === 'false') return false;
+            }
+            if (typeof defaultValue === 'number' && !isNaN(parseFloat(storedValue))) {
+                return parseFloat(storedValue);
+            }
+            return storedValue;
+        }
+
+        // 2. 其次从 HTML 注释读取（模板中设置的默认值）
+        const regex = new RegExp(`<!-- config:${name}=([^\\s]+) -->`);
+        const configSource = document.documentElement.innerHTML || '';
+        const match = configSource.match(regex);
+        if (match && match[1]) {
+            let value = match[1];
+            if (typeof defaultValue === 'boolean') {
+                if (value === 'true') return true;
+                if (value === 'false') return false;
+            }
+            if (typeof defaultValue === 'number' && !isNaN(parseFloat(value))) {
+                return parseFloat(value);
+            }
+            return value;
+        }
+
+        // 3. 最后使用 JS 代码中的默认值
+        return defaultValue;
+    }
+    
+    // 持久化模板默认值到localStorage（首次加载时初始化）
+    function persistTemplateDefaults() {
+        const configKeys = ['revealBlanks', 'theme', 'fontSize', 'otherContentMode'];
+        const defaults = {
+            revealBlanks: true,
+            theme: 'system',
+            fontSize: 16,
+            otherContentMode: 'popup'
+        };
+        
+        configKeys.forEach(key => {
+            const existingValue = window.ankiStorage.getConfig(key);
+            
+            // 如果localStorage中还没有这个值
+            if (existingValue === undefined) {
+                // 优先从HTML注释读取默认值
+                const regex = new RegExp(`<!-- config:${key}=([^\\s]+) -->`);
+                const configSource = document.documentElement.innerHTML || '';
+                const match = configSource.match(regex);
+                
+                let defaultValue;
+                if (match && match[1]) {
+                    // 从HTML注释读取
+                    const strValue = match[1];
+                    if (strValue === 'true') defaultValue = true;
+                    else if (strValue === 'false') defaultValue = false;
+                    else if (!isNaN(parseFloat(strValue))) defaultValue = parseFloat(strValue);
+                    else defaultValue = strValue;
+                } else {
+                    // 使用JS代码中的默认值
+                    defaultValue = defaults[key];
+                }
+                
+                window.ankiStorage.setConfig(key, defaultValue);
+            }
+        });
+    }
+    
+    // 辅助函数：找到匹配的结束标记
+    function findMatchingEnd(text, startIndex, startMarker, endMarker) {
+        let depth = 1;
+        let i = startIndex + startMarker.length;
+        
+        while (i < text.length) {
+            if (text.substring(i, i + startMarker.length) === startMarker) {
+                depth++;
+                i += startMarker.length;
+            } else if (text.substring(i, i + endMarker.length) === endMarker) {
+                depth--;
+                if (depth === 0) {
+                    return i;
+                }
+                i += endMarker.length;
+            } else {
+                i++;
+            }
+        }
+        
+        return -1; // 没有找到匹配的结束标记
+    }
+    
+    // 解析器 - 支持嵌套标记
+    function parseText(text) {
+        const nodes = [];
+        let i = 0;
+        
+        while (i < text.length) {
+            // 检查名词解释开始
+            if (text.substring(i, i + 2) === '【*') {
+                const endIndex = findMatchingEnd(text, i, '【*', '*】');
+                if (endIndex !== -1) {
+                    const innerText = text.substring(i + 2, endIndex);
+                    const separatorIndex = innerText.indexOf('::');
+                    
+                    if (separatorIndex !== -1) {
+                        const term = innerText.substring(0, separatorIndex);
+                        const explanationText = innerText.substring(separatorIndex + 2);
+                        
+                        nodes.push({
+                            type: 'explanation',
+                            term: term,
+                            explanation: explanationText
+                        });
+                        
+                        i = endIndex + 2;
+                        continue;
+                    }
+                }
+                // 未找到闭合标记，作为普通文本处理
+            }
+            
+            // 检查挖空开始
+            if (text.substring(i, i + 2) === '[[') {
+                const endIndex = findMatchingEnd(text, i, '[[', ']]');
+                if (endIndex !== -1) {
+                    const innerText = text.substring(i + 2, endIndex);
+                    
+                    nodes.push({
+                        type: 'blank',
+                        content: innerText
+                    });
+                    
+                    i = endIndex + 2;
+                    continue;
+                }
+                // 未找到闭合标记，作为普通文本处理
+            }
+            
+            // 普通文本
+            let j = i;
+            while (j < text.length) {
+                if (text.substring(j, j + 2) === '【*' || text.substring(j, j + 2) === '[[') {
+                    break;
+                }
+                j++;
+            }
+            
+            if (j > i) {
+                nodes.push({
+                    type: 'text',
+                    content: text.substring(i, j)
+                });
+            }
+            
+            // 如果没有找到任何标记，移动到下一个字符
+            if (j === i) {
+                j = i + 1;
+            }
+            
+            i = j;
+        }
+        
+        return nodes;
+    }
+    
+    // 将解析后的节点转换为DOM元素
+    function renderNodes(nodes, fieldType = 'other') {
+        const fragment = document.createDocumentFragment();
+
+        // 添加双事件处理：click + touch (iOS兼容)
+        const setupElementEvents = (element, handler) => {
+            const wrappedHandler = function(e) {
+                // 防止触摸事件触发两次
+                if (e.touches && e.type.includes('touch')) {
+                    e.preventDefault();
+                }
+                handler.call(this, e);
+            };
+
+            // 添加iOS兼容的触摸事件
+            element.addEventListener('click', wrappedHandler);
+            element.addEventListener('touchend', wrappedHandler);
+        };
+
+        nodes.forEach(node => {
+            if (node.type === 'text') {
+                // 创建临时元素来解析HTML标签
+                const tempElement = document.createElement('span');
+                tempElement.innerHTML = node.content;
+                // 将临时元素的所有子节点添加到fragment中
+                while (tempElement.firstChild) {
+                    fragment.appendChild(tempElement.firstChild);
+                }
+            } else if (node.type === 'blank') {
+                // 使用BlankModule创建挖空元素
+                const blankSpan = BlankModule.createBlankElement(node.content, setupElementEvents, function(content) {
+                    const innerNodes = parseText(content);
+                    return renderNodes(innerNodes, fieldType);
+                }, fieldType);
+
+                fragment.appendChild(blankSpan);
+            } else if (node.type === 'explanation') {
+                // 使用ExplanationModule创建术语元素
+                const termSpan = ExplanationModule.createTermElement(node.term, node.explanation, setupElementEvents);
+                fragment.appendChild(termSpan);
+            }
+        });
+
+        return fragment;
+    }
+    
+    // 处理文本内容，支持挖空和名词解释
+    function processFieldContent(element) {
+        if (!element) return;
+        
+        const originalContent = element.innerHTML;
+        
+        let parsedNodes;
+        try {
+            parsedNodes = parseText(originalContent);
+        } catch (e) {
+            console.warn('Error parsing text, using raw content:', e);
+            element.textContent = originalContent;
+            return;
+        }
+        
+        if (!parsedNodes || parsedNodes.length === 0) {
+            element.textContent = originalContent;
+            return;
+        }
+        
+        element.innerHTML = '';
+        element.appendChild(renderNodes(parsedNodes));
+    }
+    
+    // 字段模块封装
+    const FieldModule = (function() {
+        function createFieldContainer(fieldId, fieldName, content, fieldType = 'analysis') {
+            const container = document.createElement('div');
+            container.className = 'trapezoid-container';
+            container.id = fieldId + '-container';
+
+            // 根据字段类型添加不同的类名
+            if (fieldType === 'analysis') {
+                container.classList.add('analysis-field');
+            } else if (fieldType === 'other') {
+                container.classList.add('other-field');
+            }
+
+            const trapezoid = document.createElement('div');
+            trapezoid.className = 'trapezoid';
+            trapezoid.innerHTML = `<span>${fieldName}</span>`;
+
+            const rectangle = document.createElement('div');
+            rectangle.className = 'rectangle';
+
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'field-content';
+            contentDiv.id = 'front-' + fieldId;
+
+            const hasSpecialMarkers = content.includes('[[') || content.includes('【*');
+            if (hasSpecialMarkers && typeof parseText === 'function') {
+                const parsedNodes = parseText(content);
+                contentDiv.appendChild(renderNodes(parsedNodes));
+            } else {
+                contentDiv.innerHTML = content;
+            }
+
+            rectangle.appendChild(contentDiv);
+            container.appendChild(trapezoid);
+            container.appendChild(rectangle);
+            trapezoid.style.marginBottom = '-1px';
+
+            return container;
+        }
+
+        function addField(fieldId, fieldName, content, parentElement, fieldType = 'analysis') {
+            if (!content || content.trim() === '') {
+                return null;
+            }
+            const container = createFieldContainer(fieldId, fieldName, content, fieldType);
+            parentElement.appendChild(container);
+            return container;
+        }
+
+        return {
+            createFieldContainer: createFieldContainer,
+            addField: addField
+        };
+    })();
+
+    // 知识解析模块封装
+    const KnowledgeAnalysisModule = (function() {
+        function parseKnowledgeAnalysis(content) {
+            if (!content || content.trim() === '') {
+                return [];
+            }
+
+            const items = content.split('<br>###');
+            const fields = [];
+
+            items.forEach((item, index) => {
+                if (item.trim() === '') return;
+
+                const parts = item.split('::');
+                if (parts.length >= 2) {
+                    const fieldName = parts[0].trim();
+                    const fieldContent = parts.slice(1).join('::').trim();
+
+                    fields.push({
+                        id: 'analysis-' + index + '-' + fieldName.toLowerCase().replace(/\s+/g, '-'),
+                        name: fieldName,
+                        content: fieldContent
+                    });
+                }
+            });
+
+            return fields;
+        }
+
+        function renderKnowledgeAnalysis(content, parentElement, fieldType = 'analysis') {
+            const fields = parseKnowledgeAnalysis(content);
+
+            fields.forEach(field => {
+                FieldModule.addField(field.id, field.name, field.content, parentElement, fieldType);
+            });
+        }
+
+        return {
+            parseKnowledgeAnalysis: parseKnowledgeAnalysis,
+            renderKnowledgeAnalysis: renderKnowledgeAnalysis
+        };
+    })();
+
+    // 简化的设置模块 - 仅用于应用配置（不显示UI）
+    const SettingsModule = {
+        applySettings: function() {
+            const fontSize = getConfig('fontSize', 16);
+            
+            // 通过设置CSS变量来统一控制字体大小
+            document.documentElement.style.setProperty('--base-font-size', fontSize + 'px');
+            
+            applyTheme();
+        },
+        
+        applyTheme: function() {
+            const theme = getConfig('theme', 'system');
+            const html = document.documentElement;
+            
+            html.classList.remove('theme-blue', 'theme-pink', 'theme-mint', 'theme-dark', 'theme-eye-care');
+            
+            if (theme === 'system') {
+                const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                html.classList.add(prefersDark ? 'theme-dark' : 'theme-blue');
+                
+                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+                    const currentTheme = getConfig('theme', 'system');
+                    if (currentTheme === 'system') {
+                        html.classList.remove('theme-blue', 'theme-dark');
+                        html.classList.add(e.matches ? 'theme-dark' : 'theme-blue');
+                    }
+                });
+            } else if (theme === 'blue') {
+                html.classList.add('theme-blue');
+            } else if (theme === 'pink') {
+                html.classList.add('theme-pink');
+            } else if (theme === 'mint') {
+                html.classList.add('theme-mint');
+            } else if (theme === 'dark') {
+                html.classList.add('theme-dark');
+            } else if (theme === 'eye-care') {
+                html.classList.add('theme-eye-care');
+            }
+        }
+    };
+    
+    function applyTheme() {
+        SettingsModule.applyTheme();
+    }
+    
+    // 初始化 - 不使用DOMContentLoaded，直接执行
+    function init() {
+        // 初始化授权码显示
+        const authCodeDisplay = document.getElementById('auth-code-display');
+        if (authCodeDisplay) {
+            authCodeDisplay.textContent = generateAuthCode();
+        }
+
+        // 设置卡片最小高度为窗口高度
+        const card = document.querySelector('.card');
+        if (card) {
+            card.style.minHeight = window.innerHeight + 'px';
+        }
+        
+        // 监听窗口大小变化
+        window.addEventListener('resize', function() {
+            if (card) {
+                card.style.minHeight = window.innerHeight + 'px';
+            }
+        });
+        
+        // 持久化模板默认值到localStorage（如果尚未设置）
+        persistTemplateDefaults();
+        
+        // 隐藏空的章节
+        hideEmptyChapter();
+        
+        // 初始化编号显示（已移除）
+        // initNumberDisplay();
+
+        // 初始化等级按钮
+        ExplanationModule.init(explanationBox, explanationTitle, explanationContent, closeExplanation);
+        
+        // 初始化BlankModule
+        const blanksEnabled = getConfig('revealBlanks', true);
+        BlankModule.init(blanksEnabled);
+        
+        // 检查文本对齐
+        checkTextAlignment(document.getElementById('front-original-text'));
+        checkTextAlignment(document.getElementById('front-summary'));
+        
+        // 隐藏空字段
+        hideEmptyFields();
+        
+        // 处理知识解析
+        processKnowledgeAnalysis();
+    }
+    
+    // 处理知识解析字段
+    function processKnowledgeAnalysis() {
+        const analysisContainer = document.getElementById('front-analysis-container');
+        if (!analysisContainer) return;
+        
+        const analysisElement = document.getElementById('front-knowledge-analysis');
+        if (!analysisElement) return;
+        
+        const content = analysisElement.innerHTML.trim();
+        if (content === '') {
+            analysisContainer.style.display = 'none';
+            return;
+        }
+        
+        const parentElement = document.querySelector('.content');
+        if (!parentElement) return;
+        
+        analysisContainer.remove();
+
+        KnowledgeAnalysisModule.renderKnowledgeAnalysis(content, parentElement, 'analysis');
+    }
+    
+    // 页面加载时立即执行初始化
+    init();
+    
+    // 处理字段内容
+    processFieldContent(document.getElementById('front-original-text'));
+    processFieldContent(document.getElementById('front-summary'));
+
+    // 处理用户笔记
+    processNotes();
+
+    // 隐藏空字段
+    function hideEmptyFields() {
+        const summaryContainer = document.getElementById('front-summary-container');
+        const summaryContent = document.getElementById('front-summary');
+
+        if (summaryContent && summaryContent.textContent.trim() === '') {
+            summaryContainer.style.display = 'none';
+        }
+    }
+
+    // 处理用户笔记字段
+    function processNotes() {
+        const notesElement = document.getElementById('front-notes');
+        if (!notesElement) return;
+
+        const originalHtml = notesElement.innerHTML;
+        const content = notesElement.textContent.trim();
+        const hasHtmlTags = /<[^>]+>/i.test(originalHtml);
+
+        if (!hasHtmlTags && content === '') {
+            notesElement.innerHTML = '<span class="notes-placeholder">使用图片或文字记录笔记</span>';
+        }
+    }
+
+    // 切换笔记收起/展开
+    function toggleNotes(side) {
+        const containerId = side === 'back' ? 'notes-container' : 'front-notes-container';
+        const container = document.getElementById(containerId);
+        if (container) {
+            container.classList.toggle('collapsed');
+        }
+    }
+
+    // 确保toggleNotes暴露到全局
+    window.toggleNotes = toggleNotes;
+    
+    // 暴露到全局
+    window.toggleNotes = toggleNotes;
+
+    // 检查文本对齐
+    function checkTextAlignment(textElement) {
+        if (!textElement) return;
+        
+        const lineHeight = parseFloat(getComputedStyle(textElement).lineHeight);
+        const height = textElement.offsetHeight;
+        
+        // 如果高度超过一行的高度，则为多行（降低阈值到1.2倍）
+        if (height > lineHeight * 1.2) {
+            textElement.classList.add('multi-line');
+        } else {
+            textElement.classList.remove('multi-line');
+        }
+    }
+    
+    // 立即执行初始化
+    init();
+    
+    // 应用当前设置（从localStorage读取配置）
+    SettingsModule.applySettings();
+})();
+
+// 复制微信号到剪贴板
+window.copyWechatToClipboard = function(event) {
+    // 如果提供了事件对象，处理事件传播和默认行为
+    if (event) {
+        event.stopPropagation();
+        if (event.touches && event.type.includes('touch')) {
+            event.preventDefault(); // 防止触摸事件触发两次
+        }
+    }
+    
+    const wechatNumber = 'kikkua2649';
+    
+    // 方法1: 使用现代 Clipboard API
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(wechatNumber).then(function() {
+            showCopySuccess();
+        }).catch(function(err) {
+            console.error('Clipboard API failed:', err);
+            fallbackCopy(wechatNumber);
+        });
+    } else {
+        // 方法2: 回退到传统方法
+        fallbackCopy(wechatNumber);
+    }
+};
+
+// 为复制按钮添加触摸事件支持
+function setupCopyButtonEvents() {
+    const copyButtons = document.querySelectorAll('[onclick*="copyWechatToClipboard"]');
+    copyButtons.forEach(button => {
+        // 移除原始的onclick属性
+        button.removeAttribute('onclick');
+        
+        // 添加标准化的事件处理
+        const handleCopyClick = function(event) {
+            event.stopPropagation();
+            if (event.touches && event.type.includes('touch')) {
+                event.preventDefault(); // 防止触摸事件触发两次
+            }
+            window.copyWechatToClipboard(event);
+        };
+        
+        button.addEventListener('click', handleCopyClick);
+        button.addEventListener('touchend', handleCopyClick);
+    });
+}
+
+// 当DOM内容加载完成后设置复制按钮事件
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupCopyButtonEvents);
+} else {
+    setupCopyButtonEvents();
+}
+
+function fallbackCopy(text) {
+    // 创建临时文本区域
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    textArea.style.top = '-999999px';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    
+    try {
+        const successful = document.execCommand('copy');
+        if (successful) {
+            showCopySuccess();
+        } else {
+            showCopyError();
+        }
+    } catch (err) {
+        console.error('Fallback copy failed:', err);
+        showCopyError();
+    }
+    
+    document.body.removeChild(textArea);
+}
+
+function showCopySuccess() {
+    if (window.anki && window.anki.showToast) {
+        window.anki.showToast('微信号已复制到剪贴板');
+    } else {
+        // 创建临时提示
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            z-index: 10000;
+            pointer-events: none;
+        `;
+        toast.textContent = '微信号已复制';
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            if (document.body.contains(toast)) {
+                document.body.removeChild(toast);
+            }
+        }, 2000);
+    }
+}
+
+function showCopyError() {
+    if (window.anki && window.anki.showToast) {
+        window.anki.showToast('复制失败，请手动复制');
+    } else {
+        alert('复制失败，请手动复制微信号：kikkua2649');
+    }
+}
+
+// 根据等级数字添加对应CSS类
+function applyLevelStyling() {
+    const settingsButton = document.getElementById('anki-settings-button');
+    if (settingsButton) {
+        const levelText = settingsButton.textContent.trim();
+        settingsButton.classList.remove('level-1', 'level-2', 'level-3', 'settings-icon');
+        
+        if (levelText === '1') {
+            settingsButton.classList.add('level-1');
+        } else if (levelText === '2') {
+            settingsButton.classList.add('level-2');
+        } else if (levelText === '3') {
+            settingsButton.classList.add('level-3');
+        } else {
+            settingsButton.style.display = 'none';
+        }
+    }
+}
+
+// 当DOM内容加载完成后应用等级样式
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', applyLevelStyling);
+} else {
+    applyLevelStyling();
+}
+</script>
