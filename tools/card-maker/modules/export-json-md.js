@@ -104,7 +104,7 @@ export async function exportMarkdownZip() {
     let indexMd = `# ${state.activeNotebook || '笔记本'}\n\n`;
     indexMd += `> 共 ${notes.length} 条笔记，${sortedChapters.length} 个章节\n\n`;
 
-    // 构建目录树并生成索引
+    // 构建目录树并生成索引（使用编号路径中的名称）
     const tree = {};
     for (const numbered of sortedChapters) {
         const parts = numbered.split('::');
@@ -117,7 +117,7 @@ export async function exportMarkdownZip() {
         }
     }
 
-    // 生成文件并添加链接
+    // 生成文件并添加链接（文件夹和文件都带编号）
     function buildIndexAndFiles(node, folderPath) {
         let md = '';
         for (const [name, child] of Object.entries(node)) {
@@ -134,8 +134,11 @@ export async function exportMarkdownZip() {
                 }
                 zip.file(filename, chapterMd);
             } else {
-                md += `- **${name}**/\n`;
-                md += buildIndexAndFiles(child, folderPath + sanitizeFilename(name) + '/');
+                // 文件夹也带编号
+                const folderIndex = Object.keys(node).filter(k => k !== '_notes').indexOf(name) + 1;
+                const numberedName = String(folderIndex).padStart(2, '0') + ' ' + name;
+                md += `- **${numberedName}**/\n`;
+                md += buildIndexAndFiles(child, folderPath + sanitizeFilename(numberedName) + '/');
             }
         }
         return md;
