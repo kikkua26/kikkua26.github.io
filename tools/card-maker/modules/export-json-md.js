@@ -41,7 +41,10 @@ function parseSubfieldsToObject(raw) {
 
 // ── Markdown 包导出（zip） ──
 
+let fileIndex = 0;
+
 export async function exportMarkdownZip() {
+    fileIndex = 0;
     const notes = activeNotes().filter(n => n.mainField || n.chapter);
     if (!notes.length) { toast('没有可导出的笔记', 'error'); return; }
 
@@ -56,18 +59,24 @@ export async function exportMarkdownZip() {
         chapters[ch].push(n);
     }
 
-    // 生成目录索引
+    // 生成目录索引（带链接）
     let indexMd = `# ${state.activeNotebook || '笔记本'}\n\n`;
     indexMd += `> 共 ${notes.length} 条笔记，${Object.keys(chapters).length} 个章节\n\n`;
-    indexMd += generateIndexMd(chapters);
-    zip.file('README.md', indexMd);
-
-    // 为每个章节生成 md 文件（按 :: 分层建立子目录）
-    for (const [chapter, chapterNotes] of Object.entries(chapters)) {
+    const fileMap = {};
+    for (const chapter of Object.keys(chapters)) {
+        fileIndex++;
         const parts = chapter.split('::');
         const folder = parts.slice(0, -1).map(p => sanitizeFilename(p)).join('/');
-        const filename = (folder ? folder + '/' : '') + sanitizeFilename(parts[parts.length - 1]) + '.md';
-        let md = `# ${parts[parts.length - 1]}\n\n`;
+        const filename = (folder ? folder + '/' : '') + padNum(fileIndex) + '_' + sanitizeFilename(parts[parts.length - 1]) + '.md';
+        fileMap[chapter] = { filename, title: parts[parts.length - 1], count: chapters[chapter].length };
+    }
+    indexMd += generateIndexMd(fileMap);
+    zip.file('README.md', indexMd);
+
+    // 为每个章节生成 md 文件
+    for (const [chapter, chapterNotes] of Object.entries(chapters)) {
+        const { filename, title } = fileMap[chapter];
+        let md = `# ${title}\n\n`;
         md += `> 完整路径: ${chapter}\n>\n> 本章节共 ${chapterNotes.length} 条笔记\n\n`;
 
         for (const n of chapterNotes) {
@@ -87,16 +96,18 @@ export async function exportMarkdownZip() {
     toast('已导出 Markdown 压缩包', 'success');
 }
 
-function generateIndexMd(chapters) {
+function padNum(n) { return String(n).padStart(3, '0'); }
+
+function generateIndexMd(fileMap) {
     // 构建目录树
     const tree = {};
-    for (const ch of Object.keys(chapters)) {
-        const parts = ch.split('::');
+    for (const [chapter, info] of Object.entries(fileMap)) {
+        const parts = chapter.split('::');
         let node = tree;
         for (let i = 0; i < parts.length; i++) {
             const p = parts[i];
-            if (!node[p]) node[p] = i === parts.length - 1 ? { _count: chapters[ch].length } : {};
-            else if (i === parts.length - 1) node[p]._count = chapters[ch].length;
+            if (!node[p]) node[p] = i === parts.length - 1 ? { _info: info } : {};
+            else if (i === parts.length - 1) node[p]._info = info;
             node = node[p];
         }
     }
@@ -105,11 +116,14 @@ function generateIndexMd(chapters) {
     function walk(node, depth) {
         const indent = '  '.repeat(depth);
         for (const [name, child] of Object.entries(node)) {
-            if (name === '_count') continue;
-            const folder = child._count !== undefined ? '' : '/';
-            const count = child._count ? ` (${child._count}条)` : '';
-            md += `${indent}- ${name}${folder}${count}\n`;
-            walk(child, depth + 1);
+            if (name === '_info') continue;
+            if (child._info) {
+                const { filename, count } = child._info;
+                md += `${indent}- [${name}](${filename}) (${count}条)\n`;
+            } else {
+                md += `${indent}- **${name}**/\n`;
+                walk(child, depth + 1);
+            }
         }
     }
     walk(tree, 0);
