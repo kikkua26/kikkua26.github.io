@@ -125,7 +125,7 @@ async function selectTpl(name) {
     currentTpl = name;
     renderTplGrid();
     const editor = $('#tplEditor');
-    if (editor) editor.style.display = 'block';
+    if (editor) editor.classList.remove('hidden');
     const title = $('#tplEditorTitle');
     if (title) title.textContent = name;
 
