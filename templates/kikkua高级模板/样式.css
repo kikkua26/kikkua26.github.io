@@ -1452,6 +1452,121 @@
     .trapezoid span { display: inline-block; text-align: center; }
 }
 
+/* ===== 表格样式 - 自动适配所有容器和主题 ===== */
+.rectangle .field-content table,
+.original-text table,
+.summary-content table,
+.notes-content table {
+    width: 100% !important;
+    border-collapse: collapse;
+    margin: 8px 0;
+    font-size: 0.9em;
+    line-height: 1.5;
+    table-layout: auto;
+}
+
+.rectangle .field-content th,
+.original-text th,
+.summary-content th,
+.notes-content th {
+    background: var(--trapezoid-bg);
+    color: var(--trapezoid-text, #ffffff);
+    padding: 8px 12px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.95em;
+    border: 1px solid var(--trapezoid-text, rgba(255,255,255,0.2));
+    white-space: nowrap;
+}
+
+.rectangle .field-content td,
+.original-text td,
+.summary-content td,
+.notes-content td {
+    padding: 7px 12px;
+    border: 1px solid var(--card-border);
+    color: var(--card-text);
+    text-align: center;
+    vertical-align: middle;
+}
+
+.rectangle .field-content tr:nth-child(even),
+.original-text tr:nth-child(even),
+.summary-content tr:nth-child(even),
+.notes-content tr:nth-child(even) {
+    background: rgba(0, 0, 0, 0.02);
+}
+
+.rectangle .field-content tr:hover,
+.original-text tr:hover,
+.summary-content tr:hover,
+.notes-content tr:hover {
+    background: rgba(0, 0, 0, 0.04);
+}
+
+/* 深色模式表格适配 */
+.theme-dark .rectangle .field-content table,
+.theme-dark .original-text table,
+.theme-dark .summary-content table,
+.theme-dark .notes-content table {
+    border-color: var(--card-border);
+}
+
+.theme-dark .rectangle .field-content td,
+.theme-dark .original-text td,
+.theme-dark .summary-content td,
+.theme-dark .notes-content td {
+    border-color: #334155;
+    color: #f1f5f9;
+}
+
+.theme-dark .rectangle .field-content tr:nth-child(even),
+.theme-dark .original-text tr:nth-child(even),
+.theme-dark .summary-content tr:nth-child(even),
+.theme-dark .notes-content tr:nth-child(even) {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.theme-dark .rectangle .field-content tr:hover,
+.theme-dark .original-text tr:hover,
+.theme-dark .summary-content tr:hover,
+.theme-dark .notes-content tr:hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+/* 护眼模式表格适配 */
+.theme-eye-care .rectangle .field-content td,
+.theme-eye-care .original-text td,
+.theme-eye-care .summary-content td,
+.theme-eye-care .notes-content td {
+    border-color: #d9f99d;
+}
+
+.theme-eye-care .rectangle .field-content tr:nth-child(even),
+.theme-eye-care .original-text tr:nth-child(even) {
+    background: rgba(101, 163, 13, 0.04);
+}
+
+/* 表格响应式 */
+@media (max-width: 480px) {
+    .rectangle .field-content table,
+    .original-text table,
+    .summary-content table,
+    .notes-content table {
+        font-size: 0.85em;
+    }
+    .rectangle .field-content th,
+    .rectangle .field-content td,
+    .original-text th,
+    .original-text td,
+    .summary-content th,
+    .summary-content td,
+    .notes-content th,
+    .notes-content td {
+        padding: 5px 8px;
+    }
+}
+
 /* ===== 主题：简约蓝 ===== */
 .theme-blue {
     --card-bg: rgba(255, 255, 255, 0.85);
