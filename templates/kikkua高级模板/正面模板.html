@@ -774,28 +774,70 @@ window.ankiStorage = (function() {
         return fragment;
     }
     
-    // 处理文本内容，支持挖空和名词解释
+    // DOM感知的文本节点标记处理（不破坏HTML结构）
+    function processTextMarkers(rootElement, fieldType) {
+        var MARKERS = ['[[', '【*'];
+        var iterator = document.createTreeWalker(rootElement, NodeFilter.SHOW_TEXT, null, false);
+        var textNode = iterator.nextNode();
+
+        while (textNode) {
+            // 跳过已处理元素内的文本节点
+            if (textNode.parentElement.closest('.blank') || textNode.parentElement.closest('.term')) {
+                textNode = iterator.nextNode();
+                continue;
+            }
+
+            var content = textNode.nodeValue;
+            var hasMarker = false;
+            for (var m = 0; m < MARKERS.length; m++) {
+                if (content.indexOf(MARKERS[m]) !== -1) { hasMarker = true; break; }
+            }
+
+            if (!hasMarker) {
+                textNode = iterator.nextNode();
+                continue;
+            }
+
+            var parsedNodes = parseText(content);
+            if (parsedNodes.length === 1 && parsedNodes[0].type === 'text') {
+                textNode = iterator.nextNode();
+                continue;
+            }
+
+            var replacement = renderNodes(parsedNodes, fieldType);
+            var parentNode = textNode.parentNode;
+            var nextSibling = textNode.nextSibling;
+            parentNode.removeChild(textNode);
+            if (nextSibling) {
+                parentNode.insertBefore(replacement, nextSibling);
+            } else {
+                parentNode.appendChild(replacement);
+            }
+
+            // 重新遍历（DOM结构已改变）
+            iterator = document.createTreeWalker(rootElement, NodeFilter.SHOW_TEXT, null, false);
+            textNode = iterator.nextNode();
+        }
+    }
+
+    // 处理文本内容，支持挖空和名词解释（DOM感知，不破坏HTML结构如表格）
     function processFieldContent(element) {
         if (!element) return;
-        
-        const originalContent = element.innerHTML;
-        
-        let parsedNodes;
-        try {
-            parsedNodes = parseText(originalContent);
-        } catch (e) {
-            console.warn('Error parsing text, using raw content:', e);
-            element.textContent = originalContent;
-            return;
+
+        var originalContent = element.innerHTML;
+
+        // 快速检查是否包含标记
+        var hasMarkers = originalContent.indexOf('[[') !== -1 || originalContent.indexOf('【*') !== -1;
+
+        if (hasMarkers) {
+            // 有标记：用DOM感知方式处理（先解析HTML，再在文本节点内替换标记）
+            try {
+                processTextMarkers(element, 'other');
+            } catch (e) {
+                console.warn('Marker processing error, using raw content:', e);
+            }
         }
-        
-        if (!parsedNodes || parsedNodes.length === 0) {
-            element.textContent = originalContent;
-            return;
-        }
-        
-        element.innerHTML = '';
-        element.appendChild(renderNodes(parsedNodes));
+        // 无标记：innerHTML已正确渲染，无需处理
     }
     
     // 字段模块封装
@@ -823,12 +865,11 @@ window.ankiStorage = (function() {
             contentDiv.className = 'field-content';
             contentDiv.id = 'front-' + fieldId;
 
-            const hasSpecialMarkers = content.includes('[[') || content.includes('【*');
-            if (hasSpecialMarkers && typeof parseText === 'function') {
-                const parsedNodes = parseText(content);
-                contentDiv.appendChild(renderNodes(parsedNodes));
-            } else {
-                contentDiv.innerHTML = content;
+            contentDiv.innerHTML = content;
+            // DOM感知处理标记（不破坏HTML结构如表格）
+            var hasSpecialMarkers = content.indexOf('[[') !== -1 || content.indexOf('【*') !== -1;
+            if (hasSpecialMarkers) {
+                processTextMarkers(contentDiv, 'analysis');
             }
 
             rectangle.appendChild(contentDiv);

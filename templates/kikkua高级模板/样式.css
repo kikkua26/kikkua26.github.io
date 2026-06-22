@@ -1453,11 +1453,19 @@
 }
 
 /* ===== 表格样式 - 自动适配所有容器和主题 ===== */
+.rectangle .field-content,
+.original-field,
+.summary-container,
+.notes-container {
+    overflow-x: auto;
+}
+
 .rectangle .field-content table,
 .original-text table,
 .summary-content table,
 .notes-content table {
     width: 100% !important;
+    max-width: 100% !important;
     border-collapse: collapse;
     margin: 8px 0;
     font-size: 0.9em;
@@ -1476,7 +1484,7 @@
     font-weight: 600;
     font-size: 0.95em;
     border: 1px solid var(--trapezoid-text, rgba(255,255,255,0.2));
-    white-space: nowrap;
+    word-break: break-word;
 }
 
 .rectangle .field-content td,
