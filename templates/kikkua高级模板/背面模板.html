@@ -1,3 +1,10 @@
+<!--
+    ===== 模板默认配置 =====
+    用户可以修改下面的注释来设置默认值（修改后需要重新导入模板）
+
+    config:purchaseLink=https://file.ankichinas.cn/userCenter/66737afb04778w5K   购买链接（选填）
+-->
+<!-- config:purchaseLink=https://file.ankichinas.cn/userCenter/66737afb04778w5K -->
 <!-- 背面模板 - 显示所有字段 -->
 <div id="explanationBox" class="explanation-box">
     <div class="explanation-header">
@@ -141,7 +148,8 @@ window.ANKI_TEMPLATE_DEFAULTS = {
     revealBlanks: true,
     otherContentMode: 'popup',
     theme: 'system',
-    fontSize: 16
+    fontSize: 16,
+    purchaseLink: 'https://file.ankichinas.cn/userCenter/66737afb04778w5K'
 };
 
 // ==================== 工具函数 ====================
@@ -753,6 +761,16 @@ window.ankiStorage = (function() {
         };
     })();
     
+    // 应用购买链接配置
+    function applyPurchaseLink() {
+        var link = getConfig('purchaseLink', window.ANKI_TEMPLATE_DEFAULTS.purchaseLink);
+        if (!link) return;
+        var buyLink = document.querySelector('.footer-buy-link');
+        if (buyLink) {
+            buyLink.href = link;
+        }
+    }
+
     // 初始化 - 不使用DOMContentLoaded，直接执行
     function init() {
         // 初始化授权码显示
@@ -760,6 +778,9 @@ window.ankiStorage = (function() {
         if (authCodeDisplay) {
             authCodeDisplay.textContent = generateAuthCode();
         }
+
+        // 应用购买链接配置
+        applyPurchaseLink();
 
         // 设置卡片最小高度为窗口高度
         const card = document.querySelector('.card');
@@ -1635,7 +1656,7 @@ window.ankiStorage = (function() {
         }
 
         // 2. Try from HTML comments
-        const regex = new RegExp(`<!-- config:${name}=([\w.-]+) -->`); // Allow . and - for values like eyeCare or numbers
+        const regex = new RegExp(`<!-- config:${name}=([^\\s]+) -->`); // 匹配非空白字符，支持URL
         const configSource = document.documentElement.innerHTML || '';
         const match = configSource.match(regex);
         if (match && match[1]) {
