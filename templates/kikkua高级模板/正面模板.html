@@ -777,46 +777,55 @@ window.ankiStorage = (function() {
     // DOM感知的文本节点标记处理（不破坏HTML结构）
     function processTextMarkers(rootElement, fieldType) {
         var MARKERS = ['[[', '【*'];
+        var MAX_ITERATIONS = 500;
+        var iterations = 0;
+
         var iterator = document.createTreeWalker(rootElement, NodeFilter.SHOW_TEXT, null, false);
         var textNode = iterator.nextNode();
 
-        while (textNode) {
-            // 跳过已处理元素内的文本节点
-            if (textNode.parentElement.closest('.blank') || textNode.parentElement.closest('.term')) {
+        while (textNode && iterations < MAX_ITERATIONS) {
+            iterations++;
+            try {
+                // 安全检查：跳过已处理元素内的文本节点
+                var parent = textNode.parentNode;
+                if (!parent) { textNode = iterator.nextNode(); continue; }
+                var parentEl = parent.nodeType === 1 ? parent : parent.parentElement;
+                if (parentEl && (parentEl.closest('.blank') || parentEl.closest('.term'))) {
+                    textNode = iterator.nextNode();
+                    continue;
+                }
+
+                var content = textNode.nodeValue;
+                if (!content) { textNode = iterator.nextNode(); continue; }
+
+                var hasMarker = false;
+                for (var m = 0; m < MARKERS.length; m++) {
+                    if (content.indexOf(MARKERS[m]) !== -1) { hasMarker = true; break; }
+                }
+
+                if (!hasMarker) { textNode = iterator.nextNode(); continue; }
+
+                var parsedNodes = parseText(content);
+                if (!parsedNodes || parsedNodes.length === 0) { textNode = iterator.nextNode(); continue; }
+                // 如果解析结果只有纯文本，无需替换
+                if (parsedNodes.length === 1 && parsedNodes[0].type === 'text') { textNode = iterator.nextNode(); continue; }
+
+                var replacement = renderNodes(parsedNodes, fieldType);
+                var nextSibling = textNode.nextSibling;
+                parent.removeChild(textNode);
+                if (nextSibling) {
+                    parent.insertBefore(replacement, nextSibling);
+                } else {
+                    parent.appendChild(replacement);
+                }
+
+                // DOM结构已改变，重新遍历
+                iterator = document.createTreeWalker(rootElement, NodeFilter.SHOW_TEXT, null, false);
                 textNode = iterator.nextNode();
-                continue;
-            }
-
-            var content = textNode.nodeValue;
-            var hasMarker = false;
-            for (var m = 0; m < MARKERS.length; m++) {
-                if (content.indexOf(MARKERS[m]) !== -1) { hasMarker = true; break; }
-            }
-
-            if (!hasMarker) {
+            } catch (e) {
+                console.warn('processTextMarkers error:', e);
                 textNode = iterator.nextNode();
-                continue;
             }
-
-            var parsedNodes = parseText(content);
-            if (parsedNodes.length === 1 && parsedNodes[0].type === 'text') {
-                textNode = iterator.nextNode();
-                continue;
-            }
-
-            var replacement = renderNodes(parsedNodes, fieldType);
-            var parentNode = textNode.parentNode;
-            var nextSibling = textNode.nextSibling;
-            parentNode.removeChild(textNode);
-            if (nextSibling) {
-                parentNode.insertBefore(replacement, nextSibling);
-            } else {
-                parentNode.appendChild(replacement);
-            }
-
-            // 重新遍历（DOM结构已改变）
-            iterator = document.createTreeWalker(rootElement, NodeFilter.SHOW_TEXT, null, false);
-            textNode = iterator.nextNode();
         }
     }
 
