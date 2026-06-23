@@ -98,7 +98,7 @@ export async function parseApkg(file) {
 // Phase 2: 导出 apkg
 // ═══════════════════════════════════════
 
-export async function exportApkg(deckName) {
+export async function exportApkg(deckName, purchaseLink) {
     if (!apkgModel) {
         toast('请先上传 apkg 模板文件', 'error');
         return;
@@ -150,6 +150,16 @@ export async function exportApkg(deckName) {
     model.id = modelId;
     model.mod = Math.floor(now / 1000);
     model.usn = -1;
+
+    // 注入购买链接配置到背面模板
+    if (purchaseLink && model.tmpls && model.tmpls.length > 0) {
+        const configComment = `<!-- config:purchaseLink=${purchaseLink} -->`;
+        for (const tmpl of model.tmpls) {
+            if (tmpl.afmt && !tmpl.afmt.includes('config:purchaseLink=')) {
+                tmpl.afmt = configComment + '\n' + tmpl.afmt;
+            }
+        }
+    }
 
     // 创建牌组
     const deckId = now + 1;
@@ -441,7 +451,9 @@ export function handleApkgUpload() {
 export async function handleApkgExport() {
     const nameInput = rootEl.querySelector('#cmApkgDeckName');
     const deckName = nameInput?.value?.trim() || state.activeNotebook || 'kikkua卡片';
-    await exportApkg(deckName);
+    const linkInput = rootEl.querySelector('#cmApkgPurchaseLink');
+    const purchaseLink = linkInput?.value?.trim() || '';
+    await exportApkg(deckName, purchaseLink);
 }
 
 function esc(s) {
