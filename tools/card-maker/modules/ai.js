@@ -482,6 +482,23 @@ export function applyBatchImport() {
         addedNotes++;
     }
 
+    // 按 JSON 中章节首次出现的顺序重排笔记（树渲染按章节分组，需保证同章节笔记连续且有序）
+    const chapterFirstIdx = {};
+    data.forEach((item, i) => {
+        const ch = item['章节'] || '';
+        if (ch && chapterFirstIdx[ch] === undefined) chapterFirstIdx[ch] = i;
+    });
+    if (Object.keys(chapterFirstIdx).length > 1) {
+        const importedNotes = nb.notes.slice(-addedNotes);
+        const existingNotes = nb.notes.slice(0, nb.notes.length - addedNotes);
+        importedNotes.sort((a, b) => {
+            const ia = chapterFirstIdx[a.chapter] ?? 9999;
+            const ib = chapterFirstIdx[b.chapter] ?? 9999;
+            return ia - ib;
+        });
+        nb.notes = [...existingNotes, ...importedNotes];
+    }
+
     flushData();
     renderAll();
     hideBatchModal();
