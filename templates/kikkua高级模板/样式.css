@@ -1496,19 +1496,20 @@
 .notes-content td,
 .explanation-content td {
     padding: 3px 6px;
-    border: 1px solid var(--explanation-border, rgba(255,255,255,0.15)) !important;
-    color: var(--explanation-text, #f9fafb) !important;
+    border: 1px solid var(--explanation-border) !important;
+    color: var(--explanation-text) !important;
     text-align: left;
     vertical-align: middle;
 }
 
 .explanation-content th {
-    border-color: rgba(255, 255, 255, 0.2) !important;
+    background: var(--primary-gradient) !important;
+    border-color: var(--explanation-border) !important;
     color: #ffffff !important;
 }
 
 .explanation-content table {
-    border-color: rgba(255, 255, 255, 0.15) !important;
+    border-color: var(--explanation-border) !important;
 }
 
 .rectangle .field-content tr:nth-child(even),
@@ -1540,14 +1541,6 @@
 .theme-dark .original-text td,
 .theme-dark .summary-content td,
 .theme-dark .notes-content td,
-.theme-dark .explanation-content td {
-    border-color: rgba(255, 255, 255, 0.15);
-    color: #f1f5f9;
-}
-
-.theme-dark .explanation-content th {
-    border-color: rgba(255, 255, 255, 0.2);
-}
 
 .theme-dark .rectangle .field-content tr:nth-child(even),
 .theme-dark .original-text tr:nth-child(even),
