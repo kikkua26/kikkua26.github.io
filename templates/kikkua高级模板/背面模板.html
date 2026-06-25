@@ -402,21 +402,15 @@ window.ankiStorage = (function() {
                 console.error('Explanation module not initialized');
                 return;
             }
-            
+
             // 设置解释标题
             explanationTitle.innerHTML = term;
-            
-            // 处理解释内容中的特殊标记
-            const hasSpecialMarkers = explanation.includes('[[') || explanation.includes('【*');
-            if (hasSpecialMarkers && typeof parseText === 'function') {
-                // 使用 parseText 解析挖空
-                const parsedNodes = parseText(explanation);
-                explanationContent.innerHTML = '';
-                // 使用简化版 renderNodes
-                explanationContent.appendChild(renderExplanationNodes(parsedNodes));
-            } else {
-                // 直接设置 HTML
-                explanationContent.innerHTML = explanation;
+
+            // 先设置HTML（保留表格等结构），再用DOM感知方式处理标记
+            explanationContent.innerHTML = explanation;
+            var hasSpecialMarkers = explanation.indexOf('[[') !== -1 || explanation.indexOf('【*') !== -1;
+            if (hasSpecialMarkers) {
+                try { processTextMarkers(explanationContent, 'other'); } catch (e) { console.warn('explanation marker error:', e); }
             }
             
             // 样式由CSS统一控制，只需添加show类
@@ -476,49 +470,6 @@ window.ankiStorage = (function() {
             }
         }
         
-        // 为解释内容渲染挖空节点（简化版）
-        function renderExplanationNodes(nodes) {
-            const container = document.createElement('div');
-            
-            nodes.forEach(node => {
-                if (node.type === 'text') {
-                    const span = document.createElement('span');
-                    span.innerHTML = node.content;
-                    container.appendChild(span);
-                } else if (node.type === 'blank') {
-                    const blankSpan = document.createElement('span');
-                    blankSpan.className = 'blank';
-                    blankSpan.textContent = node.content;
-                    // 点击展开
-                    blankSpan.addEventListener('click', function(e) {
-                        e.stopPropagation();
-                        if (this.classList.contains('revealed')) {
-                            this.classList.remove('revealed');
-                        } else {
-                            this.classList.add('revealed');
-                        }
-                    });
-                    // 触摸展开
-                    blankSpan.addEventListener('touchend', function(e) {
-                        e.stopPropagation();
-                        e.preventDefault();
-                        if (this.classList.contains('revealed')) {
-                            this.classList.remove('revealed');
-                        } else {
-                            this.classList.add('revealed');
-                        }
-                    });
-                    container.appendChild(blankSpan);
-                } else if (node.type === 'explanation') {
-                    // 名词解释标记不应该出现在解释内容中，直接显示文本
-                    const span = document.createElement('span');
-                    span.innerHTML = node.term + (node.explanation ? '：' + node.explanation : '');
-                    container.appendChild(span);
-                }
-            });
-            
-            return container;
-        }
         
         // 设置关闭按钮事件
         function setupCloseButton() {
