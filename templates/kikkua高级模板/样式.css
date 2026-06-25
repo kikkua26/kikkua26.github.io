@@ -1496,10 +1496,14 @@
 .notes-content td,
 .explanation-content td {
     padding: 3px 6px;
-    border: 1px solid var(--card-border);
-    color: var(--card-text);
+    border: 1px solid var(--explanation-border, rgba(255,255,255,0.15));
+    color: var(--explanation-text, #f9fafb);
     text-align: left;
     vertical-align: middle;
+}
+
+.explanation-content th {
+    border-color: rgba(255, 255, 255, 0.2);
 }
 
 .rectangle .field-content tr:nth-child(even),
@@ -1532,8 +1536,12 @@
 .theme-dark .summary-content td,
 .theme-dark .notes-content td,
 .theme-dark .explanation-content td {
-    border-color: #334155;
+    border-color: rgba(255, 255, 255, 0.15);
     color: #f1f5f9;
+}
+
+.theme-dark .explanation-content th {
+    border-color: rgba(255, 255, 255, 0.2);
 }
 
 .theme-dark .rectangle .field-content tr:nth-child(even),
