@@ -1456,18 +1456,20 @@
 .rectangle .field-content,
 .original-field,
 .summary-container,
-.notes-container {
+.notes-container,
+.explanation-content {
     overflow-x: auto;
 }
 
 .rectangle .field-content table,
 .original-text table,
 .summary-content table,
-.notes-content table {
+.notes-content table,
+.explanation-content table {
     width: 100% !important;
     max-width: 100% !important;
     border-collapse: collapse;
-    margin: 8px 0;
+    margin: 4px 0;
     font-size: 0.9em;
     line-height: 1.5;
     table-layout: auto;
@@ -1476,10 +1478,11 @@
 .rectangle .field-content th,
 .original-text th,
 .summary-content th,
-.notes-content th {
+.notes-content th,
+.explanation-content th {
     background: var(--trapezoid-bg);
     color: var(--trapezoid-text, #ffffff);
-    padding: 8px 12px;
+    padding: 4px 6px;
     text-align: center;
     font-weight: 600;
     font-size: 0.95em;
@@ -1490,25 +1493,28 @@
 .rectangle .field-content td,
 .original-text td,
 .summary-content td,
-.notes-content td {
-    padding: 7px 12px;
+.notes-content td,
+.explanation-content td {
+    padding: 3px 6px;
     border: 1px solid var(--card-border);
     color: var(--card-text);
-    text-align: center;
+    text-align: left;
     vertical-align: middle;
 }
 
 .rectangle .field-content tr:nth-child(even),
 .original-text tr:nth-child(even),
 .summary-content tr:nth-child(even),
-.notes-content tr:nth-child(even) {
+.notes-content tr:nth-child(even),
+.explanation-content tr:nth-child(even) {
     background: rgba(0, 0, 0, 0.02);
 }
 
 .rectangle .field-content tr:hover,
 .original-text tr:hover,
 .summary-content tr:hover,
-.notes-content tr:hover {
+.notes-content tr:hover,
+.explanation-content tr:hover {
     background: rgba(0, 0, 0, 0.04);
 }
 
@@ -1516,14 +1522,16 @@
 .theme-dark .rectangle .field-content table,
 .theme-dark .original-text table,
 .theme-dark .summary-content table,
-.theme-dark .notes-content table {
+.theme-dark .notes-content table,
+.theme-dark .explanation-content table {
     border-color: var(--card-border);
 }
 
 .theme-dark .rectangle .field-content td,
 .theme-dark .original-text td,
 .theme-dark .summary-content td,
-.theme-dark .notes-content td {
+.theme-dark .notes-content td,
+.theme-dark .explanation-content td {
     border-color: #334155;
     color: #f1f5f9;
 }
@@ -1531,14 +1539,16 @@
 .theme-dark .rectangle .field-content tr:nth-child(even),
 .theme-dark .original-text tr:nth-child(even),
 .theme-dark .summary-content tr:nth-child(even),
-.theme-dark .notes-content tr:nth-child(even) {
+.theme-dark .notes-content tr:nth-child(even),
+.theme-dark .explanation-content tr:nth-child(even) {
     background: rgba(255, 255, 255, 0.03);
 }
 
 .theme-dark .rectangle .field-content tr:hover,
 .theme-dark .original-text tr:hover,
 .theme-dark .summary-content tr:hover,
-.theme-dark .notes-content tr:hover {
+.theme-dark .notes-content tr:hover,
+.theme-dark .explanation-content tr:hover {
     background: rgba(255, 255, 255, 0.06);
 }
 
@@ -1546,12 +1556,15 @@
 .theme-eye-care .rectangle .field-content td,
 .theme-eye-care .original-text td,
 .theme-eye-care .summary-content td,
-.theme-eye-care .notes-content td {
+.theme-eye-care .notes-content td,
+.theme-eye-care .explanation-content td {
     border-color: #d9f99d;
 }
 
 .theme-eye-care .rectangle .field-content tr:nth-child(even),
-.theme-eye-care .original-text tr:nth-child(even) {
+.theme-eye-care .original-text tr:nth-child(even),
+.theme-eye-care .notes-content tr:nth-child(even),
+.theme-eye-care .explanation-content tr:nth-child(even) {
     background: rgba(101, 163, 13, 0.04);
 }
 
@@ -1560,7 +1573,8 @@
     .rectangle .field-content table,
     .original-text table,
     .summary-content table,
-    .notes-content table {
+    .notes-content table,
+    .explanation-content table {
         font-size: 0.85em;
     }
     .rectangle .field-content th,
@@ -1570,8 +1584,10 @@
     .summary-content th,
     .summary-content td,
     .notes-content th,
-    .notes-content td {
-        padding: 5px 8px;
+    .notes-content td,
+    .explanation-content th,
+    .explanation-content td {
+        padding: 2px 4px;
     }
 }
 
