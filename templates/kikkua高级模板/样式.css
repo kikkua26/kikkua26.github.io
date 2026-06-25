@@ -1493,7 +1493,15 @@
 .rectangle .field-content td,
 .original-text td,
 .summary-content td,
-.notes-content td,
+.notes-content td {
+    padding: 3px 6px;
+    border: 1px solid var(--card-border);
+    color: var(--card-text);
+    text-align: left;
+    vertical-align: middle;
+}
+
+/* 强制覆盖：弹窗内表格用弹窗配色 */
 .explanation-content td {
     padding: 3px 6px;
     border: 1px solid var(--explanation-border) !important;
