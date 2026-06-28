@@ -179,6 +179,7 @@ function createBlock(x, y, w, h) {
     div.className = 'rect-block';
     div.style.left = x + 'px'; div.style.top = y + 'px';
     div.style.width = w + 'px'; div.style.height = h + 'px';
+    div.dataset.color = state.currentColor;
     div.style.backgroundColor = state.currentColor + Math.round(state.opacity*255).toString(16).padStart(2,'0');
     div.addEventListener('dblclick', () => removeBlock(div));
     div.addEventListener('pointerdown', e => startMoveBlock(e, div));
@@ -198,7 +199,7 @@ export function rebuildRects() {
         state.rectangles.push({
             x: +(bx / ir.width).toFixed(4), y: +(by / ir.height).toFixed(4),
             w: +(bw / ir.width).toFixed(4), h: +(bh / ir.height).toFixed(4),
-            c: b.style.backgroundColor.slice(0,7).toUpperCase(),
+            c: b.dataset.color || '#000000',
         });
     });
 }
@@ -217,7 +218,7 @@ export function redrawBlocks() {
 
 export function updateOpacity() {
     drawingLayer.querySelectorAll('.rect-block').forEach(b => {
-        const c = b.style.backgroundColor.slice(0,7);
+        const c = b.dataset.color || '#000000';
         b.style.backgroundColor = c + Math.round(state.opacity*255).toString(16).padStart(2,'0');
     });
 }
