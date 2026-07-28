@@ -3,8 +3,10 @@
     用户可以修改下面的注释来设置默认值（修改后需要重新导入模板）
 
     config:purchaseLink=https://file.ankichinas.cn/userCenter/66737afb04778w5K   购买链接（选填）
+    config:studyMode=blank   学习模式: blank=挖空模式, spell=拼写模式, recite=背诵模式
 -->
 <!-- config:purchaseLink=https://file.ankichinas.cn/userCenter/66737afb04778w5K -->
+<!-- config:studyMode=blank -->
 <!-- 背面模板 - 显示所有字段 -->
 <div id="explanationBox" class="explanation-box">
     <div class="explanation-header">
@@ -145,7 +147,7 @@
 <script>
 // ==================== 模板默认配置 ====================
 window.ANKI_TEMPLATE_DEFAULTS = {
-    revealBlanks: true,
+    studyMode: 'blank',
     otherContentMode: 'popup',
     theme: 'system',
     fontSize: 16,
@@ -752,8 +754,9 @@ window.ankiStorage = (function() {
         // 初始化ExplanationModule
         ExplanationModule.init(explanationBox, explanationTitle, explanationContent, closeExplanation);
         
-        // 初始化BlankModule
-        const blanksEnabled = getConfig('revealBlanks', true);
+        // 初始化BlankModule（背诵模式下禁用挖空）
+        const studyMode = getConfig('studyMode', 'blank');
+        const blanksEnabled = studyMode !== 'recite';
         BlankModule.init(blanksEnabled);
         
         // 处理所有字段的内容
@@ -1646,8 +1649,8 @@ window.ankiStorage = (function() {
         if (value === undefined || value === null) return false;
         
         switch (name) {
-            case 'revealBlanks':
-                return typeof value === 'boolean';
+            case 'studyMode':
+                return value === 'blank' || value === 'spell' || value === 'recite';
             case 'otherContentMode':
                 return value === 'popup' || value === 'inline';
             case 'theme':
@@ -1664,7 +1667,11 @@ window.ankiStorage = (function() {
         let isOpen = false;
 
         const configOptions = [
-            { key: 'revealBlanks', label: '挖空开关', type: 'toggle', default: true },
+            { key: 'studyMode', label: '学习模式', type: 'select', default: 'blank', options: [
+                { value: 'blank', label: '挖空模式' },
+                { value: 'spell', label: '拼写模式' },
+                { value: 'recite', label: '背诵模式' }
+            ]},
             { key: 'otherContentMode', label: '知识扩展', type: 'select', default: 'popup', options: [
                 { value: 'inline', label: '页面显示' },
                 { value: 'popup', label: '按钮弹窗' }
@@ -2066,17 +2073,18 @@ window.ankiStorage = (function() {
             function addDualEvent(element, callback) {
                 if (!element) return;
                 
-                // 添加点击事件
+                // 添加触摸事件，支持iOS设备
+                element.addEventListener('touchend', function(e) {
+                    e.preventDefault(); // 阻止后续click事件，防止触发两次
+                    e.stopPropagation();
+                    callback();
+                }, { passive: false });
+                
+                // 添加点击事件（桌面端）
                 element.addEventListener('click', function(e) {
                     e.stopPropagation();
                     callback();
                 });
-                
-                // 添加触摸事件，支持iOS设备
-                element.addEventListener('touchend', function(e) {
-                    e.stopPropagation();
-                    callback();
-                }, { passive: false });
                 
                 // 为iOS添加触摸样式提示
                 element.style.cursor = 'pointer';
@@ -2131,34 +2139,6 @@ window.ankiStorage = (function() {
             
             // 应用当前设置
             SettingsPanelModule.applySettings();
-            
-            // 额外为设置按钮添加直接的触摸事件支持
-            const settingsButton = document.getElementById('anki-settings-button');
-            if (settingsButton) {
-                // 确保移除所有之前的事件监听器
-                settingsButton.removeEventListener('click', handleSettingsButtonTouch);
-                settingsButton.removeEventListener('touchend', handleSettingsButtonTouch);
-                
-                // 定义一个简单的处理函数
-                function handleSettingsButtonTouch(e) {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    // 直接调用togglePanel函数
-                    if (typeof SettingsPanelModule.togglePanel === 'function') {
-                        SettingsPanelModule.togglePanel();
-                    } else {
-                        // 作为后备方案，直接操作样式
-                        const panel = document.getElementById('anki-settings-panel');
-                        if (panel) {
-                            panel.classList.toggle('show');
-                        }
-                    }
-                }
-                
-                // 添加直接的事件监听器
-                settingsButton.addEventListener('click', handleSettingsButtonTouch);
-                settingsButton.addEventListener('touchend', handleSettingsButtonTouch, { passive: false });
-            }
         } catch (error) {
             console.error('初始化错误:', error);
         }
