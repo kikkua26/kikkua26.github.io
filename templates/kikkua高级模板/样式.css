@@ -350,6 +350,66 @@
     font-weight: inherit;
 }
 
+/* ===== 拼写模式 ===== */
+.spell-blank-wrapper {
+    display: inline;
+    margin: 0;
+    padding: 0;
+    vertical-align: baseline;
+}
+
+.spell-blank-input {
+    display: inline-block;
+    border: none;
+    border-bottom: 1px solid var(--blank-border);
+    background: transparent;
+    font-size: inherit;
+    font-family: inherit;
+    font-weight: inherit;
+    color: inherit;
+    padding: 0;
+    margin: 0;
+    text-align: left;
+    outline: none;
+    transition: color 0.15s ease, border-color 0.15s ease;
+    line-height: inherit;
+    border-radius: 0;
+    cursor: text;
+    vertical-align: baseline;
+    appearance: none;
+    -webkit-appearance: none;
+    min-width: 0;
+}
+
+.spell-blank-input:focus {
+    border-bottom-color: var(--primary-start);
+}
+
+.spell-blank-input.spell-partial {
+    color: var(--primary-start);
+    border-bottom-color: var(--primary-start);
+}
+
+.spell-blank-input.spell-correct {
+    color: #16a34a;
+    border-bottom-color: #16a34a;
+    font-weight: inherit;
+}
+
+.spell-blank-input.spell-revealed {
+    color: #d97706;
+    border-bottom-color: #d97706;
+}
+
+.spell-blank-input.spell-incorrect {
+    color: #ef4444;
+    border-bottom-color: #ef4444;
+}
+
+.spell-blank-input:read-only {
+    cursor: default;
+}
+
 /* ===== 名词解释 ===== */
 .term {
     color: var(--term-color);
@@ -1943,6 +2003,92 @@
 .theme-eye-care .toggle-button .toggle-icon { color: white; }
 .theme-eye-care .other-field-button { background-color: #5c940d; color: white; }
 .theme-eye-care .other-field-button:hover { background-color: #4a7a0a; border-color: #7cb342; }
+
+/* ===== 拼写模式 - 各主题适配 ===== */
+.theme-dark .spell-blank-input {
+    color: inherit;
+    border-bottom-color: var(--blank-border);
+}
+
+.theme-dark .spell-blank-input:focus {
+    border-bottom-color: #38bdf8;
+}
+
+.theme-dark .spell-blank-input.spell-partial {
+    color: #38bdf8;
+    border-bottom-color: #38bdf8;
+}
+
+.theme-dark .spell-blank-input.spell-correct {
+    color: #4ade80;
+    border-bottom-color: #4ade80;
+}
+
+.theme-dark .spell-blank-input.spell-incorrect {
+    color: #f87171;
+    border-bottom-color: #f87171;
+}
+
+.theme-blue .spell-blank-input:focus {
+    border-bottom-color: #0ea5e9;
+}
+
+.theme-blue .spell-blank-input.spell-partial {
+    color: #0ea5e9;
+    border-bottom-color: #0ea5e9;
+}
+
+.theme-blue .spell-blank-input.spell-correct {
+    color: #16a34a;
+    border-bottom-color: #16a34a;
+}
+
+.theme-pink .spell-blank-input:focus {
+    border-bottom-color: #ec4899;
+}
+
+.theme-pink .spell-blank-input.spell-partial {
+    color: #ec4899;
+    border-bottom-color: #ec4899;
+}
+
+.theme-pink .spell-blank-input.spell-correct {
+    color: #10b981;
+    border-bottom-color: #10b981;
+}
+
+.theme-mint .spell-blank-input:focus {
+    border-bottom-color: #22c55e;
+}
+
+.theme-mint .spell-blank-input.spell-partial {
+    color: #22c55e;
+    border-bottom-color: #22c55e;
+}
+
+.theme-mint .spell-blank-input.spell-correct {
+    color: #15803d;
+    border-bottom-color: #15803d;
+}
+
+.theme-eye-care .spell-blank-input:focus {
+    border-bottom-color: #65a30d;
+}
+
+.theme-eye-care .spell-blank-input.spell-partial {
+    color: #65a30d;
+    border-bottom-color: #65a30d;
+}
+
+.theme-eye-care .spell-blank-input.spell-correct {
+    color: #15803d;
+    border-bottom-color: #15803d;
+}
+
+.theme-eye-care .spell-blank-input.spell-incorrect {
+    color: #dc2626;
+    border-bottom-color: #dc2626;
+}
 
 /* ===== prefers-color-scheme: dark ===== */
 @media (prefers-color-scheme: dark) {
