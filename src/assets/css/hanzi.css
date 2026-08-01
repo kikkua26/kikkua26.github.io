@@ -969,7 +969,8 @@
 
 /* 用户笔迹与已写笔画要盖在演示动画之上，动画不遮字 */
 #hzPracticeWriter,
-#hzWordWriter {
+#hzWordWriter,
+#cbWriter {
   position: relative;
   z-index: 1;
 }
