@@ -316,9 +316,15 @@ async function loadLibraries() {
 async function loadStroke(ch) {
   if (strokeCache.has(ch)) return strokeCache.get(ch);
   const tryFetch = async (url) => {
-    const res = await fetch(url);
-    if (!res.ok) return null;
-    return res.json();
+    try {
+      const res = await fetch(url);
+      if (!res.ok) return null;
+      const text = await res.text();
+      if (!text.trim().startsWith('{')) return null; // CDN 可能返回错误页
+      return JSON.parse(text);
+    } catch {
+      return null;
+    }
   };
   const d =
     (await tryFetch(`${STROKE_DIR}${hexCode(ch)}.json`)) ||
