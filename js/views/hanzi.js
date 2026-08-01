@@ -191,14 +191,15 @@ async function speak(text) {
   }
 }
 
-// ── 轻量反馈 ──
-function floatMsg(anchor, text, ok) {
-  if (!anchor || !anchor.isConnected) return;
+// ── 轻量反馈（右上角） ──
+function floatMsg(text, ok) {
+  const box = $id('hzFeedback');
+  if (!box) return;
   const el = document.createElement('div');
   el.className = 'hz-float' + (ok ? ' ok' : ' err');
   el.textContent = text;
-  anchor.appendChild(el);
-  later(() => el.remove(), 1300);
+  box.appendChild(el);
+  later(() => el.remove(), 1700);
 }
 
 function toast(text) {
@@ -370,23 +371,14 @@ export async function renderHanziStudy(libId) {
               <button class="btn btn-primary" data-action="play-all">${IC.play} 播放</button>
               <button class="btn btn-secondary" data-action="practice">${IC.pen} 练习</button>
             </div>
-            <p class="hz-progress-text" id="hzProgressText">点「播放」看笔顺，点「练习」跟着写</p>
-            <div class="hz-dots" id="hzDots"></div>
-            <div class="hz-pane hz-done-pane" id="hzDone" hidden>
-              <div class="hz-done-icon">${IC.checkCircle}</div>
-              <h3 class="hz-done-title" id="hzDoneTitle"></h3>
-              <p class="hz-done-desc" id="hzDoneDesc"></p>
-              <div class="hz-pane-actions">
-                <button class="btn btn-primary" data-action="again">再练一次</button>
-                <button class="btn btn-secondary" data-action="next-char">下一个字 ${IC.arrowR}</button>
-              </div>
-            </div>
           </section>
 
           <footer class="hz-foot" id="hzFoot">字库加载中…</footer>
         </div>
       </main>
     </div>
+
+    <div class="hz-feedback" id="hzFeedback" aria-live="polite"></div>
   `;
 
   const app = document.getElementById('app');
@@ -576,19 +568,6 @@ function clearEl(id) {
 // ── 模式切换 ──
 function setMode(m) {
   mode = m;
-  if (!live()) return;
-  const doneEl = $id('hzDone');
-  const dotsEl = $id('hzDots');
-  const textEl = $id('hzProgressText');
-  if (doneEl) doneEl.hidden = m !== 'done';
-  if (dotsEl) dotsEl.hidden = m !== 'practice' && m !== 'done';
-  if (textEl) {
-    if (m === 'practice') textEl.hidden = true; // 练习时不显示第几笔文字
-    else textEl.hidden = false;
-    if (m === 'play') textEl.textContent = '看笔顺演示…';
-    else if (m === 'done') textEl.textContent = '';
-    else textEl.textContent = '点「播放」看笔顺，点「练习」跟着写';
-  }
   if (m === 'practice') startPractice();
 }
 
@@ -605,11 +584,6 @@ function playWholeChar() {
       onComplete: () => {
         if (!live() || token !== demoToken) return;
         mode = 'idle';
-        const textEl = $id('hzProgressText');
-        if (textEl) textEl.textContent = '写完了！点「练习」跟着写一遍';
-        if (textEl) textEl.hidden = false;
-        const doneEl = $id('hzDone');
-        if (doneEl) doneEl.hidden = true;
       },
     });
   } catch { /* 演示异常时静默跳过 */ }
@@ -626,9 +600,6 @@ function startPractice() {
   pracW.hideCharacter({ duration: 0 });
   pracW.showOutline();
   try { demoW.hideCharacter({ duration: 0 }); } catch { /* ignore */ }
-  const doneEl = $id('hzDone');
-  if (doneEl) doneEl.hidden = true;
-  updatePracticeUI();
   later(() => startStrokeDemo(0), 400);
   pracW.quiz({
     showOutline: true,
@@ -639,21 +610,15 @@ function startPractice() {
     onCorrectStroke: (data) => {
       if (!live()) return;
       expected = data.strokeNum + 1;
-      updatePracticeUI();
-      floatMsg($id('hzPracticeBox'), pick(OK_MSGS), true);
+      floatMsg(pick(OK_MSGS), true);
       if (expected < totalStrokes) later(() => startStrokeDemo(expected), 450);
     },
-    onMistake: () => floatMsg($id('hzPracticeBox'), pick(ERR_MSGS), false),
+    onMistake: () => floatMsg(pick(ERR_MSGS), false),
     onComplete: () => {
       if (!live()) return;
       expected = totalStrokes;
-      updatePracticeUI();
       stopStrokeDemo();
-      setMode('done');
-      const title = $id('hzDoneTitle');
-      const desc = $id('hzDoneDesc');
-      if (title) title.textContent = `「${current.c}」写好了！`;
-      if (desc) desc.textContent = `${totalStrokes} 个笔画全部完成，真棒！`;
+      floatMsg('全部完成！', true);
     },
   });
 }
@@ -681,17 +646,6 @@ function startStrokeDemo(n) {
       },
     });
   } catch { /* 演示层异常时静默跳过 */ }
-}
-
-function updatePracticeUI() {
-  if (!live()) return;
-  const dotsEl = $id('hzDots');
-  if (dotsEl) {
-    dotsEl.innerHTML = Array.from({ length: totalStrokes }, (_, i) => {
-      const cls = i < expected ? 'done' : i === expected ? 'active' : '';
-      return `<span class="hz-dot ${cls}">${i < expected ? '✓' : i + 1}</span>`;
-    }).join('');
-  }
 }
 
 // ── 搜索 ──
@@ -777,8 +731,6 @@ function onClick(e) {
     case 'speak': speak(current.c); break;
     case 'play-all': playWholeChar(); break;
     case 'practice': setMode('practice'); break;
-    case 'again': startPractice(); break;
-    case 'next-char': stepChar(1); break;
   }
 }
 
