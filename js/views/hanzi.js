@@ -476,15 +476,11 @@ export async function renderHanziStudy(libId) {
       <main class="hz-main">
         <div class="hz-wrap">
           <section class="hz-card hz-current-card">
-            <div class="hz-card-head">
-              <div class="hz-char-unit">
-                <div class="hz-pinyin" id="hzPinyin">—</div>
-                <div class="hz-char-cell" id="hzCharBig">?</div>
-              </div>
-              <div class="hz-words-unit">
-                <div class="hz-words-list" id="hzCurrentWords"></div>
-              </div>
+            <div class="hz-char-unit">
+              <div class="hz-pinyin" id="hzPinyin">—</div>
+              <div class="hz-char-cell" id="hzCharBig">?</div>
             </div>
+            <div class="hz-current-words" id="hzCurrentWords"></div>
             <div class="hz-writer-center">
               <div class="hz-writer-box hz-write-box" id="hzPracticeBox">
                 <div id="hzPracticeWriter"></div>
@@ -860,9 +856,7 @@ function renderCurrent() {
   const wordsEl = $id('hzCurrentWords');
   if (wordsEl) {
     const words = (current.w || []).filter((w) => w.length >= 2).slice(0, 3);
-    wordsEl.innerHTML = words.length
-      ? words.map((w) => `<span>${w}</span>`).join('')
-      : '<span class="hz-words-empty">还没有组词</span>';
+    wordsEl.textContent = words.length ? words.join(' · ') : '还没有组词';
   }
 }
 

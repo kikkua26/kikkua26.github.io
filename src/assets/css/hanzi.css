@@ -739,20 +739,13 @@
   border-radius: var(--radius-md);
 }
 
-/* ── 学习卡头部：字格（拼音在上）+ 组词（右） ── */
-.hz-card-head {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 30px;
-  padding: 6px 0 20px;
-}
-
+/* ── 学习卡头部：拼音 + 字格 居中 ── */
 .hz-char-unit {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
+  padding: 6px 0 0;
 }
 
 .hz-char-cell {
@@ -781,37 +774,12 @@
   letter-spacing: 0.08em;
 }
 
-.hz-words-unit {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
-  min-width: 0;
-}
-
-.hz-words-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  justify-content: flex-start;
-  max-width: 210px;
-}
-
-.hz-words-list span {
-  padding: 5px 14px;
-  font-size: 16px;
-  letter-spacing: 0.12em;
-  color: var(--amber-dark);
-  background: linear-gradient(180deg, rgba(245, 158, 11, 0.14), rgba(245, 158, 11, 0.07));
-  border: 1px solid rgba(245, 158, 11, 0.32);
-  border-radius: 999px;
-  white-space: nowrap;
-}
-
-.hz-words-list .hz-words-empty {
-  font-size: 13px;
+.hz-current-words {
+  margin: 12px 0 0;
+  text-align: center;
+  font-size: 14px;
   color: var(--text-muted);
-  letter-spacing: 0;
+  letter-spacing: 0.12em;
 }
 
 /* ── 学习卡按钮区 ── */
@@ -1041,10 +1009,6 @@
     width: 78px;
     height: 78px;
     font-size: 48px;
-  }
-
-  .hz-card-head {
-    gap: 22px;
   }
 
 }
