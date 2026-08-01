@@ -108,56 +108,18 @@ function dispose() {
 }
 
 // ── 语音朗读 ──
-// 优先浏览器内置 TTS；无声或失败时回退到网络语音接口；全失败才提示。
-function speakTTS(text) {
-  if (!('speechSynthesis' in window) || !text) return Promise.resolve('noVoice');
-  return new Promise((resolve) => {
-    let started = false;
-    let timer = null;
-    let attempted = false;
-    const finish = (status) => {
-      if (timer) clearTimeout(timer);
-      resolve(status);
-    };
-    const trySpeak = () => {
-      if (attempted) return;
-      attempted = true;
-      try {
-        const voices = window.speechSynthesis.getVoices();
-        const zh = voices.find((v) => v.lang && v.lang.toLowerCase().startsWith('zh'));
-        if (!zh) {
-          finish('noVoice'); // 没有中文语音，直接走网络朗读
-          return;
-        }
-        const u = new SpeechSynthesisUtterance(text);
-        u.lang = 'zh-CN';
-        u.rate = 0.8;
-        u.voice = zh;
-        u.onstart = () => { started = true; finish('ok'); };
-        u.onerror = () => { if (!started) finish('fail'); };
-        window.speechSynthesis.cancel();
-        window.speechSynthesis.speak(u);
-        // 兜底：1.2 秒内未真正开始朗读则判定失败
-        timer = setTimeout(() => { if (!started) finish('fail'); }, 1200);
-      } catch {
-        finish('fail');
-      }
-    };
-    if (window.speechSynthesis.getVoices().length) {
-      trySpeak();
-    } else {
-      window.speechSynthesis.addEventListener('voiceschanged', trySpeak, { once: true });
-      setTimeout(trySpeak, 600);
-    }
-  });
-}
+// 依次尝试：有道网络语音 → 百度网络语音 → 系统 TTS；全失败才提示。
+const TTS_AUDIO_SOURCES = [
+  (t) => 'https://dict.youdao.com/dictvoice?audio=' + encodeURIComponent(t) + '&type=zh_CN',
+  (t) => 'https://fanyi.baidu.com/gettts?lan=zh&text=' + encodeURIComponent(t) + '&spd=3&source=web',
+];
 
-function speakAudioFallback(text) {
+function playAudio(url) {
   return new Promise((resolve) => {
     try {
       const audio = new Audio();
-      audio.src = 'https://dict.youdao.com/dictvoice?audio=' + encodeURIComponent(text) + '&type=zh_CN';
-      const timer = setTimeout(() => resolve(false), 3000);
+      audio.src = url;
+      const timer = setTimeout(() => resolve(false), 2500);
       audio
         .play()
         .then(() => { clearTimeout(timer); resolve(true); })
@@ -168,12 +130,75 @@ function speakAudioFallback(text) {
   });
 }
 
+async function speakAudioFallback(text) {
+  for (const makeUrl of TTS_AUDIO_SOURCES) {
+    const ok = await playAudio(makeUrl(text));
+    if (ok) return true;
+  }
+  return false;
+}
+
+function speakTTS(text) {
+  if (!('speechSynthesis' in window) || !text) return Promise.resolve('noVoice');
+  return new Promise((resolve) => {
+    let started = false;
+    let timer = null;
+    let attempted = false;
+    let tries = 0;
+    const finish = (status) => {
+      if (timer) clearTimeout(timer);
+      resolve(status);
+    };
+    const trySpeak = () => {
+      if (attempted) return;
+      try {
+        const voices = window.speechSynthesis.getVoices();
+        const zh = voices.find((v) => v.lang && v.lang.toLowerCase().startsWith('zh'));
+        if (!zh && tries < 10) {
+          // 语音列表可能还在异步加载，稍等再试
+          tries += 1;
+          setTimeout(trySpeak, 200);
+          return;
+        }
+        attempted = true;
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = 'zh-CN';
+        u.rate = 0.8;
+        if (zh) u.voice = zh;
+        u.onstart = () => { started = true; finish('ok'); };
+        u.onerror = () => { if (!started) finish('fail'); };
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(u);
+        // 兜底：1.2 秒内未真正开始朗读则判定失败
+        timer = setTimeout(() => { if (!started) finish('fail'); }, 1200);
+      } catch {
+        if (!attempted) { attempted = true; finish('fail'); }
+      }
+    };
+    if (window.speechSynthesis.getVoices().length) {
+      trySpeak();
+    } else {
+      window.speechSynthesis.addEventListener('voiceschanged', trySpeak, { once: true });
+      trySpeak();
+    }
+  });
+}
+
 async function speak(text) {
-  // 网络语音优先（稳定出声），系统语音兜底（断网/接口不可用时）
-  const okAudio = await speakAudioFallback(text);
-  if (okAudio) return;
-  const status = await speakTTS(text);
-  if (status !== 'ok') toast('当前环境不支持朗读，请更换浏览器试试');
+  // 手机浏览器系统语音一般可靠且零延迟，优先 TTS；
+  // 桌面内嵌浏览器常见无声 TTS，优先网络语音。
+  const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || '');
+  if (isMobile) {
+    const status = await speakTTS(text);
+    if (status === 'ok') return;
+    const okAudio = await speakAudioFallback(text);
+    if (!okAudio) toast('当前环境不支持朗读，请更换浏览器试试');
+  } else {
+    const okAudio = await speakAudioFallback(text);
+    if (okAudio) return;
+    const status = await speakTTS(text);
+    if (status !== 'ok') toast('当前环境不支持朗读，请更换浏览器试试');
+  }
 }
 
 // ── 轻量反馈 ──
