@@ -5,6 +5,7 @@
    ============================================================ */
 
 .hz-page {
+  --hz-sidebar-w: 260px;
   background: var(--bg-primary);
 }
 
@@ -441,12 +442,24 @@
   position: sticky;
   top: 52px;
   height: calc(100vh - 52px);
-  width: 260px;
+  width: var(--hz-sidebar-w);
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
   background: var(--bg-primary);
   border-right: 1px solid var(--border-light);
+}
+
+/* 学习页头部：与侧边栏等宽的偏移列，保证与卡片对齐 */
+.hz-study-header .header-row {
+  display: grid;
+  grid-template-columns: var(--hz-sidebar-w) 1fr;
+}
+
+.hz-study-header .header-row .header-inner {
+  grid-column: 2;
+  width: 100%;
+  justify-self: center;
 }
 
 .hz-sidebar-head {
@@ -600,6 +613,10 @@
 }
 
 @media (max-width: 767px) {
+  .hz-study-header .header-row {
+    grid-template-columns: 0 1fr;
+  }
+
   .hz-menu-btn {
     display: flex;
   }

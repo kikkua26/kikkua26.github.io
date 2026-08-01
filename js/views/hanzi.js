@@ -508,15 +508,18 @@ export async function renderHanziStudy(libId) {
   root = document.createElement('div');
   root.className = 'page hz-page';
   root.innerHTML = `
-    <header class="header">
-      <div class="header-inner">
-        <div class="header-left">
-          <a href="/hanzi" class="back-btn" data-link aria-label="返回字库列表">${ICONS.back}</a>
-          <span class="header-title" id="hzLibTitle">汉字小书房</span>
-        </div>
-        <div class="header-right">
-          ${headerLockButtonHtml()}
-          <button class="hz-menu-btn" id="hzMenuBtn" data-action="menu-open" aria-label="打开字库列表">${IC.menu}</button>
+    <header class="header hz-study-header">
+      <div class="header-row">
+        <div class="header-offset" aria-hidden="true"></div>
+        <div class="header-inner">
+          <div class="header-left">
+            <a href="/hanzi" class="back-btn" data-link aria-label="返回字库列表">${ICONS.back}</a>
+            <span class="header-title" id="hzLibTitle">汉字小书房</span>
+          </div>
+          <div class="header-right">
+            ${headerLockButtonHtml()}
+            <button class="hz-menu-btn" id="hzMenuBtn" data-action="menu-open" aria-label="打开字库列表">${IC.menu}</button>
+          </div>
         </div>
       </div>
     </header>
