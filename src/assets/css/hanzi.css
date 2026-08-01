@@ -785,26 +785,27 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 6px;
+  gap: 8px;
   min-width: 0;
-}
-
-.hz-words-title {
-  font-size: 12px;
-  color: var(--text-muted);
-  letter-spacing: 0.1em;
 }
 
 .hz-words-list {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-start;
+  max-width: 210px;
 }
 
 .hz-words-list span {
-  font-size: 17px;
-  color: var(--text-secondary);
-  letter-spacing: 0.14em;
+  padding: 5px 14px;
+  font-size: 16px;
+  letter-spacing: 0.12em;
+  color: var(--amber-dark);
+  background: linear-gradient(180deg, rgba(245, 158, 11, 0.14), rgba(245, 158, 11, 0.07));
+  border: 1px solid rgba(245, 158, 11, 0.32);
+  border-radius: 999px;
+  white-space: nowrap;
 }
 
 .hz-words-list .hz-words-empty {

@@ -482,7 +482,6 @@ export async function renderHanziStudy(libId) {
                 <div class="hz-char-cell" id="hzCharBig">?</div>
               </div>
               <div class="hz-words-unit">
-                <div class="hz-words-title">组词</div>
                 <div class="hz-words-list" id="hzCurrentWords"></div>
               </div>
             </div>
@@ -860,7 +859,7 @@ function renderCurrent() {
   $id('hzPinyin').textContent = current.p || '拼音待补充';
   const wordsEl = $id('hzCurrentWords');
   if (wordsEl) {
-    const words = (current.w || []).filter((w) => w.length >= 2);
+    const words = (current.w || []).filter((w) => w.length >= 2).slice(0, 3);
     wordsEl.innerHTML = words.length
       ? words.map((w) => `<span>${w}</span>`).join('')
       : '<span class="hz-words-empty">还没有组词</span>';
