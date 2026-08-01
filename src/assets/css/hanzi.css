@@ -491,6 +491,15 @@
   background: var(--bg-hover);
 }
 
+.hz-char-num {
+  width: 26px;
+  flex-shrink: 0;
+  text-align: right;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
 .hz-char-item.active {
   background: var(--accent-glow);
 }
@@ -731,14 +740,15 @@
 }
 
 /* ── 当前字卡 ── */
-.hz-current-main {
+.hz-current-card {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 22px;
+  text-align: center;
+  gap: 10px;
 }
 
 .hz-char-big {
-  flex-shrink: 0;
   width: 104px;
   height: 104px;
   display: flex;
@@ -755,14 +765,6 @@
   box-shadow: var(--shadow-sm);
 }
 
-.hz-current-side {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
 .hz-pinyin {
   font-size: 22px;
   font-weight: 600;
@@ -773,7 +775,9 @@
 .hz-current-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 4px;
 }
 
 .hz-mini-btn {
@@ -781,11 +785,11 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  min-height: 40px;
-  padding: 0 14px;
+  min-height: 44px;
+  padding: 0 18px;
   font-family: var(--font-body);
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 15px;
+  font-weight: 600;
   color: var(--text-secondary);
   background: var(--bg-primary);
   border: 1px solid var(--border);

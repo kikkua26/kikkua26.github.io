@@ -564,16 +564,12 @@ export async function renderHanziStudy(libId) {
       <main class="hz-main">
         <div class="hz-wrap">
           <section class="hz-card hz-current-card">
-            <div class="hz-current-main">
-              <div class="hz-char-big" id="hzCharBig">?</div>
-              <div class="hz-current-side">
-                <div class="hz-pinyin" id="hzPinyin">—</div>
-                <div class="hz-current-actions">
-                  <button class="hz-mini-btn" data-action="speak" title="读一读">${IC.speak}<span>读一读</span></button>
-                  <button class="hz-mini-btn" data-action="prev" title="上一个字">${IC.chevL}</button>
-                  <button class="hz-mini-btn" data-action="next" title="下一个字">${IC.chevR}</button>
-                </div>
-              </div>
+            <div class="hz-char-big" id="hzCharBig">?</div>
+            <div class="hz-pinyin" id="hzPinyin">—</div>
+            <div class="hz-current-actions">
+              <button class="hz-mini-btn" data-action="prev" title="上一个字">${IC.chevL}<span>上一个</span></button>
+              <button class="hz-mini-btn" data-action="speak" title="读一读">${IC.speak}<span>读一读</span></button>
+              <button class="hz-mini-btn" data-action="next" title="下一个字"><span>下一个</span>${IC.chevR}</button>
             </div>
           </section>
 
@@ -590,7 +586,6 @@ export async function renderHanziStudy(libId) {
             </div>
           </section>
 
-          <footer class="hz-foot" id="hzFoot">字库加载中…</footer>
         </div>
       </main>
     </div>
@@ -636,7 +631,6 @@ export async function renderHanziStudy(libId) {
     const startChar =
       saved && saved.l === lib.id && saved.c && libChars.includes(saved.c) ? saved.c : (lib.start || libChars[0] || DEFAULT_CHAR);
     selectChar(startChar);
-    refreshFootCount();
   } catch (e) {
     console.error('汉字数据加载失败:', e);
     const el = $id('hzPracticeLoading');
@@ -936,11 +930,6 @@ function safeStateSet(obj) {
   try { localStorage.setItem(STATE_KEY, JSON.stringify(obj)); } catch { /* ignore */ }
 }
 
-function refreshFootCount() {
-  const el = $id('hzFoot');
-  if (el && lib) el.textContent = `「${lib.name}」· 共 ${libChars.length} 字 · 笔画数据来自 Hanzi Writer`;
-}
-
 // ── 选字 ──
 function selectChar(c) {
   current = byChar.get(c) || { c, p: '', w: [] };
@@ -963,10 +952,11 @@ function renderCharList() {
   const list = $id('hzCharList');
   if (!list) return;
   list.innerHTML = libChars
-    .map((c) => {
+    .map((c, i) => {
       const e = byChar.get(c);
       return `
         <button class="hz-char-item" data-action="list-char" data-char="${c}">
+          <span class="hz-char-num">${i + 1}</span>
           <span class="hz-char-item-c">${c}</span>
           <span class="hz-char-item-p">${e ? e.p : ''}</span>
         </button>`;
