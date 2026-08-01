@@ -5,7 +5,7 @@ import { renderDeckDetail } from './views/detail.js';
 import { renderStudy } from './views/study.js';
 import { renderAbout } from './views/about.js';
 import { renderTools } from './views/tools.js';
-import { renderHanzi } from './views/hanzi.js';
+import { renderHanzi, renderHanziStudy } from './views/hanzi.js';
 import { setRouteHandler } from './navigation.js';
 import { ROUTES, SITE, UI } from './config.js';
 
@@ -35,9 +35,13 @@ async function handleRoute() {
         } else if (path === ROUTES.tools || path.startsWith(ROUTES.tools + '?')) {
             setPageMeta('工具箱', '专业制卡工具集');
             renderTools();
-        } else if (path === ROUTES.hanzi || path.startsWith(ROUTES.hanzi + '?')) {
-            setPageMeta('汉字小书房', '儿童汉字书写练习：认字、看笔顺、临写、组词');
+        } else if (path === ROUTES.hanzi) {
+            setPageMeta('汉字小书房', '儿童汉字书写学习：选择字库，认字、看笔顺、临写、组词');
             await renderHanzi();
+        } else if (path.startsWith(ROUTES.hanzi + '/')) {
+            const libId = decodeURIComponent(path.slice(ROUTES.hanzi.length + 1));
+            setPageMeta('汉字小书房', '儿童汉字书写练习：认字、看笔顺、临写、组词');
+            await renderHanziStudy(libId);
         } else {
             history.pushState(null, '', '/');
             handleRoute();

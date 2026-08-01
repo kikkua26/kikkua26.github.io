@@ -4,8 +4,10 @@
 // 页面私有类统一 hz- 前缀，不影响其他视图。
 
 import { ICONS } from '../icons.js';
+import { navigate } from '../navigation.js';
 
 const DATA_URL = '/data/hanzi/chars.json';
+const LIBRARIES_URL = '/data/hanzi/libraries.json';
 const STROKE_DIR = '/data/hanzi/strokes/';
 const CDN_STROKE = 'https://cdn.jsdelivr.net/npm/hanzi-writer-data@2.0/';
 const LIB_URL = '/js/lib/hanzi-writer.min.js';
@@ -64,6 +66,9 @@ let timers = new Set();
 let writers = [];          // 单字 writer: [demo, hint, practice]
 let wordWriters = [];      // 组词 writer: [hint, practice]
 let charsData = [];
+let libs = [];             // 字库注册表
+let lib = null;            // 当前字库
+let libChars = [];         // 当前字库的字列表
 let byChar = new Map();
 let strokeCache = new Map();
 let current = null;        // {c, p, w}
@@ -229,6 +234,13 @@ async function loadChars() {
   byChar = new Map(charsData.map((e) => [e.c, e]));
 }
 
+async function loadLibraries() {
+  const res = await fetch(LIBRARIES_URL + '?v=' + Date.now());
+  if (!res.ok) throw new Error('字库注册表加载失败');
+  const data = await res.json();
+  libs = data.libraries || [];
+}
+
 async function loadStroke(ch) {
   if (strokeCache.has(ch)) return strokeCache.get(ch);
   const tryFetch = async (url) => {
@@ -260,8 +272,64 @@ export async function renderHanzi() {
     <header class="header">
       <div class="header-inner">
         <div class="header-left">
-          <a href="/" class="back-btn" data-link aria-label="返回首页">${ICONS.back}</a>
           <span class="header-title">汉字小书房</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="hz-wrap">
+      <section class="hz-hero">
+        <h1 class="hz-hero-title">汉字小书房</h1>
+        <p class="hz-hero-sub">选一个字库，开始认字、学笔顺、写一写</p>
+      </section>
+
+      <section class="hz-lib-grid" id="hzLibGrid">
+        <div class="hz-lib-loading">字库加载中…</div>
+      </section>
+
+      <footer class="hz-foot">汉字小书房 · 笔画数据来自 Hanzi Writer</footer>
+    </div>
+  `;
+
+  const app = document.getElementById('app');
+  app.innerHTML = '';
+  app.appendChild(root);
+
+  try {
+    const data = await Promise.all([loadLib(), loadLibraries(), loadChars()]);
+    if (!live()) return;
+    const grid = $id('hzLibGrid');
+    grid.innerHTML = libs
+      .map(
+        (l) => `
+          <a class="hz-lib-card" href="/hanzi/${l.id}" data-link>
+            <div class="hz-lib-card-head">
+              <span class="hz-lib-name">${l.name}</span>
+              <span class="hz-lib-count">${l.count} 字</span>
+            </div>
+            <div class="hz-lib-subtitle">${l.subtitle}</div>
+            <p class="hz-lib-desc">${l.desc}</p>
+            <span class="hz-lib-link">开始学习 ${IC.arrowR}</span>
+          </a>`
+      )
+      .join('');
+  } catch (e) {
+    console.error('字库加载失败:', e);
+    const grid = $id('hzLibGrid');
+    if (grid) grid.innerHTML = '<div class="hz-lib-loading">字库加载失败，请刷新重试</div>';
+  }
+}
+
+export async function renderHanziStudy(libId) {
+  dispose();
+  root = document.createElement('div');
+  root.className = 'page hz-page';
+  root.innerHTML = `
+    <header class="header">
+      <div class="header-inner">
+        <div class="header-left">
+          <a href="/hanzi" class="back-btn" data-link aria-label="返回字库列表">${ICONS.back}</a>
+          <span class="header-title" id="hzLibTitle">汉字小书房</span>
         </div>
       </div>
     </header>
@@ -270,7 +338,7 @@ export async function renderHanzi() {
       <section class="hz-card hz-search-card">
         <div class="hz-search">
           <span class="hz-search-icon">${IC.search}</span>
-          <input id="hzSearch" type="search" placeholder="输入汉字或拼音，如：天 / tian"
+          <input id="hzSearch" type="search" placeholder="在字库里找字，输入汉字或拼音"
                  maxlength="20" autocomplete="off" spellcheck="false" aria-label="搜索汉字或拼音">
         </div>
         <div class="hz-results" id="hzResults" hidden></div>
@@ -382,7 +450,7 @@ export async function renderHanzi() {
         </div>
       </section>
 
-      <footer class="hz-foot">常用字库 <span id="hzFootCount">…</span> 字 · 笔画数据来自 Hanzi Writer</footer>
+      <footer class="hz-foot" id="hzFoot">字库加载中…</footer>
     </div>
   `;
 
@@ -395,14 +463,26 @@ export async function renderHanzi() {
   window.addEventListener('resize', onResize);
 
   try {
-    await Promise.all([loadLib(), loadChars()]);
+    await Promise.all([loadLib(), loadLibraries(), loadChars()]);
     if (!live()) return;
+    lib = libs.find((l) => l.id === libId) || null;
+    if (!lib) {
+      navigate('/hanzi');
+      return;
+    }
+    libChars = lib.all ? charsData.map((e) => e.c) : lib.chars.filter((c) => byChar.has(c));
+    const titleEl = $id('hzLibTitle');
+    if (titleEl) titleEl.textContent = lib.name;
+    const searchInput = $id('hzSearch');
+    if (searchInput) searchInput.placeholder = `在「${lib.name}」里找字，输入汉字或拼音`;
     const saved = safeStateGet();
-    const startChar = saved && byChar.has(saved.c) ? saved.c : DEFAULT_CHAR;
+    const startChar =
+      saved && saved.l === lib.id && saved.c && libChars.includes(saved.c) ? saved.c : (lib.start || libChars[0] || DEFAULT_CHAR);
     selectChar(startChar);
     if (saved && ['read', 'strokes', 'write', 'done'].includes(saved.step) && saved.step !== 'read') {
       goStep(saved.step);
     }
+    refreshFootCount();
   } catch (e) {
     console.error('汉字数据加载失败:', e);
     const el = $id('hzDemoLoading');
@@ -425,7 +505,7 @@ function safeStateSet(obj) {
 function selectChar(c) {
   current = byChar.get(c) || { c, p: '', w: [] };
   stopStrokeDemo();
-  safeStateSet({ c, step: 'read' });
+  safeStateSet({ c, step: 'read', l: lib ? lib.id : '' });
   word = null;
   wordChars = [];
   wordIdx = 0;
@@ -468,7 +548,7 @@ function renderWordList() {
 function goStep(s) {
   if (!live()) return;
   step = s;
-  safeStateSet({ c: current.c, step: s });
+  safeStateSet({ c: current.c, step: s, l: lib ? lib.id : '' });
   root.querySelectorAll('.hz-step').forEach((el) => {
     const i = ['read', 'strokes', 'write', 'done'].indexOf(el.dataset.step);
     const j = ['read', 'strokes', 'write', 'done'].indexOf(s);
@@ -484,8 +564,8 @@ function goStep(s) {
 }
 
 function refreshFootCount() {
-  const el = $id('hzFootCount');
-  if (el) el.textContent = String(charsData.length);
+  const el = $id('hzFoot');
+  if (el && lib) el.textContent = `「${lib.name}」· 共 ${libChars.length} 字 · 笔画数据来自 Hanzi Writer`;
 }
 
 function renderDone() {
@@ -891,7 +971,9 @@ function doSearch(raw) {
   const qTone = stripTone(q);
   const qLen = [...q].length;
   const matches = [];
-  for (const e of charsData) {
+  for (const c of libChars) {
+    const e = byChar.get(c);
+    if (!e) continue;
     let score = 0;
     let matchedWord = '';
     if (e.c === q) score = 100;
@@ -932,10 +1014,10 @@ function hideResults() {
 
 // ── 上一个 / 下一个 ──
 function stepChar(delta) {
-  const idx = charsData.findIndex((e) => e.c === current.c);
+  const idx = libChars.indexOf(current.c);
   if (idx < 0) return;
-  const next = (idx + delta + charsData.length) % charsData.length;
-  selectChar(charsData[next].c);
+  const next = (idx + delta + libChars.length) % libChars.length;
+  selectChar(libChars[next]);
 }
 
 // ── 事件 ──

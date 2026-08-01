@@ -1,7 +1,8 @@
 // kikkua · 汉字书写 — 3500 常用字数据构建脚本
 // 用法: node tools/hanzi/build-data.mjs <3500常用字.txt> <makemeahanzi dictionary.txt> <词频表.txt>
 // 输出:
-//   data/hanzi/chars.json   3500 常用字库（字 / 拼音 / 组词）
+//   data/hanzi/chars.json       3500 常用字库（字 / 拼音 / 组词）
+//   data/hanzi/libraries.json   字库注册表（启蒙 / 高频 / 全部）
 //
 // 策略：
 //   1. 前 267 个人工精选字（curated-chars.mjs）直接保留，拼音与组词质量优先；
@@ -16,6 +17,7 @@ import { CHARS } from './curated-chars.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const OUT_FILE = path.resolve(__dirname, '../../data/hanzi/chars.json');
+const OUT_LIBS = path.resolve(__dirname, '../../data/hanzi/libraries.json');
 
 const [chars3500Path, dictPath, cibiaoPath] = process.argv.slice(2);
 if (!chars3500Path || !dictPath || !cibiaoPath) {
@@ -91,16 +93,21 @@ console.log(`字典拼音: ${dict.size} 字`);
 // ── 读取词频表，构建 字 → 词候选项 ──
 // 行格式: 词 \t 拼音(数字声调) \t 排名
 const wordCands = new Map();
+const charFreq = new Map(); // 单字条目：字 → 排名（更接近真实字频）
 for (const line of fs.readFileSync(cibiaoPath, 'utf8').split('\n')) {
   if (!line.trim()) continue;
   const [w, py, rankStr] = line.split('\t');
   if (!w || !py) continue;
   const chars = [...w];
   const len = chars.length;
+  const rank = Number(rankStr) || 999999;
+  if (len === 1 && charSet.has(w)) {
+    if (!charFreq.has(w) || rank < charFreq.get(w)) charFreq.set(w, rank);
+    continue;
+  }
   if (len < 2 || len > 5) continue;
   if (!chars.every(isCJK)) continue;
   if (!chars.every((c) => charSet.has(c))) continue; // 只保留全为常用字的词
-  const rank = Number(rankStr) || 999999;
   const syls = py.split("'");
   chars.forEach((c, i) => {
     if (!wordCands.has(c)) wordCands.set(c, []);
@@ -176,6 +183,62 @@ const noWords = chars.filter((e) => !e.w.length).length;
 console.log(`已生成 ${OUT_FILE}`);
 console.log(`共 ${chars.length} 字（精选覆盖 ${curatedMap.size}，自动生成 ${chars.length - curatedMap.size}）`);
 console.log(`无拼音 ${noPinyin}，无组词 ${noWords}`);
+
+// ── 字库注册表 ──
+// 每个字的“词频综合得分”：所有包含它的词的排名倒数之和（越高越常用）
+const charScore = new Map();
+for (const c of charList) {
+  const cands = wordCands.get(c) || [];
+  const score =
+    cands.reduce((acc, i) => acc + 1 / (i.rank || 999999), 0) +
+    (charFreq.has(c) ? 1 / (charFreq.get(c) || 999999) : 0);
+  charScore.set(c, score);
+}
+const byScore = [...charList].sort((a, b) => charScore.get(b) - charScore.get(a));
+
+const libraries = [
+  {
+    id: 'qimeng',
+    name: '启蒙识字',
+    subtitle: '小学低年级精选字',
+    desc: '267 个人工精选的常用字，拼音与组词贴近儿童日常，适合启蒙入门。',
+    start: '一',
+    chars: CHARS.map((e) => e.c),
+  },
+  {
+    id: 'gaopin',
+    name: '高频常用字 500',
+    subtitle: '现代汉语词频前 500',
+    desc: '按现代汉语词频选出最常用的 500 个字，优先掌握高频字，阅读事半功倍。',
+    start: '一',
+    chars: byScore.slice(0, 500),
+  },
+  {
+    id: 'quanbu',
+    name: '常用字 3500',
+    subtitle: '现代汉语常用字表',
+    desc: '覆盖 2500 个常用字与 1000 个次常用字，全部配齐本地笔画数据，可搜索任意常用字。',
+    start: '一',
+    all: true,
+  },
+];
+
+const libPayload = {
+  version: 1,
+  updated: new Date().toISOString().slice(0, 10),
+  libraries: libraries.map((lib) => ({
+    id: lib.id,
+    name: lib.name,
+    subtitle: lib.subtitle,
+    desc: lib.desc,
+    start: lib.start,
+    count: lib.all ? chars.length : lib.chars.length,
+    ...(lib.all ? { all: true } : { chars: lib.chars }),
+  })),
+};
+fs.writeFileSync(OUT_LIBS, JSON.stringify(libPayload));
+console.log(`已生成 ${OUT_LIBS}`);
+libraries.forEach((lib) => console.log(`  字库 ${lib.name}: ${lib.all ? chars.length : lib.chars.length} 字`));
 
 // 抽查
 const samples = ['天', '的', '长', '地', '乐', '行', '蚌', '洼', '骤', '瓷'];
