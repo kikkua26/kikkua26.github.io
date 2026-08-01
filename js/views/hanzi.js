@@ -176,6 +176,8 @@ let cbDone = new Set(); // 抄写本：真正写完的格子索引
 let cbBlocked = new Set(); // 抄写本：无法书写（锁定/无笔画）的格子索引
 let cbOriginal = '';    // 抄写本：原文（含标点，显示在字帖上方）
 let qimengSet = new Set(); // 抄写本：未解锁时可书写的启蒙字集合
+let charsLoaded = false;  // 字库数据会话内缓存
+let libsLoaded = false;   // 字库注册表会话内缓存
 
 const later = (fn, ms) => {
   const id = setTimeout(fn, ms);
@@ -394,18 +396,22 @@ function celebrate(boxId) {
 
 // ── 数据加载 ──
 async function loadChars() {
-  const res = await fetch(DATA_URL + '?v=' + Date.now());
+  if (charsLoaded) return;
+  const res = await fetch(DATA_URL);
   if (!res.ok) throw new Error('字库加载失败');
   const data = await res.json();
   charsData = data.chars || [];
   byChar = new Map(charsData.map((e) => [e.c, e]));
+  charsLoaded = true;
 }
 
 async function loadLibraries() {
-  const res = await fetch(LIBRARIES_URL + '?v=' + Date.now());
+  if (libsLoaded) return;
+  const res = await fetch(LIBRARIES_URL);
   if (!res.ok) throw new Error('字库注册表加载失败');
   const data = await res.json();
   libs = data.libraries || [];
+  libsLoaded = true;
 }
 
 async function loadStroke(ch) {
