@@ -482,13 +482,19 @@ export async function renderHanzi() {
     await Promise.all([loadLib(), loadLibraries(), loadChars()]);
     if (!live()) return;
     const grid = $id('hzLibGrid');
+    const unlocked = isUnlocked();
     grid.innerHTML = libs
       .map((l) => {
-        const locked = LOCKED_LIBS.has(l.id);
+        const needUnlock = LOCKED_LIBS.has(l.id) && !unlocked;
+        const badge = LOCKED_LIBS.has(l.id)
+          ? needUnlock
+            ? `<span class="hz-lib-lock-badge">${IC.lock} 已加密</span>`
+            : `<span class="hz-lib-lock-badge hz-lib-unlocked">✓ 已解锁</span>`
+          : '';
         return `
-          <a class="hz-lib-card${locked ? ' hz-lib-locked' : ''}" href="/hanzi/${l.id}" data-link${locked ? ' data-locked="1"' : ''}>
+          <a class="hz-lib-card${needUnlock ? ' hz-lib-locked' : ''}" href="/hanzi/${l.id}" data-link${needUnlock ? ' data-locked="1"' : ''}>
             <div class="hz-lib-card-head">
-              <span class="hz-lib-name">${l.name}${locked ? `<span class="hz-lib-lock-badge">${IC.lock} 已加密</span>` : ''}</span>
+              <span class="hz-lib-name">${l.name}${badge}</span>
               <span class="hz-lib-count">${l.count} 字</span>
             </div>
             <div class="hz-lib-subtitle">${l.subtitle}</div>

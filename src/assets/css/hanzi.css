@@ -145,6 +145,12 @@
   vertical-align: middle;
 }
 
+.hz-lib-lock-badge.hz-lib-unlocked {
+  color: var(--success);
+  background: var(--success-glow);
+  border-color: rgba(5, 150, 105, 0.3);
+}
+
 /* ── 抄写本 ── */
 .hz-cb-text {
   width: 100%;
