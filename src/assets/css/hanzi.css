@@ -776,6 +776,27 @@
   100% { opacity: 0; }
 }
 
+/* ── 庆祝纸屑 ── */
+.hz-confetti {
+  position: fixed;
+  z-index: 1300;
+  border-radius: 2px;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  animation: hzConfetti 1.15s ease-out forwards;
+}
+
+@keyframes hzConfetti {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(0deg) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) rotate(var(--rot)) scale(0.5);
+  }
+}
+
 /* ── Toast ── */
 .hz-toast {
   position: fixed;

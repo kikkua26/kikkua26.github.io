@@ -214,6 +214,31 @@ function toast(text) {
   later(() => { el.classList.remove('show'); later(() => el.remove(), 350); }, 2400);
 }
 
+// ── 庆祝特效（整字写完后五彩纸屑） ──
+function celebrate(boxId) {
+  const box = $id(boxId);
+  const rect = box ? box.getBoundingClientRect() : null;
+  const cx = rect ? rect.left + rect.width / 2 : window.innerWidth / 2;
+  const cy = rect ? rect.top + rect.height / 2 : window.innerHeight / 3;
+  const colors = ['#f59e0b', '#0d9488', '#e74c3c', '#3b82f6', '#a855f7', '#10b981'];
+  for (let i = 0; i < 26; i++) {
+    const p = document.createElement('span');
+    p.className = 'hz-confetti';
+    const angle = (i / 26) * Math.PI * 2 + Math.random() * 0.6;
+    const dist = 50 + Math.random() * 95;
+    p.style.left = cx + 'px';
+    p.style.top = cy + 'px';
+    p.style.setProperty('--dx', Math.cos(angle) * dist + 'px');
+    p.style.setProperty('--dy', Math.sin(angle) * dist - 40 + 'px');
+    p.style.setProperty('--rot', Math.round(180 + Math.random() * 320) + 'deg');
+    p.style.background = colors[i % colors.length];
+    p.style.width = 6 + Math.random() * 5 + 'px';
+    p.style.height = 10 + Math.random() * 6 + 'px';
+    document.body.appendChild(p);
+    later(() => p.remove(), 1300);
+  }
+}
+
 // ── 数据加载 ──
 async function loadChars() {
   const res = await fetch(DATA_URL + '?v=' + Date.now());
@@ -683,13 +708,13 @@ function startCbQuiz() {
     onCorrectStroke: (data) => {
       if (!live()) return;
       expected = data.strokeNum + 1;
-      floatMsg(pick(OK_MSGS), true);
       if (expected < totalStrokes) later(() => startStrokeDemo(expected), 450);
     },
     onMistake: () => floatMsg(pick(ERR_MSGS), false),
     onComplete: () => {
       if (!live()) return;
       stopStrokeDemo();
+      celebrate('cbBox');
       floatMsg('这个字写好了！', true);
       later(() => { cbIdx += 1; cbStartNext(); }, 600);
     },
@@ -698,6 +723,7 @@ function startCbQuiz() {
 
 function cbFinish() {
   renderSheet();
+  celebrate('cbBox');
   floatMsg('整篇写完了！', true);
 }
 
@@ -895,7 +921,6 @@ function startPractice() {
     onCorrectStroke: (data) => {
       if (!live()) return;
       expected = data.strokeNum + 1;
-      floatMsg(pick(OK_MSGS), true);
       if (expected < totalStrokes) later(() => startStrokeDemo(expected), 450);
     },
     onMistake: () => floatMsg(pick(ERR_MSGS), false),
@@ -903,7 +928,8 @@ function startPractice() {
       if (!live()) return;
       expected = totalStrokes;
       stopStrokeDemo();
-      floatMsg('全部完成！', true);
+      celebrate('hzPracticeBox');
+      floatMsg('太棒了！', true);
     },
   });
 }
