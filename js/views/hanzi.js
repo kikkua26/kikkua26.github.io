@@ -565,7 +565,7 @@ export async function renderHanziStudy(libId) {
         <div class="hz-wrap">
           <section class="hz-card hz-current-card">
             <div class="hz-current-top">
-              <div class="hz-current-left">
+              <div class="hz-current-tile">
                 <div class="hz-pinyin" id="hzPinyin">—</div>
                 <div class="hz-char-big" id="hzCharBig">?</div>
               </div>
