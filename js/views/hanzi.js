@@ -587,7 +587,7 @@ function renderSheet() {
   sheet.innerHTML = cbChars
     .map((ch, i) => {
       const cls = i < cbIdx ? 'done' : i === cbIdx ? 'current' : '';
-      return `<span class="hz-cb-cell ${cls}">${i < cbIdx ? '✓' : ch}</span>`;
+      return `<span class="hz-cb-cell ${cls}">${ch}</span>`;
     })
     .join('');
   const count = $id('cbSheetCount');

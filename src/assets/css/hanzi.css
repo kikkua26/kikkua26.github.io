@@ -197,8 +197,8 @@
 }
 
 .hz-cb-cell.done {
-  color: #fff;
-  font-size: 18px;
+  color: var(--accent-dark);
+  font-size: 26px;
   background: var(--success-glow);
   border-color: var(--success-light);
 }
