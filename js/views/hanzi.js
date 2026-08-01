@@ -544,13 +544,7 @@ export async function renderCopybook() {
     <div class="hz-wrap">
       <section class="hz-card" id="cbComposeCard">
         <h2 class="hz-card-title">写一句话</h2>
-        <p class="hz-card-desc">搜索汉字点一下加入句子，或直接输入文字</p>
-        <div class="hz-search">
-          <span class="hz-search-icon">${IC.search}</span>
-          <input id="cbSearch" type="search" placeholder="搜索汉字或拼音，点一下加入句子"
-                 maxlength="20" autocomplete="off" spellcheck="false" aria-label="搜索汉字或拼音">
-        </div>
-        <div class="hz-results" id="cbResults" hidden></div>
+        <p class="hz-card-desc">直接输入一句话，生成一张字帖</p>
         <textarea id="cbText" class="hz-cb-text" rows="3" maxlength="80"
                   placeholder="也可以直接在这里输入一句话，如：好好学习 天天向上"></textarea>
         <div class="hz-pane-actions">
@@ -564,6 +558,7 @@ export async function renderCopybook() {
           <span class="hz-cb-sheet-title">你的字帖</span>
           <span class="hz-cb-sheet-count" id="cbSheetCount"></span>
         </div>
+        <div class="hz-cb-note" id="cbNote" hidden></div>
         <div class="hz-cb-sheet" id="cbSheet"></div>
         <div class="hz-cb-current">
           <div class="hz-cb-char" id="cbCharBig">?</div>
@@ -607,69 +602,35 @@ export async function renderCopybook() {
   }
 }
 
-// 抄写本：搜索（全字库），点击加入句子
-function cbSearch(raw) {
-  const q = (raw || '').trim();
-  const box = $id('cbResults');
-  if (!box) return;
-  if (!q) {
-    box.hidden = true;
-    box.innerHTML = '';
-    return;
-  }
-  const qTone = stripTone(q);
-  const qLen = [...q].length;
-  const matches = [];
-  for (const e of charsData) {
-    let score = 0;
-    if (e.c === q) score = 100;
-    else if (qLen === 1 && stripTone(e.p) === qTone) score = 80;
-    else if (qLen <= 6 && stripTone(e.p).startsWith(qTone)) score = 60;
-    else {
-      const w = (e.w || []).find((wi) => wi.includes(q) || q.includes(wi));
-      if (w) score = 40;
-    }
-    if (score) matches.push(e);
-  }
-  matches.sort((a, b) => b.c.localeCompare(a.c, 'zh'));
-  const shown = matches.slice(0, MAX_RESULTS);
-  box.innerHTML = shown.length
-    ? `<div class="hz-results-head">找到 ${shown.length} 个字，点击加入句子</div>` +
-      shown
-        .map(
-          (e) => `
-            <button class="hz-result" data-action="cb-result" data-char="${e.c}">
-              <span class="hz-result-char">${e.c}</span>
-              <span class="hz-result-meta">
-                <span class="hz-result-pinyin">${e.p}</span>
-                <span class="hz-result-words">${(e.w || []).slice(0, 2).join('、')}</span>
-              </span>
-            </button>`
-        )
-        .join('')
-    : `<div class="hz-results-empty">没有找到，试试别的字或拼音吧</div>`;
-  box.hidden = false;
-}
-
-function cbAppendChar(c) {
-  const input = $id('cbText');
-  if (!input) return;
-  input.value = (input.value + c).slice(0, 80);
-  const box = $id('cbResults');
-  if (box) { box.hidden = true; box.innerHTML = ''; }
-  const search = $id('cbSearch');
-  if (search) search.value = '';
-}
+// 抄写本：标点不进字帖
+const CB_PUNCT = new Set('，。！？、；：“”‘’（）《》〈〉【】「」『』…—～·,.;:!?\'"()[]{}<>-_/\\|@#$%^&*+=~`');
 
 function cbGenerate() {
   const input = $id('cbText');
   if (!input) return;
   const text = (input.value || '').replace(/\s+/g, '');
   if (!text) {
-    toast('先输入或搜索几个字吧');
+    toast('先输入一句话吧');
     return;
   }
-  cbChars = [...text].slice(0, 60);
+  const chars = [...text].slice(0, 60);
+  // 标点剔除，字库外的字收集起来提示
+  cbChars = chars.filter((c) => !CB_PUNCT.has(c));
+  const missing = [...new Set(chars.filter((c) => !CB_PUNCT.has(c) && !byChar.has(c)))];
+  const note = $id('cbNote');
+  if (note) {
+    if (missing.length) {
+      note.hidden = false;
+      note.textContent = `以下字符不在字库中，练习时会尝试联网获取笔画，获取不到将自动跳过：${missing.join('、')}`;
+    } else {
+      note.hidden = true;
+      note.textContent = '';
+    }
+  }
+  if (!cbChars.length) {
+    toast('去掉标点后没有可写的字了');
+    return;
+  }
   cbIdx = 0;
   const compose = $id('cbComposeCard');
   const sheet = $id('cbSheetCard');
@@ -684,7 +645,7 @@ function renderSheet() {
   sheet.innerHTML = cbChars
     .map((ch, i) => {
       const cls = i < cbIdx ? 'done' : i === cbIdx ? 'current' : '';
-      return `<span class="hz-cb-cell ${cls}">${ch}</span>`;
+      return `<button class="hz-cb-cell ${cls}" data-action="cb-cell" data-index="${i}">${ch}</button>`;
     })
     .join('');
   const count = $id('cbSheetCount');
@@ -1116,7 +1077,11 @@ function onClick(e) {
     case 'next': stepChar(1); break;
     case 'speak': speak(current.c); break;
     case 'practice': setMode('practice'); break;
-    case 'cb-result': cbAppendChar(btn.dataset.char); break;
+    case 'cb-cell': {
+      cbIdx = Number(btn.dataset.index) || 0;
+      cbStartNext();
+      break;
+    }
     case 'cb-generate': cbGenerate(); break;
     case 'cb-clear': {
       const input = $id('cbText');
@@ -1137,11 +1102,6 @@ function onClick(e) {
 }
 
 function onInput(e) {
-  if (e.target.id === 'cbSearch') {
-    if (searchTimer) clearTimeout(searchTimer);
-    searchTimer = later(() => cbSearch(e.target.value), 220);
-    return;
-  }
   if (e.target.id !== 'hzSearch') return;
   if (searchTimer) clearTimeout(searchTimer);
   searchTimer = later(() => doSearch(e.target.value), 220);

@@ -167,6 +167,17 @@
   color: var(--text-muted);
 }
 
+.hz-cb-note {
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #92400e;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: var(--radius-md);
+}
+
 .hz-cb-sheet {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
@@ -183,10 +194,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 0;
   font-family: var(--font-display);
   font-size: 26px;
   font-weight: 600;
   color: rgba(140, 120, 95, 0.72);
+  cursor: pointer;
   border: 1.5px solid #d8cdbb;
   border-radius: 8px;
   background:
@@ -194,6 +207,11 @@
     linear-gradient(to bottom, transparent calc(50% - 0.5px), rgba(180, 140, 100, 0.14) calc(50% - 0.5px), rgba(180, 140, 100, 0.14) calc(50% + 0.5px), transparent calc(50% + 0.5px)),
     #fffdf9;
   transition: all var(--transition-normal);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.hz-cb-cell:hover {
+  border-color: var(--accent-light);
 }
 
 .hz-cb-cell.done {
@@ -679,6 +697,15 @@
 .hz-writer-box svg {
   display: block;
   touch-action: none;
+}
+
+/* ── 按钮行（居中） ── */
+.hz-pane-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 18px;
 }
 
 .hz-loading {
