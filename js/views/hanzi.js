@@ -11,6 +11,7 @@ const CDN_STROKE = 'https://cdn.jsdelivr.net/npm/hanzi-writer-data@2.0/';
 const LIB_URL = '/js/lib/hanzi-writer.min.js';
 const STATE_KEY = 'kikkua_hz_state';
 const MAX_RESULTS = 24;
+const DEFAULT_CHAR = '一';
 
 const OK_MSGS = ['真棒！', '太厉害了！', '好样的！', '写得好！', '继续加油！'];
 const ERR_MSGS = ['没关系，再试试！', '别着急～', '加油！', '再试一次！'];
@@ -318,7 +319,7 @@ export async function renderHanzi() {
     await Promise.all([loadLib(), loadChars()]);
     if (!live()) return;
     const saved = safeStateGet();
-    const startChar = saved && byChar.has(saved.c) ? saved.c : (charsData[0]?.c || '永');
+    const startChar = saved && byChar.has(saved.c) ? saved.c : DEFAULT_CHAR;
     selectChar(startChar);
     if (saved && ['read', 'strokes', 'write', 'done'].includes(saved.step) && saved.step !== 'read') {
       goStep(saved.step);
