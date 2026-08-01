@@ -42,7 +42,98 @@ const IC = {
   checkCircle: icon('<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>', 34),
   menu: icon('<line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="18" y2="18"/>', 20),
   book: icon('<path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>', 20),
+  lock: icon('<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>', 14),
 };
+
+// ── 解锁机制：高频/常用字加密，任一组密码全部解锁 ──
+const LOCKED_LIBS = new Set(['gaopin', 'quanbu']);
+const PASSWORD_HASHES = [
+  'cfc74e67de5125db5fb1b35a2a88540373d27acc04722a1ed7997746b078520e',
+  '0b7b4902f1a327f38716024eb168b12acbd37cad4a8fec8c26e06b51b0da98a9',
+  '96363908db98c1ba8cb3851a0e26ff235b238505177479881802f9c4bd6bc8df',
+  'd4a686541f57e638398f91cf86fc120f9f2721a5c921895d967692de932d0751',
+  '0c3b1867cacf6ddf32b3abf63bf0347cc2114c39e706d17b1d0c30709549c51d',
+  'b04f5d17bad13834a61215bb35949a82c52eadf8ef05ca29ab10671f3d425e28',
+  '09d866e0eef63f924501a8d0efe3d2bbdc7b50fe5cccd774fa225363dd685bb3',
+  'eab87bdc550601d7a6d014312a8b181346acce93cc4cc4ca03a7a2a9c5731129',
+  '0fbee05fa60856d2c41ca9e04ff7086ab93819cb1b03da72a9d3745c2f774663',
+  'b6d52e47a26f98396e84e0b9cc603168320130e2dae21475de2713afe3c2ab6f',
+  'f44977852132ba8dcbe63d5e91dab3bcd8ba3db776e09475370b4d85bb101660',
+  '203bb89e59a30ef2d10e82a9846db04b07fa4be658d1cf1634c9d9d7adee92d3',
+  '00a1a41521e4f3d299978b798248776f769366acc3df7a5315dc5fe3d06034dc',
+  'a6fd04236cacd6c6907511b0f2862f7dc35b44085d3db9e979ffe7a36ad0e5dd',
+  '8ba668cdc8b4435e56a8efceaead1931b891ec7e2d9e3bfc10c55aa388426ec4',
+  '18246417e4f8890a02b225fdd73fef5cfd4d606950e679b27bc5ea9add28513c',
+  'f0257b9cb209808ef1c4d2417ff915cb9fca25aabab6f982fca2cd62519dc11b',
+  'b6da587a82bf1762470bf3b1197bdf6e325d3034627da0cbb8802a220b174c01',
+  'bdc31847f1319708068575053b5613425db6d614925d1324a69dda42f5bb8646',
+  '6251690fc5da651943a4c47ef4efe0eecca0bcd9e66acedf7403172e45951575',
+];
+
+function isUnlocked() {
+  try { return localStorage.getItem('kikkua_hz_unlocked') === '1'; } catch { return false; }
+}
+function setUnlocked() {
+  try { localStorage.setItem('kikkua_hz_unlocked', '1'); } catch { /* ignore */ }
+}
+async function hashPassword(pw) {
+  const data = new TextEncoder().encode(pw);
+  const buf = await crypto.subtle.digest('SHA-256', data);
+  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+async function checkPassword(pw) {
+  try {
+    const h = await hashPassword(pw);
+    return PASSWORD_HASHES.includes(h);
+  } catch {
+    return false;
+  }
+}
+
+function showLockDialog(onSuccess) {
+  const overlay = document.createElement('div');
+  overlay.className = 'hz-lock-overlay';
+  overlay.innerHTML = `
+    <div class="hz-lock-dialog" role="dialog" aria-modal="true">
+      <div class="hz-lock-icon">${IC.lock}</div>
+      <h3 class="hz-lock-title">需要解锁密码</h3>
+      <p class="hz-lock-desc">「高频常用字 500」「常用字 3500」已加密，输入密码后全部解锁</p>
+      <input type="password" class="hz-lock-input" id="hzLockInput" placeholder="输入密码" autocomplete="off">
+      <div class="hz-lock-error" id="hzLockError" hidden>密码错误，再试试</div>
+      <div class="hz-lock-actions">
+        <button class="btn btn-secondary" id="hzLockCancel">取消</button>
+        <button class="btn btn-primary" id="hzLockOk">解锁</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  requestAnimationFrame(() => overlay.classList.add('show'));
+  const input = overlay.querySelector('#hzLockInput');
+  const error = overlay.querySelector('#hzLockError');
+  input.focus();
+  const close = () => {
+    overlay.classList.remove('show');
+    setTimeout(() => overlay.remove(), 250);
+  };
+  const ok = async () => {
+    if (await checkPassword(input.value)) {
+      setUnlocked();
+      close();
+      if (onSuccess) onSuccess();
+    } else {
+      error.hidden = false;
+      input.value = '';
+      input.focus();
+    }
+  };
+  overlay.querySelector('#hzLockOk').addEventListener('click', ok);
+  overlay.querySelector('#hzLockCancel').addEventListener('click', close);
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') ok();
+    if (e.key === 'Escape') close();
+  });
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+}
 
 // ── HanziWriter 懒加载 ──
 let libPromise = null;
@@ -82,7 +173,9 @@ let lastWriterWidth = 0;
 let cbChars = [];   // 抄写本：字帖字符
 let cbIdx = 0;      // 抄写本：当前书写位置
 let cbDone = new Set(); // 抄写本：真正写完的格子索引
+let cbBlocked = new Set(); // 抄写本：无法书写（锁定/无笔画）的格子索引
 let cbOriginal = '';    // 抄写本：原文（含标点，显示在字帖上方）
+let qimengSet = new Set(); // 抄写本：未解锁时可书写的启蒙字集合
 
 const later = (fn, ms) => {
   const id = setTimeout(fn, ms);
@@ -390,19 +483,28 @@ export async function renderHanzi() {
     if (!live()) return;
     const grid = $id('hzLibGrid');
     grid.innerHTML = libs
-      .map(
-        (l) => `
-          <a class="hz-lib-card" href="/hanzi/${l.id}" data-link>
+      .map((l) => {
+        const locked = LOCKED_LIBS.has(l.id);
+        return `
+          <a class="hz-lib-card${locked ? ' hz-lib-locked' : ''}" href="/hanzi/${l.id}" data-link${locked ? ' data-locked="1"' : ''}>
             <div class="hz-lib-card-head">
-              <span class="hz-lib-name">${l.name}</span>
+              <span class="hz-lib-name">${l.name}${locked ? `<span class="hz-lib-lock-badge">${IC.lock} 已加密</span>` : ''}</span>
               <span class="hz-lib-count">${l.count} 字</span>
             </div>
             <div class="hz-lib-subtitle">${l.subtitle}</div>
             <p class="hz-lib-desc">${l.desc}</p>
             <span class="hz-lib-link">开始学习 ${IC.arrowR}</span>
-          </a>`
-      )
+          </a>`;
+      })
       .join('');
+    grid.addEventListener('click', (e) => {
+      const card = e.target.closest('.hz-lib-card[data-locked]');
+      if (!card) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const href = card.getAttribute('href');
+      showLockDialog(() => navigate(href));
+    });
   } catch (e) {
     console.error('字库加载失败:', e);
     const grid = $id('hzLibGrid');
@@ -504,6 +606,10 @@ export async function renderHanziStudy(libId) {
       navigate('/hanzi');
       return;
     }
+    if (LOCKED_LIBS.has(lib.id) && !isUnlocked()) {
+      navigate('/hanzi');
+      return;
+    }
     libChars = lib.all ? charsData.map((e) => e.c) : lib.chars.filter((c) => byChar.has(c));
     const titleEl = $id('hzLibTitle');
     if (titleEl) titleEl.textContent = lib.name;
@@ -597,7 +703,8 @@ export async function renderCopybook() {
   root.addEventListener('mousedown', unlockAudio, { once: true });
 
   try {
-    await Promise.all([loadLib(), loadChars()]);
+    await Promise.all([loadLib(), loadLibraries(), loadChars()]);
+    qimengSet = new Set((libs.find((l) => l.id === 'qimeng')?.chars) || []);
   } catch (e) {
     console.error('数据加载失败:', e);
     const el = $id('cbLoading');
@@ -620,13 +727,24 @@ function cbGenerate() {
   // 标点剔除，字库外的字收集起来提示
   cbChars = chars.filter((c) => !CB_PUNCT.has(c));
   cbDone = new Set();
+  cbBlocked = new Set();
   cbOriginal = (input.value || '').replace(/\s+/g, ' ').trim();
-  const missing = [...new Set(chars.filter((c) => !CB_PUNCT.has(c) && !byChar.has(c)))];
+  const unlocked = isUnlocked();
+  const uniqueChars = [...new Set(chars.filter((c) => !CB_PUNCT.has(c)))];
+  const missing = uniqueChars.filter((c) => !byChar.has(c));
+  const lockedChars = uniqueChars.filter((c) => byChar.has(c) && !unlocked && !qimengSet.has(c));
   const note = $id('cbNote');
   if (note) {
+    const parts = [];
+    if (lockedChars.length) {
+      parts.push(`以下字需要解锁后才能书写：${lockedChars.join('、')}`);
+    }
     if (missing.length) {
+      parts.push(`以下字符不在字库中，练习时会尝试联网获取笔画，获取不到将自动跳过：${missing.join('、')}`);
+    }
+    if (parts.length) {
       note.hidden = false;
-      note.textContent = `以下字符不在字库中，练习时会尝试联网获取笔画，获取不到将自动跳过：${missing.join('、')}`;
+      note.textContent = parts.join('\n');
     } else {
       note.hidden = true;
       note.textContent = '';
@@ -651,7 +769,7 @@ function renderSheet() {
   if (origEl) origEl.textContent = cbOriginal;
   sheet.innerHTML = cbChars
     .map((ch, i) => {
-      const cls = cbDone.has(i) ? 'done' : i === cbIdx ? 'current' : '';
+      const cls = cbDone.has(i) ? 'done' : i === cbIdx ? 'current' : cbBlocked.has(i) ? 'blocked' : '';
       return `<button class="hz-cb-cell ${cls}" data-action="cb-cell" data-index="${i}">${ch}</button>`;
     })
     .join('');
@@ -673,14 +791,25 @@ async function cbStartNext() {
   }
   renderSheet();
   const ch = cbChars[cbIdx];
+  // 未解锁时只能书写启蒙部分的字
+  if (!isUnlocked() && byChar.has(ch) && !qimengSet.has(ch)) {
+    floatMsg(`「${ch}」需要解锁后才能书写`, false);
+    cbBlocked.add(cbIdx);
+    cbIdx += 1;
+    while (cbIdx < cbChars.length && cbBlocked.has(cbIdx)) cbIdx += 1;
+    cbStartNext();
+    return;
+  }
   const loading = $id('cbLoading');
   if (loading) loading.hidden = false;
   const ok = await ensureStroke(ch);
   if (!live()) return;
   if (!ok) {
-    // 标点或无笔画数据的字：直接跳过
+    // 无笔画数据的字：直接跳过
     floatMsg(`「${ch}」没有笔画，跳过`, false);
+    cbBlocked.add(cbIdx);
     cbIdx += 1;
+    while (cbIdx < cbChars.length && cbBlocked.has(cbIdx)) cbIdx += 1;
     cbStartNext();
     return;
   }
@@ -761,9 +890,9 @@ function startCbQuiz() {
         cbDone.add(cbIdx);
         // 跳到下一个未写完的字；全部写完则结束
         let next = cbIdx + 1;
-        while (next < cbChars.length && cbDone.has(next)) next += 1;
+        while (next < cbChars.length && (cbDone.has(next) || cbBlocked.has(next))) next += 1;
         if (next >= cbChars.length) {
-          const undone = cbChars.findIndex((_, i) => !cbDone.has(i));
+          const undone = cbChars.findIndex((_, i) => !cbDone.has(i) && !cbBlocked.has(i));
           next = undone >= 0 ? undone : -1;
         }
         if (next < 0) {
@@ -1111,7 +1240,7 @@ function onClick(e) {
       break;
     }
     case 'cb-speak': speak(cbChars[Math.min(cbIdx, cbChars.length - 1)]); break;
-    case 'cb-restart': cbIdx = 0; cbDone = new Set(); cbStartNext(); break;
+    case 'cb-restart': cbIdx = 0; cbDone = new Set(); cbBlocked = new Set(); cbStartNext(); break;
     case 'cb-edit': {
       stopStrokeDemo();
       const compose = $id('cbComposeCard');

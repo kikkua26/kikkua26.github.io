@@ -124,6 +124,27 @@
   border-color: var(--amber);
 }
 
+/* ── 加密字库标识 ── */
+.hz-lib-locked {
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.hz-lib-lock-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+  padding: 2px 8px;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  color: #92400e;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 999px;
+  vertical-align: middle;
+}
+
 /* ── 抄写本 ── */
 .hz-cb-text {
   width: 100%;
@@ -240,6 +261,94 @@
   color: var(--accent-dark);
   box-shadow: 0 0 0 3px var(--accent-glow);
   animation: hzCbPulse 1.4s ease-in-out infinite;
+}
+
+.hz-cb-cell.blocked {
+  opacity: 0.4;
+}
+
+/* ── 解锁弹窗 ── */
+.hz-lock-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.hz-lock-overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.hz-lock-dialog {
+  width: 100%;
+  max-width: 360px;
+  padding: 30px 26px;
+  text-align: center;
+  background: var(--bg-primary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+
+.hz-lock-icon {
+  display: flex;
+  justify-content: center;
+  color: var(--amber);
+  margin-bottom: 12px;
+}
+
+.hz-lock-title {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 8px;
+}
+
+.hz-lock-desc {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+  margin: 0 0 18px;
+}
+
+.hz-lock-input {
+  width: 100%;
+  height: 46px;
+  padding: 0 14px;
+  font-size: 15px;
+  text-align: center;
+  color: var(--text-primary);
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  outline: none;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.hz-lock-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.hz-lock-error {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #c2410c;
+}
+
+.hz-lock-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 18px;
 }
 
 @keyframes hzCbPulse {
