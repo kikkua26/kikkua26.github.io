@@ -739,75 +739,34 @@
   border-radius: var(--radius-md);
 }
 
-/* ── 当前字卡 ── */
-.hz-current-card {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.hz-current-top {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 22px;
-}
-
-.hz-current-tile {
+/* ── 学习卡头部（字 + 拼音 + 组词） ── */
+.hz-study-head {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 2px;
-  flex-shrink: 0;
-  width: 128px;
-  height: 128px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
+  gap: 4px;
+  margin-bottom: 16px;
 }
 
 .hz-char-big {
   font-family: var(--font-display);
-  font-size: 66px;
-  line-height: 1;
+  font-size: 72px;
+  line-height: 1.1;
   font-weight: 600;
   color: var(--text-primary);
 }
 
 .hz-pinyin {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
   color: var(--accent-dark);
   letter-spacing: 0.02em;
-  margin-bottom: 2px;
 }
 
 .hz-current-words {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  flex: 1;
-  min-width: 0;
-}
-
-.hz-current-word {
-  padding: 6px 14px;
-  font-size: 16px;
-  letter-spacing: 0.1em;
-  color: var(--amber-dark);
-  background: var(--amber-glow);
-  border: 1px solid rgba(245, 158, 11, 0.28);
-  border-radius: 999px;
-  white-space: nowrap;
-}
-
-.hz-current-word-empty {
   font-size: 13px;
   color: var(--text-muted);
+  letter-spacing: 0.04em;
 }
 
 .hz-current-actions {
@@ -815,6 +774,7 @@
   flex-wrap: wrap;
   justify-content: center;
   gap: 10px;
+  margin-top: 14px;
 }
 
 .hz-mini-btn {
@@ -1024,17 +984,8 @@
     padding: 16px;
   }
 
-  .hz-current-tile {
-    width: 108px;
-    height: 108px;
-  }
-
   .hz-char-big {
-    font-size: 54px;
-  }
-
-  .hz-current-top {
-    gap: 16px;
+    font-size: 60px;
   }
 
 }
