@@ -368,8 +368,7 @@ export async function renderHanziStudy(libId) {
               </div>
             </div>
             <div class="hz-demo-controls">
-              <button class="btn btn-primary" data-action="play-all">${IC.play} 播放</button>
-              <button class="btn btn-secondary" data-action="practice">${IC.pen} 练习</button>
+              <button class="btn btn-primary" data-action="practice">${IC.pen} 练习</button>
             </div>
           </section>
 
@@ -569,21 +568,24 @@ function clearEl(id) {
 function setMode(m) {
   mode = m;
   if (m === 'practice') startPractice();
+  else if (m === 'idle') startFullCharLoop();
 }
 
-// ── 播放整字 ──
-function playWholeChar() {
+// ── 整字循环演示（进入字后自动播放） ──
+function startFullCharLoop() {
   if (!writers.length || !live()) return;
   const demoW = writers[1];
   demoToken += 1;
   const token = demoToken;
-  setMode('play');
   try {
     demoW.hideCharacter({ duration: 0 });
     demoW.animateCharacter({
       onComplete: () => {
         if (!live() || token !== demoToken) return;
-        mode = 'idle';
+        later(() => {
+          if (token !== demoToken) return;
+          startFullCharLoop();
+        }, 1200);
       },
     });
   } catch { /* 演示异常时静默跳过 */ }
@@ -729,7 +731,6 @@ function onClick(e) {
     case 'prev': stepChar(-1); break;
     case 'next': stepChar(1); break;
     case 'speak': speak(current.c); break;
-    case 'play-all': playWholeChar(); break;
     case 'practice': setMode('practice'); break;
   }
 }
