@@ -41,6 +41,7 @@ const IC = {
   arrowR: icon('<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>', 15),
   checkCircle: icon('<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>', 34),
   menu: icon('<line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="18" y2="18"/>', 20),
+  book: icon('<path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>', 20),
 };
 
 // ── HanziWriter 懒加载 ──
@@ -78,6 +79,8 @@ let demoToken = 0;
 let searchTimer = null;
 let resizeTimer = null;
 let lastWriterWidth = 0;
+let cbChars = [];   // 抄写本：字帖字符
+let cbIdx = 0;      // 抄写本：当前书写位置
 
 const later = (fn, ms) => {
   const id = setTimeout(fn, ms);
@@ -266,8 +269,18 @@ export async function renderHanzi() {
     <div class="hz-wrap">
       <section class="hz-hero">
         <h1 class="hz-hero-title">汉字小书房</h1>
-        <p class="hz-hero-sub">选一个字库，开始认字、学笔顺、写一写</p>
+        <p class="hz-hero-sub">选一个字库，或打开抄写本，开始练字</p>
       </section>
+
+      <a class="hz-lib-card hz-copybook-entry" href="/hanzi/copybook" data-link>
+        <div class="hz-lib-card-head">
+          <span class="hz-lib-name">${IC.book} 抄写本</span>
+          <span class="hz-lib-count">字帖</span>
+        </div>
+        <div class="hz-lib-subtitle">把想写的字组成一句话</div>
+        <p class="hz-lib-desc">搜索或输入汉字组成句子，生成一张田字格字帖，像练字本一样逐字临写。</p>
+        <span class="hz-lib-link">打开抄写本 ${IC.arrowR}</span>
+      </a>
 
       <section class="hz-lib-grid" id="hzLibGrid">
         <div class="hz-lib-loading">字库加载中…</div>
@@ -416,6 +429,276 @@ export async function renderHanziStudy(libId) {
     const el = $id('hzPracticeLoading');
     if (el) el.textContent = '数据加载失败，请刷新重试';
   }
+}
+
+// ── 抄写本 ──
+export async function renderCopybook() {
+  dispose();
+  cbChars = [];
+  cbIdx = 0;
+  root = document.createElement('div');
+  root.className = 'page hz-page';
+  root.innerHTML = `
+    <header class="header">
+      <div class="header-inner">
+        <div class="header-left">
+          <a href="/hanzi" class="back-btn" data-link aria-label="返回字库列表">${ICONS.back}</a>
+          <span class="header-title">抄写本</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="hz-wrap">
+      <section class="hz-card" id="cbComposeCard">
+        <h2 class="hz-card-title">写一句话</h2>
+        <p class="hz-card-desc">搜索汉字点一下加入句子，或直接输入文字</p>
+        <div class="hz-search">
+          <span class="hz-search-icon">${IC.search}</span>
+          <input id="cbSearch" type="search" placeholder="搜索汉字或拼音，点一下加入句子"
+                 maxlength="20" autocomplete="off" spellcheck="false" aria-label="搜索汉字或拼音">
+        </div>
+        <div class="hz-results" id="cbResults" hidden></div>
+        <textarea id="cbText" class="hz-cb-text" rows="3" maxlength="80"
+                  placeholder="也可以直接在这里输入一句话，如：好好学习 天天向上"></textarea>
+        <div class="hz-pane-actions">
+          <button class="btn btn-primary" data-action="cb-generate">生成字帖 ${IC.arrowR}</button>
+          <button class="btn btn-secondary" data-action="cb-clear">清空</button>
+        </div>
+      </section>
+
+      <section class="hz-card" id="cbSheetCard" hidden>
+        <div class="hz-cb-sheet-head">
+          <span class="hz-cb-sheet-title">你的字帖</span>
+          <span class="hz-cb-sheet-count" id="cbSheetCount"></span>
+        </div>
+        <div class="hz-cb-sheet" id="cbSheet"></div>
+        <div class="hz-cb-current">
+          <div class="hz-cb-char" id="cbCharBig">?</div>
+          <div class="hz-cb-pinyin" id="cbPinyin"></div>
+          <button class="hz-mini-btn" data-action="cb-speak">${IC.speak} 读一读</button>
+        </div>
+        <div class="hz-writer-center">
+          <div class="hz-writer-box hz-write-box" id="cbBox">
+            <div id="cbWriter"></div>
+            <div class="hz-write-layer" id="cbDemo"></div>
+            <div class="hz-loading" id="cbLoading">加载中…</div>
+          </div>
+        </div>
+        <div class="hz-pane-actions">
+          <button class="btn btn-secondary" data-action="cb-restart">重新开始</button>
+          <button class="btn btn-secondary" data-action="cb-edit">换一句</button>
+        </div>
+      </section>
+    </div>
+
+    <div class="hz-feedback" id="hzFeedback" aria-live="polite"></div>
+  `;
+
+  const app = document.getElementById('app');
+  app.innerHTML = '';
+  app.appendChild(root);
+
+  root.addEventListener('click', onClick);
+  root.addEventListener('input', onInput);
+
+  try {
+    await Promise.all([loadLib(), loadChars()]);
+  } catch (e) {
+    console.error('数据加载失败:', e);
+    const el = $id('cbLoading');
+    if (el) el.textContent = '数据加载失败，请刷新重试';
+  }
+}
+
+// 抄写本：搜索（全字库），点击加入句子
+function cbSearch(raw) {
+  const q = (raw || '').trim();
+  const box = $id('cbResults');
+  if (!box) return;
+  if (!q) {
+    box.hidden = true;
+    box.innerHTML = '';
+    return;
+  }
+  const qTone = stripTone(q);
+  const qLen = [...q].length;
+  const matches = [];
+  for (const e of charsData) {
+    let score = 0;
+    if (e.c === q) score = 100;
+    else if (qLen === 1 && stripTone(e.p) === qTone) score = 80;
+    else if (qLen <= 6 && stripTone(e.p).startsWith(qTone)) score = 60;
+    else {
+      const w = (e.w || []).find((wi) => wi.includes(q) || q.includes(wi));
+      if (w) score = 40;
+    }
+    if (score) matches.push(e);
+  }
+  matches.sort((a, b) => b.c.localeCompare(a.c, 'zh'));
+  const shown = matches.slice(0, MAX_RESULTS);
+  box.innerHTML = shown.length
+    ? `<div class="hz-results-head">找到 ${shown.length} 个字，点击加入句子</div>` +
+      shown
+        .map(
+          (e) => `
+            <button class="hz-result" data-action="cb-result" data-char="${e.c}">
+              <span class="hz-result-char">${e.c}</span>
+              <span class="hz-result-meta">
+                <span class="hz-result-pinyin">${e.p}</span>
+                <span class="hz-result-words">${(e.w || []).slice(0, 2).join('、')}</span>
+              </span>
+            </button>`
+        )
+        .join('')
+    : `<div class="hz-results-empty">没有找到，试试别的字或拼音吧</div>`;
+  box.hidden = false;
+}
+
+function cbAppendChar(c) {
+  const input = $id('cbText');
+  if (!input) return;
+  input.value = (input.value + c).slice(0, 80);
+  const box = $id('cbResults');
+  if (box) { box.hidden = true; box.innerHTML = ''; }
+  const search = $id('cbSearch');
+  if (search) search.value = '';
+}
+
+function cbGenerate() {
+  const input = $id('cbText');
+  if (!input) return;
+  const text = (input.value || '').replace(/\s+/g, '');
+  if (!text) {
+    toast('先输入或搜索几个字吧');
+    return;
+  }
+  cbChars = [...text].slice(0, 60);
+  cbIdx = 0;
+  const compose = $id('cbComposeCard');
+  const sheet = $id('cbSheetCard');
+  if (compose) compose.hidden = true;
+  if (sheet) sheet.hidden = false;
+  cbStartNext();
+}
+
+function renderSheet() {
+  const sheet = $id('cbSheet');
+  if (!sheet) return;
+  sheet.innerHTML = cbChars
+    .map((ch, i) => {
+      const cls = i < cbIdx ? 'done' : i === cbIdx ? 'current' : '';
+      return `<span class="hz-cb-cell ${cls}">${i < cbIdx ? '✓' : ch}</span>`;
+    })
+    .join('');
+  const count = $id('cbSheetCount');
+  if (count) count.textContent = `共 ${cbChars.length} 字`;
+  const ch = cbChars[Math.min(cbIdx, cbChars.length - 1)];
+  const entry = byChar.get(ch);
+  const big = $id('cbCharBig');
+  const pinyin = $id('cbPinyin');
+  if (big) big.textContent = ch;
+  if (pinyin) pinyin.textContent = entry ? entry.p : '';
+}
+
+async function cbStartNext() {
+  if (!live()) return;
+  if (cbIdx >= cbChars.length) {
+    cbFinish();
+    return;
+  }
+  renderSheet();
+  const ch = cbChars[cbIdx];
+  const loading = $id('cbLoading');
+  if (loading) loading.hidden = false;
+  const ok = await ensureStroke(ch);
+  if (!live()) return;
+  if (!ok) {
+    // 标点或无笔画数据的字：直接跳过
+    floatMsg(`「${ch}」没有笔画，跳过`, false);
+    cbIdx += 1;
+    cbStartNext();
+    return;
+  }
+  buildCopybookWriters();
+  startCbQuiz();
+}
+
+function buildCopybookWriters() {
+  writers.forEach((w) => { try { w.cancelQuiz && w.cancelQuiz(); } catch { /* ignore */ } });
+  writers = [];
+  const lib = window.HanziWriter;
+  const size = writerSize('cbBox');
+  const ch = cbChars[cbIdx];
+  clearEl('cbWriter');
+  clearEl('cbDemo');
+  writers.push(
+    lib.create($id('cbWriter'), ch, {
+      charData: strokeData,
+      width: size,
+      height: size,
+      strokeColor: '#0d9488',
+      radicalColor: '#b45309',
+      outlineColor: 'rgba(228, 220, 207, 0.4)',
+      showOutline: true,
+      showCharacter: false,
+      drawingColor: '#0d9488',
+      drawingWidth: 50,
+      strokeAnimationSpeed: 0.9,
+    })
+  );
+  writers.push(
+    lib.create($id('cbDemo'), ch, {
+      charData: strokeData,
+      width: size,
+      height: size,
+      strokeColor: '#f59e0b',
+      radicalColor: '#f59e0b',
+      showOutline: false,
+      showCharacter: false,
+      strokeAnimationSpeed: 0.8,
+      delayBetweenStrokes: 250,
+    })
+  );
+  const loading = $id('cbLoading');
+  if (loading) loading.hidden = true;
+}
+
+function startCbQuiz() {
+  if (!writers.length || !live()) return;
+  stopStrokeDemo();
+  const pracW = writers[0];
+  const demoW = writers[1];
+  expected = 0;
+  try { pracW.cancelQuiz(); } catch { /* ignore */ }
+  pracW.hideCharacter({ duration: 0 });
+  pracW.showOutline();
+  try { demoW.hideCharacter({ duration: 0 }); } catch { /* ignore */ }
+  later(() => startStrokeDemo(0), 400);
+  pracW.quiz({
+    showOutline: true,
+    showHintAfterMisses: 3,
+    acceptMistakes: false,
+    highlightOnComplete: true,
+    markStrokeCorrectAfterMisses: 8,
+    onCorrectStroke: (data) => {
+      if (!live()) return;
+      expected = data.strokeNum + 1;
+      floatMsg(pick(OK_MSGS), true);
+      if (expected < totalStrokes) later(() => startStrokeDemo(expected), 450);
+    },
+    onMistake: () => floatMsg(pick(ERR_MSGS), false),
+    onComplete: () => {
+      if (!live()) return;
+      stopStrokeDemo();
+      floatMsg('这个字写好了！', true);
+      later(() => { cbIdx += 1; cbStartNext(); }, 600);
+    },
+  });
+}
+
+function cbFinish() {
+  renderSheet();
+  floatMsg('整篇写完了！', true);
 }
 
 function safeStateGet() {
@@ -732,10 +1015,32 @@ function onClick(e) {
     case 'next': stepChar(1); break;
     case 'speak': speak(current.c); break;
     case 'practice': setMode('practice'); break;
+    case 'cb-result': cbAppendChar(btn.dataset.char); break;
+    case 'cb-generate': cbGenerate(); break;
+    case 'cb-clear': {
+      const input = $id('cbText');
+      if (input) input.value = '';
+      break;
+    }
+    case 'cb-speak': speak(cbChars[Math.min(cbIdx, cbChars.length - 1)]); break;
+    case 'cb-restart': cbIdx = 0; cbStartNext(); break;
+    case 'cb-edit': {
+      stopStrokeDemo();
+      const compose = $id('cbComposeCard');
+      const sheet = $id('cbSheetCard');
+      if (compose) compose.hidden = false;
+      if (sheet) sheet.hidden = true;
+      break;
+    }
   }
 }
 
 function onInput(e) {
+  if (e.target.id === 'cbSearch') {
+    if (searchTimer) clearTimeout(searchTimer);
+    searchTimer = later(() => cbSearch(e.target.value), 220);
+    return;
+  }
   if (e.target.id !== 'hzSearch') return;
   if (searchTimer) clearTimeout(searchTimer);
   searchTimer = later(() => doSearch(e.target.value), 220);

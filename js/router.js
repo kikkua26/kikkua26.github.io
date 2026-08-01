@@ -5,7 +5,7 @@ import { renderDeckDetail } from './views/detail.js';
 import { renderStudy } from './views/study.js';
 import { renderAbout } from './views/about.js';
 import { renderTools } from './views/tools.js';
-import { renderHanzi, renderHanziStudy } from './views/hanzi.js';
+import { renderHanzi, renderHanziStudy, renderCopybook } from './views/hanzi.js';
 import { setRouteHandler } from './navigation.js';
 import { ROUTES, SITE, UI } from './config.js';
 
@@ -38,6 +38,9 @@ async function handleRoute() {
         } else if (path === ROUTES.hanzi) {
             setPageMeta('汉字小书房', '儿童汉字书写学习：选择字库，认字、看笔顺、临写、组词');
             await renderHanzi();
+        } else if (path.startsWith(ROUTES.hanzi + '/copybook')) {
+            setPageMeta('抄写本', '把想写的字组成一句话，像字帖一样逐字临写');
+            await renderCopybook();
         } else if (path.startsWith(ROUTES.hanzi + '/')) {
             const libId = decodeURIComponent(path.slice(ROUTES.hanzi.length + 1));
             setPageMeta('汉字小书房', '儿童汉字书写练习：认字、看笔顺、临写、组词');

@@ -113,6 +113,131 @@
   color: var(--text-muted);
 }
 
+/* ── 抄写本入口（导航页） ── */
+.hz-copybook-entry {
+  margin-bottom: 14px;
+  border-color: rgba(245, 158, 11, 0.35);
+  background: linear-gradient(180deg, rgba(245, 158, 11, 0.05), var(--bg-primary));
+}
+
+.hz-copybook-entry:hover {
+  border-color: var(--amber);
+}
+
+/* ── 抄写本 ── */
+.hz-cb-text {
+  width: 100%;
+  margin-top: 12px;
+  padding: 12px 14px;
+  font-family: var(--font-display);
+  font-size: 18px;
+  line-height: 1.8;
+  letter-spacing: 0.08em;
+  color: var(--text-primary);
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  outline: none;
+  resize: vertical;
+  min-height: 84px;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.hz-cb-text:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.hz-cb-sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.hz-cb-sheet-title {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.hz-cb-sheet-count {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.hz-cb-sheet {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
+  gap: 8px;
+  padding: 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  margin-bottom: 18px;
+}
+
+.hz-cb-cell {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 600;
+  color: rgba(140, 120, 95, 0.72);
+  border: 1.5px solid #d8cdbb;
+  border-radius: 8px;
+  background:
+    linear-gradient(to right, transparent calc(50% - 0.5px), rgba(180, 140, 100, 0.14) calc(50% - 0.5px), rgba(180, 140, 100, 0.14) calc(50% + 0.5px), transparent calc(50% + 0.5px)),
+    linear-gradient(to bottom, transparent calc(50% - 0.5px), rgba(180, 140, 100, 0.14) calc(50% - 0.5px), rgba(180, 140, 100, 0.14) calc(50% + 0.5px), transparent calc(50% + 0.5px)),
+    #fffdf9;
+  transition: all var(--transition-normal);
+}
+
+.hz-cb-cell.done {
+  color: #fff;
+  font-size: 18px;
+  background: var(--success-glow);
+  border-color: var(--success-light);
+}
+
+.hz-cb-cell.current {
+  border-color: var(--accent);
+  border-width: 2px;
+  color: var(--accent-dark);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+  animation: hzCbPulse 1.4s ease-in-out infinite;
+}
+
+@keyframes hzCbPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+}
+
+.hz-cb-current {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.hz-cb-char {
+  font-family: var(--font-display);
+  font-size: 34px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.hz-cb-pinyin {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--accent-dark);
+}
+
 /* ── 卡片 ── */
 .hz-study-layout {
   display: flex;
