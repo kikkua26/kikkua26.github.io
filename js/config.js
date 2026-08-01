@@ -22,6 +22,7 @@ export const ROUTES = {
     study: 'study/',
     about: 'about',
     tools: 'tools',
+    hanzi: 'hanzi',
 };
 
 export const DATA_PATHS = {
