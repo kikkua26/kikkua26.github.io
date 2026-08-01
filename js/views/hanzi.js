@@ -43,10 +43,12 @@ const IC = {
   menu: icon('<line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="18" y2="18"/>', 20),
   book: icon('<path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>', 20),
   lock: icon('<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>', 14),
+  service: icon('<path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>', 14),
 };
 
 // ── 解锁机制：高频/常用字加密，任一组密码全部解锁 ──
 const LOCKED_LIBS = new Set(['gaopin', 'quanbu']);
+const WECHAT_ID = 'kikkua2649';
 const PASSWORD_HASHES = [
   '573036530bb7190c445ff5fd346291fc120faad7f4c6ed0eaba56bf24fb45bfc',
   '2ad064da7a944b77c27d682efc65178f913240a9c730cb7e98819f496140e255',
@@ -100,6 +102,7 @@ function showLockDialog(onSuccess) {
       <p class="hz-lock-desc">「高频常用字 500」「常用字 3500」已加密，输入密码后全部解锁</p>
       <input type="password" class="hz-lock-input" id="hzLockInput" placeholder="输入密码" autocomplete="off">
       <div class="hz-lock-error" id="hzLockError" hidden>密码错误，再试试</div>
+      <div class="hz-lock-wechat">没有密钥？加微信 <button class="hz-wechat-copy" id="hzWechatCopy">${WECHAT_ID}</button> 获取（点击复制）</div>
       <div class="hz-lock-actions">
         <button class="btn btn-secondary" id="hzLockCancel">取消</button>
         <button class="btn btn-primary" id="hzLockOk">解锁</button>
@@ -118,6 +121,7 @@ function showLockDialog(onSuccess) {
   const ok = async () => {
     if (await checkPassword(input.value)) {
       setUnlocked();
+      refreshHeaderLock();
       close();
       if (onSuccess) onSuccess();
     } else {
@@ -132,7 +136,67 @@ function showLockDialog(onSuccess) {
     if (e.key === 'Enter') ok();
     if (e.key === 'Escape') close();
   });
+  overlay.querySelector('#hzWechatCopy').addEventListener('click', copyWechat);
   overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+}
+
+function showServiceDialog() {
+  const overlay = document.createElement('div');
+  overlay.className = 'hz-lock-overlay';
+  overlay.innerHTML = `
+    <div class="hz-lock-dialog" role="dialog" aria-modal="true">
+      <div class="hz-lock-icon">${IC.service}</div>
+      <h3 class="hz-lock-title">联系客服</h3>
+      <p class="hz-lock-desc">加微信 <button class="hz-wechat-copy" id="hzWechatCopy">${WECHAT_ID}</button> 联系客服（点击复制微信号）</p>
+      <div class="hz-lock-actions">
+        <button class="btn btn-primary" id="hzServiceOk">知道了</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  requestAnimationFrame(() => overlay.classList.add('show'));
+  const close = () => {
+    overlay.classList.remove('show');
+    setTimeout(() => overlay.remove(), 250);
+  };
+  overlay.querySelector('#hzServiceOk').addEventListener('click', close);
+  overlay.querySelector('#hzWechatCopy').addEventListener('click', copyWechat);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+}
+
+function copyWechat() {
+  const done = () => toast(`微信号 ${WECHAT_ID} 已复制`);
+  const fallback = () => {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = WECHAT_ID;
+      ta.style.cssText = 'position:fixed;opacity:0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+      done();
+    } catch { /* ignore */ }
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(WECHAT_ID).then(done).catch(fallback);
+  } else {
+    fallback();
+  }
+}
+
+function headerLockButtonHtml() {
+  const unlocked = isUnlocked();
+  return `<button class="hz-header-lock" data-action="unlock-panel" title="${unlocked ? '联系客服' : '解锁'}">${unlocked ? IC.service : IC.lock}<span>${unlocked ? '客服' : '解锁'}</span></button>`;
+}
+
+function refreshHeaderLock() {
+  if (!live()) return;
+  root.querySelectorAll('.hz-header-lock').forEach((el) => {
+    const unlocked = isUnlocked();
+    el.innerHTML = `${unlocked ? IC.service : IC.lock}<span>${unlocked ? '客服' : '解锁'}</span>`;
+    el.title = unlocked ? '联系客服' : '解锁';
+  });
 }
 
 // ── HanziWriter 懒加载 ──
@@ -365,6 +429,7 @@ export async function renderHanzi() {
         <div class="header-left">
           <span class="header-title">汉字小书房</span>
         </div>
+        <div class="header-right">${headerLockButtonHtml()}</div>
       </div>
     </header>
 
@@ -395,6 +460,7 @@ export async function renderHanzi() {
   const app = document.getElementById('app');
   app.innerHTML = '';
   app.appendChild(root);
+  root.addEventListener('click', onClick);
 
   try {
     await Promise.all([loadLib(), loadLibraries(), loadChars()]);
@@ -449,6 +515,7 @@ export async function renderHanziStudy(libId) {
           <span class="header-title" id="hzLibTitle">汉字小书房</span>
         </div>
         <div class="header-right">
+          ${headerLockButtonHtml()}
           <button class="hz-menu-btn" id="hzMenuBtn" data-action="menu-open" aria-label="打开字库列表">${IC.menu}</button>
         </div>
       </div>
@@ -561,6 +628,7 @@ export async function renderCopybook() {
           <a href="/hanzi" class="back-btn" data-link aria-label="返回字库列表">${ICONS.back}</a>
           <span class="header-title">抄写本</span>
         </div>
+        <div class="header-right">${headerLockButtonHtml()}</div>
       </div>
     </header>
 
@@ -1140,6 +1208,10 @@ function onClick(e) {
   switch (action) {
     case 'menu-open': openSidebar(); break;
     case 'sidebar-close': closeSidebar(); break;
+    case 'unlock-panel':
+      if (isUnlocked()) showServiceDialog();
+      else showLockDialog();
+      break;
     case 'list-char':
       selectChar(btn.dataset.char);
       hideResults();

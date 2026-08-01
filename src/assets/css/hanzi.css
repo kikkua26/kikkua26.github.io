@@ -357,6 +357,52 @@
   margin-top: 18px;
 }
 
+.hz-lock-wechat {
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.8;
+}
+
+.hz-wechat-copy {
+  display: inline;
+  padding: 0 2px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent-dark);
+  background: none;
+  border: none;
+  border-bottom: 1px dashed var(--accent-light);
+  cursor: pointer;
+}
+
+.hz-header-lock {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 34px;
+  padding: 0 12px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.hz-header-lock:hover {
+  color: var(--amber-dark);
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+.hz-header-lock svg {
+  flex-shrink: 0;
+}
+
 @keyframes hzCbPulse {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.06); }
