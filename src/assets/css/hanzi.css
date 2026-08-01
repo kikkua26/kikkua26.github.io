@@ -534,96 +534,7 @@
   transform: scale(0.96);
 }
 
-.hz-words {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 16px;
-  padding-top: 14px;
-  border-top: 1px solid var(--border-light);
-}
-
-.hz-word-tag {
-  min-height: 34px;
-  padding: 0 14px;
-  font-family: var(--font-body);
-  font-size: 15px;
-  letter-spacing: 0.08em;
-  color: var(--amber-dark);
-  background: var(--amber-glow);
-  border: 1px solid rgba(245, 158, 11, 0.28);
-  border-radius: 999px;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  -webkit-tap-highlight-color: transparent;
-}
-
-.hz-word-tag:hover {
-  background: rgba(245, 158, 11, 0.16);
-}
-
-.hz-word-empty {
-  font-size: 13px;
-  color: var(--text-muted);
-}
-
-/* ── 步骤指示 ── */
-.hz-steps {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  margin-bottom: 22px;
-}
-
-.hz-step {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  min-height: 32px;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-muted);
-  border-radius: 999px;
-  transition: all var(--transition-normal);
-}
-
-.hz-step-num {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-muted);
-  background: var(--bg-tertiary);
-  border-radius: 50%;
-  transition: all var(--transition-normal);
-}
-
-.hz-step.active {
-  color: var(--accent-dark);
-  font-weight: 600;
-  background: var(--accent-glow);
-}
-
-.hz-step.active .hz-step-num {
-  color: #fff;
-  background: var(--accent);
-}
-
-.hz-step.done {
-  color: var(--success);
-}
-
-.hz-step.done .hz-step-num {
-  color: #fff;
-  background: var(--success);
-}
-
-/* ── 步骤面板 ── */
+/* ── 面板 ── */
 .hz-pane[hidden] {
   display: none;
 }
@@ -642,32 +553,6 @@
   justify-content: center;
   gap: 10px;
   margin-top: 18px;
-}
-
-/* 认字 */
-.hz-read-char {
-  text-align: center;
-  font-family: var(--font-display);
-  font-size: 72px;
-  font-weight: 600;
-  color: var(--text-primary);
-  line-height: 1.15;
-}
-
-.hz-read-meta {
-  text-align: center;
-  font-size: 17px;
-  font-weight: 600;
-  color: var(--accent-dark);
-  margin: 6px 0 0;
-}
-
-.hz-read-words {
-  text-align: center;
-  font-size: 14px;
-  color: var(--text-secondary);
-  margin: 8px 0 0;
-  line-height: 1.7;
 }
 
 /* 笔顺 */
@@ -721,13 +606,6 @@
   min-height: 44px;
   padding: 0 16px;
   font-size: 13px;
-}
-
-.hz-counter {
-  text-align: center;
-  font-size: 14px;
-  color: var(--text-secondary);
-  margin: 14px 0 0;
 }
 
 .hz-demo-controls .btn:disabled {
@@ -825,81 +703,6 @@
   margin: 0;
 }
 
-/* ── 组词卡 ── */
-.hz-word-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.hz-word-btn {
-  min-width: 92px;
-  min-height: 48px;
-  font-size: 19px;
-  letter-spacing: 0.14em;
-}
-
-.hz-word-practice {
-  margin-top: 20px;
-  padding-top: 18px;
-  border-top: 1px solid var(--border-light);
-}
-
-.hz-word-chips {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-.hz-word-chip {
-  width: 56px;
-  height: 56px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-display);
-  font-size: 32px;
-  font-weight: 600;
-  color: var(--text-muted);
-  background: var(--bg-secondary);
-  border: 2px dashed var(--border);
-  border-radius: var(--radius-md);
-  transition: all var(--transition-normal);
-}
-
-.hz-word-chip.done {
-  color: var(--success);
-  background: var(--success-glow);
-  border: 2px solid var(--success-light);
-  font-size: 24px;
-}
-
-.hz-word-chip.active {
-  color: var(--accent-dark);
-  background: var(--accent-glow);
-  border: 2px solid var(--accent);
-  animation: hzChipBounce 1s ease-in-out infinite;
-}
-
-@keyframes hzChipBounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-3px); }
-}
-
-.hz-word-done {
-  text-align: center;
-  margin-top: 18px;
-}
-
-.hz-word-done .hz-done-icon {
-  margin-bottom: 6px;
-}
-
-.hz-word-done .hz-done-title {
-  font-size: 19px;
-}
-
 /* ── 漂浮反馈 ── */
 .hz-float {
   position: absolute;
@@ -983,20 +786,6 @@
     font-size: 62px;
   }
 
-  .hz-read-char {
-    font-size: 60px;
-  }
-
-  .hz-step {
-    font-size: 12px;
-    gap: 4px;
-  }
-
-  .hz-step-num {
-    width: 20px;
-    height: 20px;
-    font-size: 11px;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
