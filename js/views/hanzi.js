@@ -81,6 +81,8 @@ let resizeTimer = null;
 let lastWriterWidth = 0;
 let cbChars = [];   // 抄写本：字帖字符
 let cbIdx = 0;      // 抄写本：当前书写位置
+let cbDone = new Set(); // 抄写本：真正写完的格子索引
+let cbOriginal = '';    // 抄写本：原文（含标点，显示在字帖上方）
 
 const later = (fn, ms) => {
   const id = setTimeout(fn, ms);
@@ -558,6 +560,7 @@ export async function renderCopybook() {
           <span class="hz-cb-sheet-title">你的字帖</span>
           <span class="hz-cb-sheet-count" id="cbSheetCount"></span>
         </div>
+        <div class="hz-cb-original" id="cbOriginal"></div>
         <div class="hz-cb-note" id="cbNote" hidden></div>
         <div class="hz-cb-sheet" id="cbSheet"></div>
         <div class="hz-cb-current">
@@ -616,6 +619,8 @@ function cbGenerate() {
   const chars = [...text].slice(0, 60);
   // 标点剔除，字库外的字收集起来提示
   cbChars = chars.filter((c) => !CB_PUNCT.has(c));
+  cbDone = new Set();
+  cbOriginal = (input.value || '').replace(/\s+/g, ' ').trim();
   const missing = [...new Set(chars.filter((c) => !CB_PUNCT.has(c) && !byChar.has(c)))];
   const note = $id('cbNote');
   if (note) {
@@ -642,9 +647,11 @@ function cbGenerate() {
 function renderSheet() {
   const sheet = $id('cbSheet');
   if (!sheet) return;
+  const origEl = $id('cbOriginal');
+  if (origEl) origEl.textContent = cbOriginal;
   sheet.innerHTML = cbChars
     .map((ch, i) => {
-      const cls = i < cbIdx ? 'done' : i === cbIdx ? 'current' : '';
+      const cls = cbDone.has(i) ? 'done' : i === cbIdx ? 'current' : '';
       return `<button class="hz-cb-cell ${cls}" data-action="cb-cell" data-index="${i}">${ch}</button>`;
     })
     .join('');
@@ -750,7 +757,22 @@ function startCbQuiz() {
       celebrate('cbBox');
       floatMsg('这个字写好了！', true);
       sfxSuccess();
-      later(() => { cbIdx += 1; cbStartNext(); }, 600);
+      later(() => {
+        cbDone.add(cbIdx);
+        // 跳到下一个未写完的字；全部写完则结束
+        let next = cbIdx + 1;
+        while (next < cbChars.length && cbDone.has(next)) next += 1;
+        if (next >= cbChars.length) {
+          const undone = cbChars.findIndex((_, i) => !cbDone.has(i));
+          next = undone >= 0 ? undone : -1;
+        }
+        if (next < 0) {
+          cbFinish();
+        } else {
+          cbIdx = next;
+          cbStartNext();
+        }
+      }, 600);
     },
   });
 }
@@ -1089,7 +1111,7 @@ function onClick(e) {
       break;
     }
     case 'cb-speak': speak(cbChars[Math.min(cbIdx, cbChars.length - 1)]); break;
-    case 'cb-restart': cbIdx = 0; cbStartNext(); break;
+    case 'cb-restart': cbIdx = 0; cbDone = new Set(); cbStartNext(); break;
     case 'cb-edit': {
       stopStrokeDemo();
       const compose = $id('cbComposeCard');
