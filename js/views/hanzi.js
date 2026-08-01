@@ -452,8 +452,6 @@ export async function renderHanzi() {
       <section class="hz-lib-grid" id="hzLibGrid">
         <div class="hz-lib-loading">字库加载中…</div>
       </section>
-
-      <footer class="hz-foot">汉字小书房 · 笔画数据来自 Hanzi Writer</footer>
     </div>
   `;
 
