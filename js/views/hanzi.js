@@ -34,6 +34,7 @@ const icon = (path, size = 16) =>
 const IC = {
   search: icon('<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>', 18),
   speak: icon('<path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a9 9 0 0 1 0 14"/>', 16),
+  menu: icon('<line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="18" y2="18"/>', 20),
   play: icon('<polygon points="6 3 20 12 6 21 6 3"/>', 15),
   prev: icon('<path d="m11 17-5-5 5-5"/><path d="m18 17-5-5 5-5"/>', 15),
   next: icon('<path d="m6 17 5-5-5-5"/><path d="m13 17 5-5-5-5"/>', 15),
@@ -331,20 +332,34 @@ export async function renderHanziStudy(libId) {
           <a href="/hanzi" class="back-btn" data-link aria-label="返回字库列表">${ICONS.back}</a>
           <span class="header-title" id="hzLibTitle">汉字小书房</span>
         </div>
+        <div class="header-right">
+          <button class="hz-menu-btn" id="hzMenuBtn" data-action="menu-open" aria-label="打开字库列表">${IC.menu}</button>
+        </div>
       </div>
     </header>
 
-    <div class="hz-wrap">
-      <section class="hz-card hz-search-card">
-        <div class="hz-search">
-          <span class="hz-search-icon">${IC.search}</span>
-          <input id="hzSearch" type="search" placeholder="在字库里找字，输入汉字或拼音"
-                 maxlength="20" autocomplete="off" spellcheck="false" aria-label="搜索汉字或拼音">
+    <div class="hz-study-layout">
+      <aside class="hz-sidebar" id="hzSidebar">
+        <div class="hz-sidebar-head">
+          <span class="hz-sidebar-title" id="hzSidebarTitle">字库</span>
+          <span class="hz-sidebar-count" id="hzSidebarCount"></span>
+          <button class="hz-sidebar-close" id="hzSidebarClose" data-action="sidebar-close" aria-label="关闭">×</button>
         </div>
-        <div class="hz-results" id="hzResults" hidden></div>
-      </section>
+        <div class="hz-sidebar-search">
+          <div class="hz-search">
+            <span class="hz-search-icon">${IC.search}</span>
+            <input id="hzSearch" type="search" placeholder="在字库里找字，输入汉字或拼音"
+                   maxlength="20" autocomplete="off" spellcheck="false" aria-label="搜索汉字或拼音">
+          </div>
+          <div class="hz-results" id="hzResults" hidden></div>
+        </div>
+        <div class="hz-sidebar-list" id="hzCharList"></div>
+      </aside>
+      <div class="hz-sidebar-overlay" id="hzSidebarOverlay" data-action="sidebar-close"></div>
 
-      <section class="hz-card hz-current-card">
+      <main class="hz-main">
+        <div class="hz-wrap">
+          <section class="hz-card hz-current-card">
         <div class="hz-current-main">
           <div class="hz-char-big" id="hzCharBig">?</div>
           <div class="hz-current-side">
@@ -450,7 +465,9 @@ export async function renderHanziStudy(libId) {
         </div>
       </section>
 
-      <footer class="hz-foot" id="hzFoot">字库加载中…</footer>
+          <footer class="hz-foot" id="hzFoot">字库加载中…</footer>
+        </div>
+      </main>
     </div>
   `;
 
@@ -475,6 +492,11 @@ export async function renderHanziStudy(libId) {
     if (titleEl) titleEl.textContent = lib.name;
     const searchInput = $id('hzSearch');
     if (searchInput) searchInput.placeholder = `在「${lib.name}」里找字，输入汉字或拼音`;
+    const sideTitle = $id('hzSidebarTitle');
+    const sideCount = $id('hzSidebarCount');
+    if (sideTitle) sideTitle.textContent = lib.name;
+    if (sideCount) sideCount.textContent = `${libChars.length} 字`;
+    renderCharList();
     const saved = safeStateGet();
     const startChar =
       saved && saved.l === lib.id && saved.c && libChars.includes(saved.c) ? saved.c : (lib.start || libChars[0] || DEFAULT_CHAR);
@@ -513,8 +535,53 @@ function selectChar(c) {
   resetWordPractice();
   renderCurrent();
   renderWordList();
+  updateCharList();
+  closeSidebar();
   goStep('read');
   loadCharWriters();
+}
+
+// ── 侧边栏字表 ──
+function renderCharList() {
+  const list = $id('hzCharList');
+  if (!list) return;
+  list.innerHTML = libChars
+    .map((c) => {
+      const e = byChar.get(c);
+      return `
+        <button class="hz-char-item" data-action="list-char" data-char="${c}">
+          <span class="hz-char-item-c">${c}</span>
+          <span class="hz-char-item-p">${e ? e.p : ''}</span>
+        </button>`;
+    })
+    .join('');
+}
+
+function updateCharList() {
+  const list = $id('hzCharList');
+  if (!list || !current) return;
+  list.querySelectorAll('.hz-char-item.active').forEach((el) => el.classList.remove('active'));
+  const item = list.querySelector(`[data-char="${current.c}"]`);
+  if (item) {
+    item.classList.add('active');
+    // 只滚动侧边栏列表，避免带动整个页面滚动
+    const target = item.offsetTop - list.clientHeight / 2 + item.clientHeight / 2;
+    list.scrollTop = Math.max(0, target);
+  }
+}
+
+function openSidebar() {
+  const sidebar = $id('hzSidebar');
+  const overlay = $id('hzSidebarOverlay');
+  if (sidebar) sidebar.classList.add('open');
+  if (overlay) overlay.classList.add('show');
+}
+
+function closeSidebar() {
+  const sidebar = $id('hzSidebar');
+  const overlay = $id('hzSidebarOverlay');
+  if (sidebar) sidebar.classList.remove('open');
+  if (overlay) overlay.classList.remove('show');
 }
 
 function renderCurrent() {
@@ -1026,6 +1093,12 @@ function onClick(e) {
   if (!btn || !live()) return;
   const action = btn.dataset.action;
   switch (action) {
+    case 'menu-open': openSidebar(); break;
+    case 'sidebar-close': closeSidebar(); break;
+    case 'list-char':
+      selectChar(btn.dataset.char);
+      hideResults();
+      break;
     case 'result':
       selectChar(btn.dataset.char);
       hideResults();
