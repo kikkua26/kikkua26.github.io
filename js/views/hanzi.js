@@ -564,10 +564,15 @@ export async function renderHanziStudy(libId) {
       <main class="hz-main">
         <div class="hz-wrap">
           <section class="hz-card hz-current-card">
-            <div class="hz-study-head">
-              <div class="hz-char-big" id="hzCharBig">?</div>
-              <div class="hz-pinyin" id="hzPinyin">—</div>
-              <div class="hz-current-words" id="hzCurrentWords"></div>
+            <div class="hz-card-head">
+              <div class="hz-char-unit">
+                <div class="hz-pinyin" id="hzPinyin">—</div>
+                <div class="hz-char-cell" id="hzCharBig">?</div>
+              </div>
+              <div class="hz-words-unit">
+                <div class="hz-words-title">组词</div>
+                <div class="hz-words-list" id="hzCurrentWords"></div>
+              </div>
             </div>
             <div class="hz-writer-center">
               <div class="hz-writer-box hz-write-box" id="hzPracticeBox">
@@ -576,13 +581,13 @@ export async function renderHanziStudy(libId) {
                 <div class="hz-loading" id="hzPracticeLoading">加载中…</div>
               </div>
             </div>
-            <div class="hz-demo-controls">
-              <button class="btn btn-primary" data-action="practice">${IC.pen} 练习</button>
-            </div>
-            <div class="hz-current-actions">
+            <div class="hz-nav-row">
               <button class="hz-mini-btn" data-action="prev" title="上一个字">${IC.chevL}<span>上一个</span></button>
               <button class="hz-mini-btn" data-action="speak" title="读一读">${IC.speak}<span>读一读</span></button>
               <button class="hz-mini-btn" data-action="next" title="下一个字"><span>下一个</span>${IC.chevR}</button>
+            </div>
+            <div class="hz-practice-row">
+              <button class="btn btn-primary" data-action="practice">${IC.pen} 练习</button>
             </div>
           </section>
 
@@ -948,7 +953,9 @@ function renderCurrent() {
   const wordsEl = $id('hzCurrentWords');
   if (wordsEl) {
     const words = (current.w || []).filter((w) => w.length >= 2);
-    wordsEl.textContent = words.length ? `组词：${words.join(' · ')}` : '还没有组词';
+    wordsEl.innerHTML = words.length
+      ? words.map((w) => `<span>${w}</span>`).join('')
+      : '<span class="hz-words-empty">还没有组词</span>';
   }
 }
 
