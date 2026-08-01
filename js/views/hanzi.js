@@ -214,6 +214,58 @@ function toast(text) {
   later(() => { el.classList.remove('show'); later(() => el.remove(), 350); }, 2400);
 }
 
+// ── 音效（Web Audio 本地合成，零网络依赖，国内访问无忧） ──
+let audioCtx = null;
+
+function ensureAudioCtx() {
+  if (!audioCtx) {
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      audioCtx = new AC();
+    } catch { return null; }
+  }
+  if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
+  return audioCtx;
+}
+
+function tone(ctx, freq, start, dur, type, vol) {
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = type || 'triangle';
+  osc.frequency.value = freq;
+  const v = vol || 0.14;
+  gain.gain.setValueAtTime(0.0001, start);
+  gain.gain.exponentialRampToValueAtTime(v, start + 0.02);
+  gain.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+  osc.connect(gain).connect(ctx.destination);
+  osc.start(start);
+  osc.stop(start + dur + 0.05);
+}
+
+function sfxSuccess() {
+  const ctx = ensureAudioCtx();
+  if (!ctx) return;
+  const t = ctx.currentTime + 0.02;
+  [523.25, 659.25, 783.99].forEach((f, i) => tone(ctx, f, t + i * 0.08, 0.2, 'triangle', 0.15));
+}
+
+function sfxError() {
+  const ctx = ensureAudioCtx();
+  if (!ctx) return;
+  const t = ctx.currentTime + 0.02;
+  tone(ctx, 196, t, 0.15, 'square', 0.06);
+  tone(ctx, 155.56, t + 0.13, 0.22, 'square', 0.06);
+}
+
+function sfxFanfare() {
+  const ctx = ensureAudioCtx();
+  if (!ctx) return;
+  const t = ctx.currentTime + 0.02;
+  [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tone(ctx, f, t + i * 0.09, 0.2, 'triangle', 0.15));
+  [523.25, 659.25, 783.99, 1046.5].forEach((f) => tone(ctx, f, t + 0.42, 0.5, 'triangle', 0.07));
+}
+
 // ── 庆祝特效（整字写完后五彩纸屑） ──
 function celebrate(boxId) {
   const box = $id(boxId);
@@ -431,6 +483,10 @@ export async function renderHanziStudy(libId) {
   root.addEventListener('click', onClick);
   root.addEventListener('input', onInput);
   window.addEventListener('resize', onResize);
+  const unlockAudio = () => ensureAudioCtx();
+  root.addEventListener('pointerdown', unlockAudio, { once: true });
+  root.addEventListener('touchstart', unlockAudio, { once: true });
+  root.addEventListener('mousedown', unlockAudio, { once: true });
 
   try {
     await Promise.all([loadLib(), loadLibraries(), loadChars()]);
@@ -531,6 +587,10 @@ export async function renderCopybook() {
 
   root.addEventListener('click', onClick);
   root.addEventListener('input', onInput);
+  const unlockAudio = () => ensureAudioCtx();
+  root.addEventListener('pointerdown', unlockAudio, { once: true });
+  root.addEventListener('touchstart', unlockAudio, { once: true });
+  root.addEventListener('mousedown', unlockAudio, { once: true });
 
   try {
     await Promise.all([loadLib(), loadChars()]);
@@ -716,12 +776,13 @@ function startCbQuiz() {
       expected = data.strokeNum + 1;
       if (expected < totalStrokes) later(() => startStrokeDemo(expected), 450);
     },
-    onMistake: () => floatMsg(pick(ERR_MSGS), false),
+    onMistake: () => { floatMsg(pick(ERR_MSGS), false); sfxError(); },
     onComplete: () => {
       if (!live()) return;
       stopStrokeDemo();
       celebrate('cbBox');
       floatMsg('这个字写好了！', true);
+      sfxSuccess();
       later(() => { cbIdx += 1; cbStartNext(); }, 600);
     },
   });
@@ -731,6 +792,7 @@ function cbFinish() {
   renderSheet();
   celebrate('cbBox');
   floatMsg('整篇写完了！', true);
+  sfxFanfare();
 }
 
 function safeStateGet() {
@@ -929,13 +991,14 @@ function startPractice() {
       expected = data.strokeNum + 1;
       if (expected < totalStrokes) later(() => startStrokeDemo(expected), 450);
     },
-    onMistake: () => floatMsg(pick(ERR_MSGS), false),
+    onMistake: () => { floatMsg(pick(ERR_MSGS), false); sfxError(); },
     onComplete: () => {
       if (!live()) return;
       expected = totalStrokes;
       stopStrokeDemo();
       celebrate('hzPracticeBox');
       floatMsg('太棒了！', true);
+      sfxFanfare();
     },
   });
 }
