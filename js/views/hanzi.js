@@ -203,94 +203,6 @@ function dispose() {
   root = null;
 }
 
-// ── 语音朗读 ──
-const TTS_AUDIO_SOURCES = [
-  (t) => 'https://dict.youdao.com/dictvoice?audio=' + encodeURIComponent(t) + '&type=zh_CN',
-  (t) => 'https://fanyi.baidu.com/gettts?lan=zh&text=' + encodeURIComponent(t) + '&spd=3&source=web',
-];
-
-function playAudio(url) {
-  return new Promise((resolve) => {
-    try {
-      const audio = new Audio();
-      audio.src = url;
-      const timer = setTimeout(() => resolve(false), 2500);
-      audio
-        .play()
-        .then(() => { clearTimeout(timer); resolve(true); })
-        .catch(() => { clearTimeout(timer); resolve(false); });
-    } catch {
-      resolve(false);
-    }
-  });
-}
-
-async function speakAudioFallback(text) {
-  for (const makeUrl of TTS_AUDIO_SOURCES) {
-    const ok = await playAudio(makeUrl(text));
-    if (ok) return true;
-  }
-  return false;
-}
-
-function speakTTS(text) {
-  if (!('speechSynthesis' in window) || !text) return Promise.resolve('noVoice');
-  return new Promise((resolve) => {
-    let started = false;
-    let timer = null;
-    let attempted = false;
-    let tries = 0;
-    const finish = (status) => {
-      if (timer) clearTimeout(timer);
-      resolve(status);
-    };
-    const trySpeak = () => {
-      if (attempted) return;
-      try {
-        const voices = window.speechSynthesis.getVoices();
-        const zh = voices.find((v) => v.lang && v.lang.toLowerCase().startsWith('zh'));
-        if (!zh && tries < 10) {
-          tries += 1;
-          setTimeout(trySpeak, 200);
-          return;
-        }
-        attempted = true;
-        const u = new SpeechSynthesisUtterance(text);
-        u.lang = 'zh-CN';
-        u.rate = 0.8;
-        if (zh) u.voice = zh;
-        u.onstart = () => { started = true; finish('ok'); };
-        u.onerror = () => { if (!started) finish('fail'); };
-        window.speechSynthesis.cancel();
-        window.speechSynthesis.speak(u);
-        timer = setTimeout(() => { if (!started) finish('fail'); }, 1200);
-      } catch {
-        if (!attempted) { attempted = true; finish('fail'); }
-      }
-    };
-    if (window.speechSynthesis.getVoices().length) trySpeak();
-    else {
-      window.speechSynthesis.addEventListener('voiceschanged', trySpeak, { once: true });
-      trySpeak();
-    }
-  });
-}
-
-async function speak(text) {
-  const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || '');
-  if (isMobile) {
-    const status = await speakTTS(text);
-    if (status === 'ok') return;
-    const okAudio = await speakAudioFallback(text);
-    if (!okAudio) toast('当前环境不支持朗读，请更换浏览器试试');
-  } else {
-    const okAudio = await speakAudioFallback(text);
-    if (okAudio) return;
-    const status = await speakTTS(text);
-    if (status !== 'ok') toast('当前环境不支持朗读，请更换浏览器试试');
-  }
-}
-
 // ── 轻量反馈（右上角） ──
 function floatMsg(text, ok) {
   const box = $id('hzFeedback');
@@ -581,13 +493,10 @@ export async function renderHanziStudy(libId) {
                 <div class="hz-loading" id="hzPracticeLoading">加载中…</div>
               </div>
             </div>
+            <p class="hz-start-hint" id="hzStartHint">点一下写字板开始练习</p>
             <div class="hz-nav-row">
               <button class="hz-mini-btn" data-action="prev" title="上一个字">${IC.chevL}<span>上一个</span></button>
-              <button class="hz-mini-btn" data-action="speak" title="读一读">${IC.speak}<span>读一读</span></button>
               <button class="hz-mini-btn" data-action="next" title="下一个字"><span>下一个</span>${IC.chevR}</button>
-            </div>
-            <div class="hz-practice-row">
-              <button class="btn btn-primary" data-action="practice">${IC.pen} 练习</button>
             </div>
           </section>
 
@@ -683,7 +592,6 @@ export async function renderCopybook() {
         <div class="hz-cb-current">
           <div class="hz-cb-char" id="cbCharBig">?</div>
           <div class="hz-cb-pinyin" id="cbPinyin"></div>
-          <button class="hz-mini-btn" data-action="cb-speak">${IC.speak} 读一读</button>
         </div>
         <div class="hz-writer-center">
           <div class="hz-writer-box hz-write-box" id="cbBox">
@@ -1076,6 +984,8 @@ function clearEl(id) {
 // ── 模式切换 ──
 function setMode(m) {
   mode = m;
+  const hint = $id('hzStartHint');
+  if (hint) hint.hidden = m === 'practice';
   if (m === 'practice') startPractice();
   else if (m === 'idle') startFullCharLoop();
 }
@@ -1225,7 +1135,14 @@ function stepChar(delta) {
 // ── 事件 ──
 function onClick(e) {
   const btn = e.target.closest('[data-action]');
-  if (!btn || !live()) return;
+  if (!live()) return;
+  if (!btn) {
+    // 点一下书写区直接进入书写
+    if (mode !== 'practice' && e.target.closest('#hzPracticeBox')) {
+      setMode('practice');
+    }
+    return;
+  }
   const action = btn.dataset.action;
   switch (action) {
     case 'menu-open': openSidebar(); break;
@@ -1240,8 +1157,6 @@ function onClick(e) {
       break;
     case 'prev': stepChar(-1); break;
     case 'next': stepChar(1); break;
-    case 'speak': speak(current.c); break;
-    case 'practice': setMode('practice'); break;
     case 'cb-cell': {
       cbIdx = Number(btn.dataset.index) || 0;
       cbStartNext();
@@ -1253,7 +1168,6 @@ function onClick(e) {
       if (input) input.value = '';
       break;
     }
-    case 'cb-speak': speak(cbChars[Math.min(cbIdx, cbChars.length - 1)]); break;
     case 'cb-restart': cbIdx = 0; cbDone = new Set(); cbBlocked = new Set(); cbStartNext(); break;
     case 'cb-edit': {
       stopStrokeDemo();
