@@ -564,8 +564,13 @@ export async function renderHanziStudy(libId) {
       <main class="hz-main">
         <div class="hz-wrap">
           <section class="hz-card hz-current-card">
-            <div class="hz-char-big" id="hzCharBig">?</div>
-            <div class="hz-pinyin" id="hzPinyin">—</div>
+            <div class="hz-current-top">
+              <div class="hz-current-left">
+                <div class="hz-pinyin" id="hzPinyin">—</div>
+                <div class="hz-char-big" id="hzCharBig">?</div>
+              </div>
+              <div class="hz-current-words" id="hzCurrentWords"></div>
+            </div>
             <div class="hz-current-actions">
               <button class="hz-mini-btn" data-action="prev" title="上一个字">${IC.chevL}<span>上一个</span></button>
               <button class="hz-mini-btn" data-action="speak" title="读一读">${IC.speak}<span>读一读</span></button>
@@ -945,6 +950,13 @@ function selectChar(c) {
 function renderCurrent() {
   $id('hzCharBig').textContent = current.c;
   $id('hzPinyin').textContent = current.p || '拼音待补充';
+  const wordsEl = $id('hzCurrentWords');
+  if (wordsEl) {
+    const words = (current.w || []).filter((w) => w.length >= 2);
+    wordsEl.innerHTML = words.length
+      ? words.map((w) => `<span class="hz-current-word">${w}</span>`).join('')
+      : '<span class="hz-current-word-empty">还没有组词</span>';
+  }
 }
 
 // ── 侧边栏字表 ──

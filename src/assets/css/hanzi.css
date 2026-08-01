@@ -743,9 +743,21 @@
 .hz-current-card {
   display: flex;
   flex-direction: column;
+  gap: 14px;
+}
+
+.hz-current-top {
+  display: flex;
   align-items: center;
-  text-align: center;
-  gap: 10px;
+  justify-content: center;
+  gap: 26px;
+}
+
+.hz-current-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
 }
 
 .hz-char-big {
@@ -766,10 +778,33 @@
 }
 
 .hz-pinyin {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 600;
   color: var(--accent-dark);
   letter-spacing: 0.02em;
+}
+
+.hz-current-words {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.hz-current-word {
+  padding: 6px 16px;
+  font-size: 17px;
+  letter-spacing: 0.1em;
+  color: var(--amber-dark);
+  background: var(--amber-glow);
+  border: 1px solid rgba(245, 158, 11, 0.28);
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.hz-current-word-empty {
+  font-size: 13px;
+  color: var(--text-muted);
 }
 
 .hz-current-actions {
@@ -777,7 +812,6 @@
   flex-wrap: wrap;
   justify-content: center;
   gap: 10px;
-  margin-top: 4px;
 }
 
 .hz-mini-btn {
