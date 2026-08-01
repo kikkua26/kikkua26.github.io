@@ -107,19 +107,73 @@ function dispose() {
   root = null;
 }
 
-// ── 语音朗读（浏览器内置 TTS） ──
-function speak(text) {
-  if (!('speechSynthesis' in window)) return;
-  try {
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = 'zh-CN';
-    u.rate = 0.8;
-    const voices = window.speechSynthesis.getVoices();
-    const zh = voices.find((v) => v.lang && v.lang.toLowerCase().startsWith('zh'));
-    if (zh) u.voice = zh;
-    window.speechSynthesis.speak(u);
-  } catch { /* 不可用时静默降级 */ }
+// ── 语音朗读 ──
+// 优先浏览器内置 TTS；无声或失败时回退到网络语音接口；全失败才提示。
+function speakTTS(text) {
+  if (!('speechSynthesis' in window) || !text) return Promise.resolve('noVoice');
+  return new Promise((resolve) => {
+    let started = false;
+    let timer = null;
+    let attempted = false;
+    const finish = (status) => {
+      if (timer) clearTimeout(timer);
+      resolve(status);
+    };
+    const trySpeak = () => {
+      if (attempted) return;
+      attempted = true;
+      try {
+        const voices = window.speechSynthesis.getVoices();
+        const zh = voices.find((v) => v.lang && v.lang.toLowerCase().startsWith('zh'));
+        if (!zh) {
+          finish('noVoice'); // 没有中文语音，直接走网络朗读
+          return;
+        }
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = 'zh-CN';
+        u.rate = 0.8;
+        u.voice = zh;
+        u.onstart = () => { started = true; finish('ok'); };
+        u.onerror = () => { if (!started) finish('fail'); };
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(u);
+        // 兜底：1.2 秒内未真正开始朗读则判定失败
+        timer = setTimeout(() => { if (!started) finish('fail'); }, 1200);
+      } catch {
+        finish('fail');
+      }
+    };
+    if (window.speechSynthesis.getVoices().length) {
+      trySpeak();
+    } else {
+      window.speechSynthesis.addEventListener('voiceschanged', trySpeak, { once: true });
+      setTimeout(trySpeak, 600);
+    }
+  });
+}
+
+function speakAudioFallback(text) {
+  return new Promise((resolve) => {
+    try {
+      const audio = new Audio();
+      audio.src = 'https://dict.youdao.com/dictvoice?audio=' + encodeURIComponent(text) + '&type=zh_CN';
+      const timer = setTimeout(() => resolve(false), 3000);
+      audio
+        .play()
+        .then(() => { clearTimeout(timer); resolve(true); })
+        .catch(() => { clearTimeout(timer); resolve(false); });
+    } catch {
+      resolve(false);
+    }
+  });
+}
+
+async function speak(text) {
+  // 网络语音优先（稳定出声），系统语音兜底（断网/接口不可用时）
+  const okAudio = await speakAudioFallback(text);
+  if (okAudio) return;
+  const status = await speakTTS(text);
+  if (status !== 'ok') toast('当前环境不支持朗读，请更换浏览器试试');
 }
 
 // ── 轻量反馈 ──
