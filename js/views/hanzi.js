@@ -221,21 +221,27 @@ function celebrate(boxId) {
   const cx = rect ? rect.left + rect.width / 2 : window.innerWidth / 2;
   const cy = rect ? rect.top + rect.height / 2 : window.innerHeight / 3;
   const colors = ['#f59e0b', '#0d9488', '#e74c3c', '#3b82f6', '#a855f7', '#10b981'];
-  for (let i = 0; i < 26; i++) {
+  for (let i = 0; i < 30; i++) {
     const p = document.createElement('span');
     p.className = 'hz-confetti';
-    const angle = (i / 26) * Math.PI * 2 + Math.random() * 0.6;
-    const dist = 50 + Math.random() * 95;
+    const angle = (i / 30) * Math.PI * 2 + Math.random() * 0.5;
+    const dist = 60 + Math.random() * 110;
+    const dx = Math.cos(angle) * dist;
+    const dy = Math.sin(angle) * dist - 45;
+    const rot = 180 + Math.random() * 300;
     p.style.left = cx + 'px';
     p.style.top = cy + 'px';
-    p.style.setProperty('--dx', Math.cos(angle) * dist + 'px');
-    p.style.setProperty('--dy', Math.sin(angle) * dist - 40 + 'px');
-    p.style.setProperty('--rot', Math.round(180 + Math.random() * 320) + 'deg');
+    p.style.width = 7 + Math.random() * 6 + 'px';
+    p.style.height = 11 + Math.random() * 7 + 'px';
+    p.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
     p.style.background = colors[i % colors.length];
-    p.style.width = 6 + Math.random() * 5 + 'px';
-    p.style.height = 10 + Math.random() * 6 + 'px';
+    p.style.transition = 'transform 1.05s cubic-bezier(0.16, 1, 0.3, 1), opacity 1.05s ease-out';
     document.body.appendChild(p);
-    later(() => p.remove(), 1300);
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      p.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) rotate(${rot}deg) scale(0.45)`;
+      p.style.opacity = '0';
+    }));
+    later(() => p.remove(), 1250);
   }
 }
 
