@@ -372,9 +372,6 @@ export async function renderHanziStudy(libId) {
             </div>
             <p class="hz-progress-text" id="hzProgressText">点「播放」看笔顺，点「练习」跟着写</p>
             <div class="hz-dots" id="hzDots"></div>
-            <div class="hz-pane-actions" id="hzPracticeActions">
-              <button class="btn btn-secondary" data-action="restart-write">重新开始</button>
-            </div>
             <div class="hz-pane hz-done-pane" id="hzDone" hidden>
               <div class="hz-done-icon">${IC.checkCircle}</div>
               <h3 class="hz-done-title" id="hzDoneTitle"></h3>
@@ -581,15 +578,14 @@ function setMode(m) {
   mode = m;
   if (!live()) return;
   const doneEl = $id('hzDone');
-  const actionsEl = $id('hzPracticeActions');
   const dotsEl = $id('hzDots');
   const textEl = $id('hzProgressText');
   if (doneEl) doneEl.hidden = m !== 'done';
-  if (actionsEl) actionsEl.hidden = m !== 'practice';
   if (dotsEl) dotsEl.hidden = m !== 'practice' && m !== 'done';
   if (textEl) {
-    if (m === 'practice') textEl.textContent = '跟着写，写对自动进下一笔';
-    else if (m === 'play') textEl.textContent = '看笔顺演示…';
+    if (m === 'practice') textEl.hidden = true; // 练习时不显示第几笔文字
+    else textEl.hidden = false;
+    if (m === 'play') textEl.textContent = '看笔顺演示…';
     else if (m === 'done') textEl.textContent = '';
     else textEl.textContent = '点「播放」看笔顺，点「练习」跟着写';
   }
@@ -611,10 +607,9 @@ function playWholeChar() {
         mode = 'idle';
         const textEl = $id('hzProgressText');
         if (textEl) textEl.textContent = '写完了！点「练习」跟着写一遍';
+        if (textEl) textEl.hidden = false;
         const doneEl = $id('hzDone');
         if (doneEl) doneEl.hidden = true;
-        const actionsEl = $id('hzPracticeActions');
-        if (actionsEl) actionsEl.hidden = true;
       },
     });
   } catch { /* 演示异常时静默跳过 */ }
@@ -633,8 +628,6 @@ function startPractice() {
   try { demoW.hideCharacter({ duration: 0 }); } catch { /* ignore */ }
   const doneEl = $id('hzDone');
   if (doneEl) doneEl.hidden = true;
-  const actionsEl = $id('hzPracticeActions');
-  if (actionsEl) actionsEl.hidden = false;
   updatePracticeUI();
   later(() => startStrokeDemo(0), 400);
   pracW.quiz({
@@ -692,11 +685,6 @@ function startStrokeDemo(n) {
 
 function updatePracticeUI() {
   if (!live()) return;
-  const textEl = $id('hzProgressText');
-  if (textEl) {
-    textEl.textContent =
-      expected >= totalStrokes ? '全部完成！' : `第 ${expected + 1} / ${totalStrokes} 笔`;
-  }
   const dotsEl = $id('hzDots');
   if (dotsEl) {
     dotsEl.innerHTML = Array.from({ length: totalStrokes }, (_, i) => {
@@ -789,7 +777,6 @@ function onClick(e) {
     case 'speak': speak(current.c); break;
     case 'play-all': playWholeChar(); break;
     case 'practice': setMode('practice'); break;
-    case 'restart-write': startPractice(); break;
     case 'again': startPractice(); break;
     case 'next-char': stepChar(1); break;
   }
