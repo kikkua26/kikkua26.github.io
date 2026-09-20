@@ -1,1400 +1,1507 @@
 <!--
-    ===== 模板默认配置 =====
-    用户可以修改下面的注释来设置默认值（修改后需要重新导入模板）
+  Anki卡片模板默认配置（可直接修改）
+  只需修改下方注释中的值即可改变默认配置（优先级高于JS默认值，低于用户localStorage）
+  例如：要关闭倒计时，将 showTimer 改为 false
+
+    配置项说明：
+    themeMode           默认主题模式（light/dark/eyeCare/system）
+    shuffleOptions      是否随机打乱选项（true/false）
+    showOptionLabels    是否显示选项标签（正面）（true/false）
+    showTimer           是否显示倒计时（true/false）
+    timerDuration       倒计时长（秒）（数字）
+    showAnalysis        是否显示解析区域（true/false）
+    showRefrence        是否显示知识点区域（true/false）
+    showSessionStats    是否显示做题统计（背面）（true/false）
+    cardWidthPercent    卡片宽度百分比（50-100，数字）
     
-    config:studyMode=blank       学习模式: blank=挖空模式, spell=拼写模式, recite=背诵模式
-    config:theme=system           主题: system=跟随系统, blue=简约蓝, pink=果粉色, mint=果冻绿, dark=深色, eye-care=护眼
-    config:fontSize=16            字体大小: 12-24
-    config:otherContentMode=inline 知识扩展: popup=按钮弹窗, inline=页面显示
+    
 -->
-<!-- config:studyMode=blank -->
-<!-- config:theme=system -->
-<!-- config:fontSize=16 -->
-<!-- config:otherContentMode=inline -->
-<!-- 正面模板 - 只显示主字段和提要 -->
-<div class="card-header">
-    <div class="chapter" id="chapter-display">{{章节}}</div>
-    <div id="anki-settings-button" class="settings-button" title="设置">{{等级}}</div>
+<!-- config:themeMode=system -->
+<!-- config:shuffleOptions=true -->
+<!-- config:showOptionLabels=true -->
+<!-- config:showTimer=true -->
+<!-- config:timerDuration=30 -->
+<!-- config:showAnalysis=true -->
+<!-- config:showRefrence=true -->
+<!-- config:showSessionStats=true --><!-- config:cardWidthPercent=55 --><div class="anki-card-root" id="kikkua-v2-root">
+<div class="header">
+<div class="timer-bar-container" id="timer-bar-container">
+<div class="timer-bar" id="timer-bar"></div>
+<div class="timer-text" id="timer-text">0s</div>
 </div>
-
-<!-- 授权提示工具提示 -->
-<div class="footer-auth-tooltip" id="footer-auth-tooltip">
-    <strong>版权声明</strong>
-    本牌组模板受知识产权法保护。未经授权的复制、分发或修改将构成侵权行为。创作不易，感谢支持！
+<span class="chapter">{{Chapter}}</span>
+<span class="type">{{Type}}</span>
+<div id="layout-toggle-button" class="layout-toggle-button" title="切换布局" style="display: none;">||</div>
+<div id="anki-settings-button" class="settings-button" title="设置">⚙️</div>
+</div><div id="anki-settings-panel" class="settings-panel">
+<div class="settings-panel-content">
+<div class="settings-panel-header">
+<span>卡片设置</span>
+<div class="settings-header-actions">
+<button id="anki-settings-reset-button" class="settings-reset-button">恢复</button>
+<button id="anki-settings-save-button" class="settings-save-button">应用</button>
+<span id="anki-settings-close-button" class="settings-close-button" title="关闭">×</span>
 </div>
-
-<!-- 名词解释框 -->
-<div id="explanationBox" class="explanation-box">
-    <div class="explanation-header">
-        <span class="explanation-title" id="explanationTitle">术语</span>
-        <button class="close-btn" id="closeExplanation">&times;</button>
-    </div>
-    <div class="explanation-content" id="explanationContent">
-        <!-- 解释内容将显示在这里 -->
-    </div>
 </div>
-
-<div class="content">
-    <!-- 主字段 -->
-            <div class="original-field">
-                <p class="original-text">
-                    <span id="front-original-text">{{主字段}}</span>
-                </p>
-            </div>
-    
-    <!-- 提要插槽 - 紧贴主字段下方 -->
-    <div class="summary-container" id="front-summary-container">
-        <div class="summary-label">提要</div>
-        <div class="summary-content" id="front-summary">{{提要}}</div>
-    </div>
-    
-    <!-- 用户笔记字段 -->
-    <div class="notes-container collapsed" id="front-notes-container">
-        <div class="notes-header" onclick="toggleNotes('front')">
-            <div class="notes-label">笔记</div>
-            <span class="notes-toggle">▼</span>
-        </div>
-        <div class="notes-content" id="front-notes">{{用户笔记}}</div>
-    </div>
-    
-    <!-- 知识解析插槽 - 紧贴提要下方 -->
-    <div class="trapezoid-container" id="front-analysis-container" style="display: none;">
-        <div class="trapezoid">
-            <span>知识解析</span>
-        </div>
-        <div class="rectangle">
-            <div class="field-content" id="front-knowledge-analysis">
-                {{知识解析}}
-            </div>
-        </div>
-    </div>
+<div class="settings-panel-body" id="anki-settings-panel-body"></div>
+<div class="settings-panel-footer">
+<div class="settings-footer-info-block"><div class="footer-contact-row">
+<span class="footer-contact-label">售后微信：</span>
+<span class="footer-contact-value" id="footer-wechat" onclick="copyWechatToClipboard()">kikkua2649</span>
+<a href="https://www.xiaohongshu.com/user/profile/65fefa42000000000d026220" target="_blank" class="footer-xhs-link" title="小红书">
+<span class="footer-xhs-icon">📕</span>
+<span>小红书</span>
+</a>
+<a href="https://lcnnq7jvkb5p.feishu.cn/wiki/Bgjjw8C4AihMyUkDFybcSZwEn7d" target="_blank" class="footer-tutorial-link" title="使用教程">
+<span class="footer-tutorial-icon">📚</span>
+<span>教程</span>
+</a>
+</div><div class="footer-auth-row" id="auth-row-container">
+<span class="footer-auth-label">授权号：</span>
+<span class="footer-auth-value" id="auth-code-display"></span>
+<a href="https://xhslink.com/m/52z3NAdFSLN" target="_blank" class="footer-buy-link">获取正版</a>
+</div><div class="footer-copyright">
+@2025 kikkua V2.9.1 仅个人学习使用，禁止商用
 </div>
-
-<!-- 移除了挖空和名解相关样式 -->
-
-<script>
-// ==================== 工具函数 ====================
-// 生成设备标识授权号（用于版权保护威慑）
-function generateAuthCode() {
-    const deviceInfo = [
-        navigator.userAgent,
-        screen.width,
-        screen.height,
-        navigator.language,
-        new Date().getTime().toString().substring(0, 8)
-    ].join('');
-
-    function simpleHash(str) {
-        let hash = 0;
-        for (let i = 0; i < str.length; i++) {
-            const char = str.charCodeAt(i);
-            hash = ((hash << 5) - hash) + char;
-            hash = hash & hash;
-        }
-        return Math.abs(hash);
-    }
-
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    const hashValue = simpleHash(deviceInfo);
-    let result = '';
-
-    for (let i = 0; i < 12; i++) {
-        const index = (hashValue * (i + 1)) % chars.length;
-        result += chars.charAt(index);
-    }
-
-    return result.replace(/(.{4})/g, '$1-').slice(0, -1);
-}
-
-// ==================== 增强版存储模块 ====================
+</div>
+</div>
+</div>
+</div><div class="footer-auth-tooltip" id="footer-auth-tooltip">
+<strong>版权声明</strong>
+本牌组模板受知识产权法保护。未经授权的复制、分发或修改将构成侵权行为。创作不易，感谢支持！
+</div><div class="question" id="main-content-area">{{Question}}</div><div class="options-container" id="options-container"></div>
+</div><script>
 window.ankiStorage = (function() {
-    const prefix = 'anki_sel_';
-    const configPrefix = 'anki_cfg_';
-
-    return {
-        set: function(key, data) {
-            const safeKey = prefix + btoa(encodeURIComponent(key)).slice(0, 50);
-            try {
-                localStorage.setItem(safeKey, JSON.stringify(data));
-            } catch(e) {
-                console.warn('localStorage setItem failed, falling back to window object for key:', safeKey, e);
-                window[safeKey] = data;
-            }
-        },
-        get: function(key) {
-            const safeKey = prefix + btoa(encodeURIComponent(key)).slice(0, 50);
-            try {
-                const data = localStorage.getItem(safeKey);
-                return data ? JSON.parse(data) : null;
-            } catch(e) {
-                console.warn('localStorage getItem failed, falling back to window object for key:', safeKey, e);
-                return window[safeKey] || null;
-            }
-        },
-        clear: function(key) {
-            const safeKey = prefix + btoa(encodeURIComponent(key)).slice(0, 50);
-            try {
-                localStorage.removeItem(safeKey);
-            } catch(e) {
-                console.warn('localStorage removeItem failed, attempting to delete from window object for key:', safeKey, e);
-                delete window[safeKey];
-            }
-        },
-        // Config-specific methods
-        setConfig: function(configKey, value) {
-            try {
-                localStorage.setItem(configPrefix + configKey, JSON.stringify(value));
-            } catch (e) {
-                console.error('Error saving config to localStorage:', configKey, e);
-            }
-        },
-        getConfig: function(configKey) {
-            try {
-                const value = localStorage.getItem(configPrefix + configKey);
-                return value !== null ? JSON.parse(value) : undefined; // Return undefined if not found
-            } catch (e) {
-                console.error('Error reading config from localStorage:', configKey, e);
-                return undefined;
-            }
-        }
-    };
+  const prefix = 'anki_sel_'; 
+  const configPrefix = 'anki_cfg_'; 
+  console.log('【调试】front.html window.ankiStorage 定义');
+  return {
+    set: function(key, data) {
+      const safeKey = prefix + btoa(encodeURIComponent(key)).slice(0, 50);
+      try {
+        localStorage.setItem(safeKey, JSON.stringify(data));
+        console.log('【调试】front.html set localStorage:', safeKey, data);
+      } catch(e) {
+        console.warn('localStorage setItem failed, falling back to window object for key:', safeKey, e);
+        window[safeKey] = data;
+      }
+    },
+    get: function(key) {
+      const safeKey = prefix + btoa(encodeURIComponent(key)).slice(0, 50);
+      try {
+        const data = localStorage.getItem(safeKey);
+        console.log('【调试】front.html get localStorage:', safeKey, data);
+        return data ? JSON.parse(data) : null;
+      } catch(e) {
+        console.warn('localStorage getItem failed, falling back to window object for key:', safeKey, e);
+        return window[safeKey] || null;
+      }
+    },
+    clear: function(key) {
+      const safeKey = prefix + btoa(encodeURIComponent(key)).slice(0, 50);
+      try {
+        localStorage.removeItem(safeKey);
+        console.log('【调试】front.html clear localStorage:', safeKey);
+      } catch(e) {
+        console.warn('localStorage removeItem failed, attempting to delete from window object for key:', safeKey, e);
+        delete window[safeKey];
+      }
+    },
+    setConfig: function(configKey, value) {
+      try {
+        localStorage.setItem(configPrefix + configKey, JSON.stringify(value));
+      } catch (e) {
+        console.error('Error saving config to localStorage:', configKey, e);
+      }
+    },
+    getConfig: function(configKey) {
+      try {
+        const value = localStorage.getItem(configPrefix + configKey);
+        return value !== null ? JSON.parse(value) : undefined; 
+      } catch (e) {
+        console.error('Error reading config from localStorage:', configKey, e);
+        return undefined;
+      }
+    }
+  };
 })();
-
-// 正面模板的JavaScript
 (function() {
-    // 隐藏空的章节
-    function hideEmptyChapter() {
-        const chapter = document.getElementById('chapter-display');
-        if (chapter) {
-            const text = chapter.textContent.trim();
-            if (!text) {
-                chapter.style.display = 'none';
-            }
-        }
-    }
-    
-    // 全局变量
-    const explanationBox = document.getElementById('explanationBox');
-    const explanationTitle = document.getElementById('explanationTitle');
-    const explanationContent = document.getElementById('explanationContent');
-    const closeExplanation = document.getElementById('closeExplanation');
-    
-    // 名词解释模块封装
-    const ExplanationModule = (function() {
-        // 私有变量
-        let explanationBox = null;
-        let explanationTitle = null;
-        let explanationContent = null;
-        let closeExplanation = null;
-        
-        // 初始化模块
-        function init(box, title, content, closeBtn) {
-            explanationBox = box;
-            explanationTitle = title;
-            explanationContent = content;
-            closeExplanation = closeBtn;
-            
-            // 设置关闭按钮事件
-            setupCloseButton();
-            
-            // 点击页面其他地方关闭解释框
-            setupDocumentClick();
-        }
-        
-        // 解析文本中的名词解释标记
-        function parseExplanations(text) {
-            const explanations = [];
-            let i = 0;
-            
-            while (i < text.length) {
-                // 检查名词解释开始
-                if (text.substring(i, i + 2) === '【*') {
-                    const endIndex = findMatchingEnd(text, i, '【*', '*】');
-                    if (endIndex !== -1) {
-                        const innerText = text.substring(i + 2, endIndex);
-                        const separatorIndex = innerText.indexOf('::');
-                        
-                        if (separatorIndex !== -1) {
-                            const term = innerText.substring(0, separatorIndex);
-                            const explanationText = innerText.substring(separatorIndex + 2);
-                            
-                            explanations.push({
-                                start: i,
-                                end: endIndex + 2,
-                                term: term,
-                                explanation: explanationText
-                            });
-                            
-                            i = endIndex + 2;
-                            continue;
-                        }
-                    }
-                }
-                i++;
-            }
-            
-            return explanations;
-        }
-        
-        // 找到匹配的结束标记
-        function findMatchingEnd(text, startIndex, startMarker, endMarker) {
-            let depth = 1;
-            let i = startIndex + startMarker.length;
-            
-            while (i < text.length) {
-                if (text.substring(i, i + startMarker.length) === startMarker) {
-                    depth++;
-                    i += startMarker.length;
-                } else if (text.substring(i, i + endMarker.length) === endMarker) {
-                    depth--;
-                    if (depth === 0) {
-                        return i;
-                    }
-                    i += endMarker.length;
-                } else {
-                    i++;
-                }
-            }
-            
-            return -1; // 没有找到匹配的结束标记
-        }
-        
-        // 创建术语元素
-        function createTermElement(term, explanation, setupElementEvents) {
-            const termSpan = document.createElement('span');
-            termSpan.className = 'term';
-            
-            // 解析术语中的HTML标签
-            const tempElement = document.createElement('span');
-            tempElement.innerHTML = term;
-            while (tempElement.firstChild) {
-                termSpan.appendChild(tempElement.firstChild);
-            }
-            
-            // 添加点击事件 - 显示解释，兼容iOS
-            setupElementEvents(termSpan, function(e) {
-                // 如果这个名词解释在未揭示的挖空内，则先揭示挖空
-                const parentBlank = this.closest('.blank');
-                if (parentBlank && !parentBlank.classList.contains('revealed')) {
-                    parentBlank.classList.add('revealed');
-                    // 恢复嵌套名解的可见性
-                    const nestedTerms = parentBlank.querySelectorAll('.term');
-                    nestedTerms.forEach(term => {
-                        term.style.visibility = 'visible';
-                    });
-                    // 阻止事件冒泡，防止触发其他事件
-                    e.stopPropagation();
-                    return;
-                }
-                
-                // 获取术语在卡片中的位置百分比
-                const card = document.querySelector('.card');
-                const cardRect = card ? card.getBoundingClientRect() : null;
-                const termRect = this.getBoundingClientRect();
-                let positionYPercent = null;
-                if (cardRect && termRect) {
-                    // 计算术语中心相对于卡片顶部的百分比
-                    const termCenterY = (termRect.top + termRect.bottom) / 2;
-                    positionYPercent = ((termCenterY - cardRect.top) / cardRect.height) * 100;
-                }
-                
-                // 显示解释框，传入位置百分比
-                showExplanation(term, explanation, positionYPercent);
-                
-                // 阻止事件冒泡，防止触发其他事件
-                e.stopPropagation();
-            });
-            
-            return termSpan;
-        }
-        
-        // 显示解释框
-        function showExplanation(term, explanation, positionYPercent) {
-            if (!explanationBox || !explanationTitle || !explanationContent) {
-                console.error('Explanation module not initialized');
-                return;
-            }
-            
-            // 设置解释标题和内容，支持HTML
-            explanationTitle.innerHTML = term;
-            explanationContent.innerHTML = explanation;
-            
-            // 移除硬编码的深色样式，让CSS控制样式
-            explanationBox.style.color = '';
-            explanationBox.style.background = '';
-            explanationBox.style.border = '';
-            explanationTitle.style.color = '';
-            explanationTitle.style.fontWeight = '';
-            explanationTitle.style.textShadow = '';
-            closeExplanation.style.color = '';
-            closeExplanation.style.fontSize = '';
-            closeExplanation.style.fontWeight = '';
-            closeExplanation.style.textShadow = '';
-            explanationContent.style.color = '';
-            
-            // 动态定位
-            if (positionYPercent !== undefined && positionYPercent !== null) {
-                const card = document.querySelector('.card');
-                const cardRect = card ? card.getBoundingClientRect() : null;
-                if (cardRect) {
-                    // 先显示弹窗以获取其高度
-                    explanationBox.classList.remove('hide');
-                    explanationBox.classList.add('show');
-                    
-                    const boxHeight = explanationBox.offsetHeight || 200;
-                    const winHeight = window.innerHeight;
-                    
-                    // 计算术语位置
-                    let topPos = cardRect.top + (cardRect.height * positionYPercent / 100);
-                    
-                    // 检查是否超出窗口底部
-                    const boxBottom = topPos + boxHeight;
-                    if (boxBottom > winHeight - 20) {
-                        // 超出底部，显示在术语上方
-                        topPos = cardRect.top + (cardRect.height * positionYPercent / 100) - boxHeight - 10;
-                        // 如果上方也不够，放到窗口顶部
-                        if (topPos < 20) {
-                            topPos = 20;
-                        }
-                    } else {
-                        // 正常显示在术语下方，偏移约20px
-                        topPos += 20;
-                    }
-                    
-                    explanationBox.style.top = topPos + 'px';
-                    // 保持水平居中
-                    explanationBox.style.transform = 'translateX(-50%)';
-                }
-            } else {
-                // 使用默认位置
-                explanationBox.style.top = '20px';
-                explanationBox.style.transform = 'translateX(-50%)';
-            }
-            
-            explanationBox.classList.add('show');
-        }
-        
-        // 隐藏解释框
-        function hideExplanation() {
-            if (explanationBox) {
-                explanationBox.classList.remove('show');
-            }
-        }
-        
-        // 设置关闭按钮事件
-        function setupCloseButton() {
-            if (!closeExplanation) return;
-            
-            const handleCloseClick = function(event) {
-                event.stopPropagation();
-                if (event.touches && event.type.includes('touch')) {
-                    event.preventDefault(); // 防止触摸事件触发两次
-                }
-                hideExplanation();
-            };
-            
-            closeExplanation.addEventListener('click', handleCloseClick);
-            closeExplanation.addEventListener('touchend', handleCloseClick);
-        }
-        
-        // 设置文档点击事件
-        function setupDocumentClick() {
-            document.addEventListener('click', function(e) {
-                if (!e.target.closest('.term') && !e.target.closest('.explanation-box')) {
-                    hideExplanation();
-                }
-            });
-            // iOS 需要同时监听 touch 事件
-            document.addEventListener('touchend', function(e) {
-                if (!e.target.closest('.term') && !e.target.closest('.explanation-box')) {
-                    hideExplanation();
-                }
-            });
-        }
-        
-        // 公共API
-        return {
-            init: init,
-            parseExplanations: parseExplanations,
-            createTermElement: createTermElement,
-            showExplanation: showExplanation,
-            hideExplanation: hideExplanation
-        };
-    })();
-    
-    // 挖空模块封装
-    const BlankModule = (function() {
-        // 私有变量
-        let blanksEnabled = true;
-
-        // 初始化模块
-        function init(enabled = true) {
-            blanksEnabled = enabled;
-        }
-
-        // 解析文本中的挖空标记
-        function parseBlanks(text) {
-            const blanks = [];
-            let i = 0;
-
-            while (i < text.length) {
-                // 检查挖空开始
-                if (text.substring(i, i + 2) === '[[') {
-                    const endIndex = findMatchingEnd(text, i, '[[', ']]');
-                    if (endIndex !== -1) {
-                        const innerText = text.substring(i + 2, endIndex);
-
-                        blanks.push({
-                            start: i,
-                            end: endIndex + 2,
-                            content: innerText
-                        });
-
-                        i = endIndex + 2;
-                        continue;
-                    }
-                }
-                i++;
-            }
-
-            return blanks;
-        }
-
-        // 找到匹配的结束标记
-        function findMatchingEnd(text, startIndex, startMarker, endMarker) {
-            let depth = 1;
-            let i = startIndex + startMarker.length;
-
-            while (i < text.length) {
-                if (text.substring(i, i + startMarker.length) === startMarker) {
-                    depth++;
-                    i += startMarker.length;
-                } else if (text.substring(i, i + endMarker.length) === endMarker) {
-                    depth--;
-                    if (depth === 0) {
-                        return i;
-                    }
-                    i += endMarker.length;
-                } else {
-                    i++;
-                }
-            }
-
-            return -1; // 没有找到匹配的结束标记
-        }
-
-        // 创建挖空元素
-        function createBlankElement(content, setupElementEvents, renderNodes, fieldType = 'other') {
-            const blankSpan = document.createElement('span');
-            blankSpan.className = 'blank';
-
-            // 解析挖空内容（可能包含名词解释）
-            const innerNodes = renderNodes(content);
-
-            // 根据挖空开关和字段类型决定初始状态
-            if (!blanksEnabled || fieldType === 'notes') {
-                blankSpan.classList.add('revealed');
-            }
-
-            blankSpan.appendChild(innerNodes);
-
-            // 确保嵌套在未揭示挖空内的名解默认隐藏
-            if (!blankSpan.classList.contains('revealed')) {
-                const nestedTerms = blankSpan.querySelectorAll('.term');
-                nestedTerms.forEach(term => {
-                    term.style.visibility = 'hidden';
-                });
-            }
-
-            // 添加点击事件 - 揭示挖空内容，兼容iOS
-            setupElementEvents(blankSpan, function(e) {
-                if (blanksEnabled && fieldType !== 'notes' && !this.classList.contains('revealed')) {
-                    revealBlank(this);
-                    // 阻止事件冒泡，防止触发名词解释的点击事件
-                    e.stopPropagation();
-                }
-            });
-
-            return blankSpan;
-        }
-
-        // 揭示挖空内容
-        function revealBlank(blankElement) {
-            if (!blankElement) return;
-
-            blankElement.classList.add('revealed');
-            // 恢复嵌套名解的可见性
-            const nestedTerms = blankElement.querySelectorAll('.term');
-            nestedTerms.forEach(term => {
-                term.style.visibility = 'visible';
-            });
-        }
-        
-        // 检查挖空是否已揭示
-        function isBlankRevealed(blankElement) {
-            if (!blankElement) return false;
-            return blankElement.classList.contains('revealed');
-        }
-        
-        // 设置挖空开关状态
-        function setBlanksEnabled(enabled) {
-            blanksEnabled = enabled;
-        }
-        
-        // 获取挖空开关状态
-        function getBlanksEnabled() {
-            return blanksEnabled;
-        }
-        
-        // 公共API
-        return {
-            init: init,
-            parseBlanks: parseBlanks,
-            createBlankElement: createBlankElement,
-            revealBlank: revealBlank,
-            isBlankRevealed: isBlankRevealed,
-            setBlanksEnabled: setBlanksEnabled,
-            getBlanksEnabled: getBlanksEnabled
-        };
-    })();
-    
-    // 拼写模式模块封装
-    const SpellModeModule = (function() {
-        let isActive = false;
-        let blanks = [];
-        
-        // 激活拼写模式：将挖空元素替换为输入框
-        function activate() {
-            if (isActive) return;
-            isActive = true;
-            blanks = [];
-            
-            // 在整个内容区域查找挖空元素（包括主字段、提要、知识解析等）
-            var contentArea = document.querySelector('.content');
-            if (!contentArea) return;
-            
-            var allBlanks = contentArea.querySelectorAll('.blank');
-            
-            allBlanks.forEach(function(blankEl) {
-                // 跳过解释框内的挖空
-                if (blankEl.closest('.explanation-box')) return;
-                
-                // 提取答案文本（去除解释标记，只取纯文本）
-                const answer = extractPlainText(blankEl);
-                if (!answer) return;
-                
-                // 创建输入容器
-                var wrapper = document.createElement('span');
-                wrapper.className = 'spell-blank-wrapper';
-                
-                // 创建输入框
-                var input = document.createElement('input');
-                input.type = 'text';
-                input.className = 'spell-blank-input';
-                input.dataset.answer = answer;
-                input.dataset.index = blanks.length;
-                input.autocomplete = 'off';
-                input.spellcheck = false;
-                input.setAttribute('autocorrect', 'off');
-                input.setAttribute('autocapitalize', 'off');
-                
-                // 测量答案文字实际宽度，作为最小宽度
-                var measureSpan = document.createElement('span');
-                measureSpan.style.cssText = 'position:absolute;visibility:hidden;white-space:nowrap;font-size:inherit;font-family:inherit;font-weight:inherit;';
-                measureSpan.textContent = answer;
-                document.body.appendChild(measureSpan);
-                input.style.width = (measureSpan.offsetWidth + 8) + 'px';
-                document.body.removeChild(measureSpan);
-                
-                wrapper.appendChild(input);
-                
-                // 替换挖空元素
-                blankEl.parentNode.replaceChild(wrapper, blankEl);
-                
-                blanks.push({ element: wrapper, answer: answer, input: input });
-                
-                // 绑定事件
-                input.addEventListener('input', handleInput);
-                input.addEventListener('keydown', handleKeydown);
-            });
-            
-            // 聚焦第一个输入框
-            if (blanks.length > 0) {
-                setTimeout(function() { blanks[0].input.focus(); }, 50);
-            }
-        }
-        
-        // 提取元素的纯文本内容
-        function extractPlainText(el) {
-            var text = el.textContent || '';
-            // 去除名词解释标记的残留文本（如术语::解释 格式只取术语部分）
-            text = text.replace(/\[\[|\]\]/g, '');
-            return text.trim();
-        }
-        
-        // 停用拼写模式：刷新页面恢复原始状态
-        function deactivate() {
-            if (!isActive) return;
-            isActive = false;
-            location.reload();
-        }
-        
-        // 处理输入事件
-        function handleInput(e) {
-            var input = e.target;
-            var answer = input.dataset.answer;
-            var userValue = input.value;
-            
-            // 检查是否完全正确
-            if (userValue.toLowerCase() === answer.toLowerCase()) {
-                input.classList.add('spell-correct');
-                input.classList.remove('spell-incorrect', 'spell-partial');
-                input.readOnly = true;
-                
-                // 修正大小写为正确答案
-                input.value = answer;
-                
-                // 移动到下一个空
-                var idx = parseInt(input.dataset.index);
-                moveToNextBlank(idx);
-            } else if (userValue.length > 0) {
-                // 实时比较，设置颜色
-                var isCorrectSoFar = answer.toLowerCase().startsWith(userValue.toLowerCase());
-                input.classList.toggle('spell-incorrect', !isCorrectSoFar);
-                input.classList.toggle('spell-partial', isCorrectSoFar);
-                input.classList.remove('spell-correct');
-            } else {
-                input.classList.remove('spell-correct', 'spell-incorrect', 'spell-partial');
-            }
-        }
-        
-        // 处理键盘事件
-        function handleKeydown(e) {
-            if (e.key === 'Tab') {
-                e.preventDefault();
-                var idx = parseInt(e.target.dataset.index);
-                moveToNextBlank(idx);
-            } else if (e.key === 'Enter') {
-                e.preventDefault();
-                revealCurrentBlank(e.target);
-            }
-            // 不阻止 Delete、Backspace 等编辑键的默认行为
-        }
-        
-        // 移动到下一个未完成的输入框
-        function moveToNextBlank(currentIdx) {
-            // 先找后面的
-            for (var i = currentIdx + 1; i < blanks.length; i++) {
-                if (!blanks[i].input.readOnly) {
-                    blanks[i].input.focus();
-                    return;
-                }
-            }
-            // 再找前面的（循环）
-            for (var i = 0; i <= currentIdx; i++) {
-                if (!blanks[i].input.readOnly) {
-                    blanks[i].input.focus();
-                    return;
-                }
-            }
-            // 全部完成
-            showAllComplete();
-        }
-        
-        // 显示答案（Enter键）
-        function revealCurrentBlank(input) {
-            if (input.readOnly) return;
-            
-            var answer = input.dataset.answer;
-            input.value = answer;
-            input.classList.add('spell-correct', 'spell-revealed');
-            input.readOnly = true;
-            
-            moveToNextBlank(parseInt(input.dataset.index));
-        }
-        
-        // 全部完成提示
-        function showAllComplete() {
-            var allCorrect = blanks.every(function(b) { return b.input.readOnly; });
-            if (allCorrect && blanks.length > 0) {
-                // 可以添加一个完成提示
-            }
-        }
-        
-        // HTML 转义
-        function escapeHtml(text) {
-            var div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-        
-        function getIsActive() { return isActive; }
-        
-        return {
-            activate: activate,
-            deactivate: deactivate,
-            getIsActive: getIsActive
-        };
-    })();
-    
-    // 辅助函数：获取配置
-    function getConfig(name, defaultValue) {
-        // 1. 优先从 localStorage 读取（用户保存的设置）
-        const storedValue = window.ankiStorage.getConfig(name);
-        if (storedValue !== undefined) {
-            if (typeof defaultValue === 'boolean') {
-                if (storedValue === 'true') return true;
-                if (storedValue === 'false') return false;
-            }
-            if (typeof defaultValue === 'number' && !isNaN(parseFloat(storedValue))) {
-                return parseFloat(storedValue);
-            }
-            return storedValue;
-        }
-
-        // 2. 其次从 HTML 注释读取（模板中设置的默认值）
-        const regex = new RegExp(`<!-- config:${name}=([^\\s]+) -->`);
-        const configSource = document.documentElement.innerHTML || '';
-        const match = configSource.match(regex);
-        if (match && match[1]) {
-            let value = match[1];
-            if (typeof defaultValue === 'boolean') {
-                if (value === 'true') return true;
-                if (value === 'false') return false;
-            }
-            if (typeof defaultValue === 'number' && !isNaN(parseFloat(value))) {
-                return parseFloat(value);
-            }
-            return value;
-        }
-
-        // 3. 最后使用 JS 代码中的默认值
-        return defaultValue;
-    }
-    
-    // 持久化模板默认值到localStorage（首次加载时初始化）
-    function persistTemplateDefaults() {
-        const configKeys = ['theme', 'fontSize', 'otherContentMode', 'studyMode'];
-        const defaults = {
-            theme: 'system',
-            fontSize: 16,
-            otherContentMode: 'popup',
-            studyMode: 'blank'
-        };
-        
-        configKeys.forEach(key => {
-            const existingValue = window.ankiStorage.getConfig(key);
-            
-            // 如果localStorage中还没有这个值
-            if (existingValue === undefined) {
-                // 优先从HTML注释读取默认值
-                const regex = new RegExp(`<!-- config:${key}=([^\\s]+) -->`);
-                const configSource = document.documentElement.innerHTML || '';
-                const match = configSource.match(regex);
-                
-                let defaultValue;
-                if (match && match[1]) {
-                    // 从HTML注释读取
-                    const strValue = match[1];
-                    if (strValue === 'true') defaultValue = true;
-                    else if (strValue === 'false') defaultValue = false;
-                    else if (!isNaN(parseFloat(strValue))) defaultValue = parseFloat(strValue);
-                    else defaultValue = strValue;
-                } else {
-                    // 使用JS代码中的默认值
-                    defaultValue = defaults[key];
-                }
-                
-                window.ankiStorage.setConfig(key, defaultValue);
-            }
-        });
-    }
-    
-    // 辅助函数：找到匹配的结束标记
-    function findMatchingEnd(text, startIndex, startMarker, endMarker) {
-        let depth = 1;
-        let i = startIndex + startMarker.length;
-        
-        while (i < text.length) {
-            if (text.substring(i, i + startMarker.length) === startMarker) {
-                depth++;
-                i += startMarker.length;
-            } else if (text.substring(i, i + endMarker.length) === endMarker) {
-                depth--;
-                if (depth === 0) {
-                    return i;
-                }
-                i += endMarker.length;
-            } else {
-                i++;
-            }
-        }
-        
-        return -1; // 没有找到匹配的结束标记
-    }
-    
-    // 解析器 - 支持嵌套标记
-    function parseText(text) {
-        const nodes = [];
-        let i = 0;
-        
-        while (i < text.length) {
-            // 检查名词解释开始
-            if (text.substring(i, i + 2) === '【*') {
-                const endIndex = findMatchingEnd(text, i, '【*', '*】');
-                if (endIndex !== -1) {
-                    const innerText = text.substring(i + 2, endIndex);
-                    const separatorIndex = innerText.indexOf('::');
-                    
-                    if (separatorIndex !== -1) {
-                        const term = innerText.substring(0, separatorIndex);
-                        const explanationText = innerText.substring(separatorIndex + 2);
-                        
-                        nodes.push({
-                            type: 'explanation',
-                            term: term,
-                            explanation: explanationText
-                        });
-                        
-                        i = endIndex + 2;
-                        continue;
-                    }
-                }
-                // 未找到闭合标记，作为普通文本处理
-            }
-            
-            // 检查挖空开始
-            if (text.substring(i, i + 2) === '[[') {
-                const endIndex = findMatchingEnd(text, i, '[[', ']]');
-                if (endIndex !== -1) {
-                    const innerText = text.substring(i + 2, endIndex);
-                    
-                    nodes.push({
-                        type: 'blank',
-                        content: innerText
-                    });
-                    
-                    i = endIndex + 2;
-                    continue;
-                }
-                // 未找到闭合标记，作为普通文本处理
-            }
-            
-            // 普通文本
-            let j = i;
-            while (j < text.length) {
-                if (text.substring(j, j + 2) === '【*' || text.substring(j, j + 2) === '[[') {
-                    break;
-                }
-                j++;
-            }
-            
-            if (j > i) {
-                nodes.push({
-                    type: 'text',
-                    content: text.substring(i, j)
-                });
-            }
-            
-            // 如果没有找到任何标记，移动到下一个字符
-            if (j === i) {
-                j = i + 1;
-            }
-            
-            i = j;
-        }
-        
-        return nodes;
-    }
-    
-    // 将解析后的节点转换为DOM元素
-    function renderNodes(nodes, fieldType = 'other') {
-        const fragment = document.createDocumentFragment();
-
-        // 添加双事件处理：click + touch (iOS兼容)
-        const setupElementEvents = (element, handler) => {
-            const wrappedHandler = function(e) {
-                // 防止触摸事件触发两次
-                if (e.touches && e.type.includes('touch')) {
-                    e.preventDefault();
-                }
-                handler.call(this, e);
-            };
-
-            // 添加iOS兼容的触摸事件
-            element.addEventListener('click', wrappedHandler);
-            element.addEventListener('touchend', wrappedHandler);
-        };
-
-        nodes.forEach(node => {
-            if (node.type === 'text') {
-                // 创建临时元素来解析HTML标签
-                const tempElement = document.createElement('span');
-                tempElement.innerHTML = node.content;
-                // 将临时元素的所有子节点添加到fragment中
-                while (tempElement.firstChild) {
-                    fragment.appendChild(tempElement.firstChild);
-                }
-            } else if (node.type === 'blank') {
-                // 使用BlankModule创建挖空元素
-                const blankSpan = BlankModule.createBlankElement(node.content, setupElementEvents, function(content) {
-                    const innerNodes = parseText(content);
-                    return renderNodes(innerNodes, fieldType);
-                }, fieldType);
-
-                fragment.appendChild(blankSpan);
-            } else if (node.type === 'explanation') {
-                // 使用ExplanationModule创建术语元素
-                const termSpan = ExplanationModule.createTermElement(node.term, node.explanation, setupElementEvents);
-                fragment.appendChild(termSpan);
-            }
-        });
-
-        return fragment;
-    }
-    
-    // DOM感知的文本节点标记处理（不破坏HTML结构）
-    function processTextMarkers(rootElement, fieldType) {
-        var MARKERS = ['[[', '【*'];
-        var MAX_ITERATIONS = 500;
-        var iterations = 0;
-
-        var iterator = document.createTreeWalker(rootElement, NodeFilter.SHOW_TEXT, null, false);
-        var textNode = iterator.nextNode();
-
-        while (textNode && iterations < MAX_ITERATIONS) {
-            iterations++;
-            try {
-                // 安全检查：跳过已处理元素内的文本节点
-                var parent = textNode.parentNode;
-                if (!parent) { textNode = iterator.nextNode(); continue; }
-                var parentEl = parent.nodeType === 1 ? parent : parent.parentElement;
-                if (parentEl && (parentEl.closest('.blank') || parentEl.closest('.term'))) {
-                    textNode = iterator.nextNode();
-                    continue;
-                }
-
-                var content = textNode.nodeValue;
-                if (!content) { textNode = iterator.nextNode(); continue; }
-
-                var hasMarker = false;
-                for (var m = 0; m < MARKERS.length; m++) {
-                    if (content.indexOf(MARKERS[m]) !== -1) { hasMarker = true; break; }
-                }
-
-                if (!hasMarker) { textNode = iterator.nextNode(); continue; }
-
-                var parsedNodes = parseText(content);
-                if (!parsedNodes || parsedNodes.length === 0) { textNode = iterator.nextNode(); continue; }
-                // 如果解析结果只有纯文本，无需替换
-                if (parsedNodes.length === 1 && parsedNodes[0].type === 'text') { textNode = iterator.nextNode(); continue; }
-
-                var replacement = renderNodes(parsedNodes, fieldType);
-                var nextSibling = textNode.nextSibling;
-                parent.removeChild(textNode);
-                if (nextSibling) {
-                    parent.insertBefore(replacement, nextSibling);
-                } else {
-                    parent.appendChild(replacement);
-                }
-
-                // DOM结构已改变，重新遍历
-                iterator = document.createTreeWalker(rootElement, NodeFilter.SHOW_TEXT, null, false);
-                textNode = iterator.nextNode();
-            } catch (e) {
-                console.warn('processTextMarkers error:', e);
-                textNode = iterator.nextNode();
-            }
-        }
-    }
-
-    // 处理文本内容，支持挖空和名词解释（DOM感知，不破坏HTML结构如表格）
-    function processFieldContent(element) {
-        if (!element) return;
-
-        var originalContent = element.innerHTML;
-
-        // 快速检查是否包含标记
-        var hasMarkers = originalContent.indexOf('[[') !== -1 || originalContent.indexOf('【*') !== -1;
-
-        if (hasMarkers) {
-            // 有标记：用DOM感知方式处理（先解析HTML，再在文本节点内替换标记）
-            try {
-                processTextMarkers(element, 'other');
-            } catch (e) {
-                console.warn('Marker processing error, using raw content:', e);
-            }
-        }
-        // 无标记：innerHTML已正确渲染，无需处理
-    }
-    
-    // 字段模块封装
-    const FieldModule = (function() {
-        function createFieldContainer(fieldId, fieldName, content, fieldType = 'analysis') {
-            const container = document.createElement('div');
-            container.className = 'trapezoid-container';
-            container.id = fieldId + '-container';
-
-            // 根据字段类型添加不同的类名
-            if (fieldType === 'analysis') {
-                container.classList.add('analysis-field');
-            } else if (fieldType === 'other') {
-                container.classList.add('other-field');
-            }
-
-            const trapezoid = document.createElement('div');
-            trapezoid.className = 'trapezoid';
-            trapezoid.innerHTML = `<span>${fieldName}</span>`;
-
-            const rectangle = document.createElement('div');
-            rectangle.className = 'rectangle';
-
-            const contentDiv = document.createElement('div');
-            contentDiv.className = 'field-content';
-            contentDiv.id = 'front-' + fieldId;
-
-            contentDiv.innerHTML = content;
-            // DOM感知处理标记（不破坏HTML结构如表格）
-            var hasSpecialMarkers = content.indexOf('[[') !== -1 || content.indexOf('【*') !== -1;
-            if (hasSpecialMarkers) {
-                processTextMarkers(contentDiv, 'analysis');
-            }
-
-            rectangle.appendChild(contentDiv);
-            container.appendChild(trapezoid);
-            container.appendChild(rectangle);
-            trapezoid.style.marginBottom = '-1px';
-
-            return container;
-        }
-
-        function addField(fieldId, fieldName, content, parentElement, fieldType = 'analysis') {
-            if (!content || content.trim() === '') {
-                return null;
-            }
-            const container = createFieldContainer(fieldId, fieldName, content, fieldType);
-            parentElement.appendChild(container);
-            return container;
-        }
-
-        return {
-            createFieldContainer: createFieldContainer,
-            addField: addField
-        };
-    })();
-
-    // 知识解析模块封装
-    const KnowledgeAnalysisModule = (function() {
-        function parseKnowledgeAnalysis(content) {
-            if (!content || content.trim() === '') {
-                return [];
-            }
-
-            const items = content.split('<br>###');
-            const fields = [];
-
-            items.forEach((item, index) => {
-                if (item.trim() === '') return;
-
-                const parts = item.split('::');
-                if (parts.length >= 2) {
-                    const fieldName = parts[0].trim();
-                    const fieldContent = parts.slice(1).join('::').trim();
-
-                    fields.push({
-                        id: 'analysis-' + index + '-' + fieldName.toLowerCase().replace(/\s+/g, '-'),
-                        name: fieldName,
-                        content: fieldContent
-                    });
-                }
-            });
-
-            return fields;
-        }
-
-        function renderKnowledgeAnalysis(content, parentElement, fieldType = 'analysis') {
-            const fields = parseKnowledgeAnalysis(content);
-
-            fields.forEach(field => {
-                FieldModule.addField(field.id, field.name, field.content, parentElement, fieldType);
-            });
-        }
-
-        return {
-            parseKnowledgeAnalysis: parseKnowledgeAnalysis,
-            renderKnowledgeAnalysis: renderKnowledgeAnalysis
-        };
-    })();
-
-    // 简化的设置模块 - 仅用于应用配置（不显示UI）
-    const SettingsModule = {
-        applySettings: function() {
-            const fontSize = getConfig('fontSize', 16);
-            
-            // 通过设置CSS变量来统一控制字体大小
-            document.documentElement.style.setProperty('--base-font-size', fontSize + 'px');
-            
-            applyTheme();
-        },
-        
-        applyTheme: function() {
-            const theme = getConfig('theme', 'system');
-            const html = document.documentElement;
-            
-            html.classList.remove('theme-blue', 'theme-pink', 'theme-mint', 'theme-dark', 'theme-eye-care');
-            
-            if (theme === 'system') {
-                const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-                html.classList.add(prefersDark ? 'theme-dark' : 'theme-blue');
-                
-                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
-                    const currentTheme = getConfig('theme', 'system');
-                    if (currentTheme === 'system') {
-                        html.classList.remove('theme-blue', 'theme-dark');
-                        html.classList.add(e.matches ? 'theme-dark' : 'theme-blue');
-                    }
-                });
-            } else if (theme === 'blue') {
-                html.classList.add('theme-blue');
-            } else if (theme === 'pink') {
-                html.classList.add('theme-pink');
-            } else if (theme === 'mint') {
-                html.classList.add('theme-mint');
-            } else if (theme === 'dark') {
-                html.classList.add('theme-dark');
-            } else if (theme === 'eye-care') {
-                html.classList.add('theme-eye-care');
-            }
-        }
+  const cardElementForCleanup = document.querySelector('.anki-card-root');
+  if (cardElementForCleanup) {
+    const analysisBoxes = cardElementForCleanup.querySelectorAll('.kikkua-analysis-box');
+    analysisBoxes.forEach(box => box.remove());
+    const refrenceBoxes = cardElementForCleanup.querySelectorAll('.kikkua-refrence-box');
+    refrenceBoxes.forEach(box => box.remove());
+    const contentSectionBack = cardElementForCleanup.querySelector('.kikkua-content-section-back');
+    if (contentSectionBack) contentSectionBack.remove();
+  }
+  function isIOS() {
+    return [
+      'iPad Simulator',
+      'iPhone Simulator',
+      'iPod Simulator',
+      'iPad',
+      'iPhone',
+      'iPod'
+    ].includes(navigator.platform)
+    || (navigator.userAgent.includes("Mac") && "ontouchend" in document);
+  }
+  const clozeTextContent = `{{ClozeText}}`.trim();
+  const questionContent = `{{Question}}`.trim();
+  const optionsString = `{{Options}}`.trim();
+  const choiceAnswerString = `{{Answer}}`.trim();
+  const answerTextContent = `{{AnswerText}}`.trim();
+  const mainContentArea = document.getElementById('main-content-area');
+  const optionsContainer = document.getElementById('options-container');
+  const cardElement = document.querySelector('.anki-card-root');
+  const settingsButton = document.getElementById('anki-settings-button');
+  const settingsPanel = document.getElementById('anki-settings-panel');
+  const settingsCloseButton = document.getElementById('anki-settings-close-button');
+  const settingsSaveButton = document.getElementById('anki-settings-save-button');
+  const settingsPanelBody = document.getElementById('anki-settings-panel-body');
+  const settingsResetButton = document.getElementById('anki-settings-reset-button');
+  const layoutToggleButton = document.getElementById('layout-toggle-button');
+  if (isIOS() && cardElement) {
+    console.log("iOS detected, creating click shield.");
+    const clickShield = document.createElement('div');
+    clickShield.id = 'ios-click-shield';
+    clickShield.onclick = function(event) {
+      console.log("iOS Click Shield intercepted click.");
+      event.stopPropagation();
     };
-    
-    function applyTheme() {
-        SettingsModule.applyTheme();
+    cardElement.appendChild(clickShield);
+  }
+  function getConfig(name, defaultValue) {
+    const storedValue = window.ankiStorage.getConfig(name);
+    if (storedValue !== undefined) {
+      if (typeof defaultValue === 'boolean') {
+        if (storedValue === 'true') return true;
+        if (storedValue === 'false') return false;
+      }
+      if (typeof defaultValue === 'number' && !isNaN(parseFloat(storedValue))) {
+        return parseFloat(storedValue);
+      }
+      return storedValue;
     }
-    
-    // 初始化 - 不使用DOMContentLoaded，直接执行
-    // 自动激活拼写模式（根据配置）
-    function autoActivateSpellMode() {
-        var savedMode = getConfig('studyMode', 'blank');
-        
-        if (savedMode === 'spell') {
-            SpellModeModule.activate();
-        } else if (savedMode === 'recite') {
-            // 背诵模式：揭示所有挖空
-            var contentArea = document.querySelector('.content');
-            if (contentArea) {
-                var allBlanks = contentArea.querySelectorAll('.blank:not(.revealed)');
-                allBlanks.forEach(function(blankEl) {
-                    blankEl.classList.add('revealed');
-                    var nestedTerms = blankEl.querySelectorAll('.term');
-                    nestedTerms.forEach(function(term) {
-                        term.style.visibility = 'visible';
-                    });
-                });
-            }
+    const regex = new RegExp(`<!-- config:${name}=([\\w.-]+) -->`); 
+    const match = document.documentElement.innerHTML.match(regex);
+    if (match) {
+      const value = match[1];
+      if (value === 'true') return true;
+      if (value === 'false') return false;
+      if (typeof defaultValue === 'number' && !isNaN(parseFloat(value))) {
+        return parseFloat(value);
+      }
+      return value;
+    }
+    return defaultValue;
+  }
+  function addFlipHintIfNeeded(anchorElement) {
+    const showFlipHintConfig = true; 
+    if (!showFlipHintConfig || !anchorElement || !anchorElement.parentNode) return;
+    if (document.querySelector('.flip-to-show-answer-hint')) return;
+    const flipHintElement = document.createElement('div');
+    flipHintElement.className = 'flip-to-show-answer-hint';
+    flipHintElement.innerHTML = '<span>🔄 翻面以查看答案</span>';
+    anchorElement.parentNode.insertBefore(flipHintElement, anchorElement.nextSibling);
+  }
+  function escapeHTMLTextSegment(str) {
+    if (typeof str !== 'string') return '';
+    return str.replace(/&/g, '&amp;');
+  }
+  function generateInitialClozeHTML(text) {
+    let output = "";
+    let i = 0;
+    while (i < text.length) {
+      let openBracket = text.indexOf('[[', i);
+      if (openBracket === -1) {
+        output += escapeHTMLTextSegment(text.substring(i));
+        break;
+      }
+      output += escapeHTMLTextSegment(text.substring(i, openBracket));
+      let balance = 0;
+      let startContent = openBracket + 2;
+      let endContent = -1;
+      let k = startContent;
+      for (; k < text.length; k++) {
+        if (text.substring(k, k + 2) === '[[') {
+          balance++;
+          k++; 
+        } else if (text.substring(k, k + 2) === ']]') {
+          if (balance === 0) {
+            endContent = k;
+            break;
+          }
+          balance--;
+          k++; 
         }
+      }
+      if (endContent === -1) { 
+        output += escapeHTMLTextSegment(text.substring(openBracket));
+        break;
+      }
+      const clozeContentForAttr = text.substring(startContent, endContent);
+      const escapedClozeContentForAttr = clozeContentForAttr
+          .replace(/&/g, '&amp;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
+      let dynamicPlaceholderText = '';
+      const hiddenContentLength = clozeContentForAttr.trim().length;
+      const minPlaceholderRepetitions = 3;
+      const maxPlaceholderRepetitions = 12;
+      const charsPerRepetitionUnit = 4;
+      let repetitions = Math.floor(hiddenContentLength / charsPerRepetitionUnit);
+      repetitions = Math.max(minPlaceholderRepetitions, repetitions);
+      repetitions = Math.min(maxPlaceholderRepetitions, repetitions);
+      const placeholderChar = '·';
+      dynamicPlaceholderText = placeholderChar.repeat(repetitions);
+      output += `<span class="cloze-block" data-original-content="${escapedClozeContentForAttr}" data-placeholder-text="${dynamicPlaceholderText}">${dynamicPlaceholderText}</span>`;
+      i = endContent + 2;
     }
-    
-    function init() {
-        // 初始化授权码显示
-        const authCodeDisplay = document.getElementById('auth-code-display');
-        if (authCodeDisplay) {
-            authCodeDisplay.textContent = generateAuthCode();
-        }
-
-        // 设置卡片最小高度为窗口高度
-        const card = document.querySelector('.card');
-        if (card) {
-            card.style.minHeight = window.innerHeight + 'px';
-        }
-        
-        // 监听窗口大小变化
-        window.addEventListener('resize', function() {
-            if (card) {
-                card.style.minHeight = window.innerHeight + 'px';
-            }
-        });
-        
-        // 持久化模板默认值到localStorage（如果尚未设置）
-        persistTemplateDefaults();
-        
-        // 隐藏空的章节
-        hideEmptyChapter();
-        
-        // 初始化编号显示（已移除）
-        // initNumberDisplay();
-
-        // 初始化等级按钮
-        ExplanationModule.init(explanationBox, explanationTitle, explanationContent, closeExplanation);
-        
-        // 初始化BlankModule（背诵模式下禁用挖空）
-        const studyMode = getConfig('studyMode', 'blank');
-        const blanksEnabled = studyMode !== 'recite';
-        BlankModule.init(blanksEnabled);
-        
-        // 检查文本对齐
-        checkTextAlignment(document.getElementById('front-original-text'));
-        checkTextAlignment(document.getElementById('front-summary'));
-        
-        // 隐藏空字段
-        hideEmptyFields();
-        
-        // 处理知识解析
-        processKnowledgeAnalysis();
-    }
-    
-    // 处理知识解析字段
-    function processKnowledgeAnalysis() {
-        const analysisContainer = document.getElementById('front-analysis-container');
-        if (!analysisContainer) return;
-        
-        const analysisElement = document.getElementById('front-knowledge-analysis');
-        if (!analysisElement) return;
-        
-        const content = analysisElement.innerHTML.trim();
-        if (content === '') {
-            analysisContainer.style.display = 'none';
-            return;
-        }
-        
-        const parentElement = document.querySelector('.content');
-        if (!parentElement) return;
-        
-        analysisContainer.remove();
-
-        KnowledgeAnalysisModule.renderKnowledgeAnalysis(content, parentElement, 'analysis');
-    }
-    
-    // 页面加载时立即执行初始化
-    init();
-    
-    // 处理字段内容
-    processFieldContent(document.getElementById('front-original-text'));
-    processFieldContent(document.getElementById('front-summary'));
-    
-    // 自动激活拼写模式（必须在 processFieldContent 之后）
-    autoActivateSpellMode();
-
-    // 处理用户笔记
-    processNotes();
-
-    // 隐藏空字段
-    function hideEmptyFields() {
-        const summaryContainer = document.getElementById('front-summary-container');
-        const summaryContent = document.getElementById('front-summary');
-
-        if (summaryContent && summaryContent.textContent.trim() === '') {
-            summaryContainer.style.display = 'none';
-        }
-    }
-
-    // 处理用户笔记字段
-    function processNotes() {
-        const notesElement = document.getElementById('front-notes');
-        if (!notesElement) return;
-
-        const originalHtml = notesElement.innerHTML;
-        const content = notesElement.textContent.trim();
-        const hasHtmlTags = /<[^>]+>/i.test(originalHtml);
-
-        if (!hasHtmlTags && content === '') {
-            notesElement.innerHTML = '<span class="notes-placeholder">使用图片或文字记录笔记</span>';
-        }
-    }
-
-    // 切换笔记收起/展开
-    function toggleNotes(side) {
-        const containerId = side === 'back' ? 'notes-container' : 'front-notes-container';
-        const container = document.getElementById(containerId);
-        if (container) {
-            container.classList.toggle('collapsed');
-        }
-    }
-
-    // 确保toggleNotes暴露到全局
-    window.toggleNotes = toggleNotes;
-    
-    // 暴露到全局
-    window.toggleNotes = toggleNotes;
-
-    // 检查文本对齐
-    function checkTextAlignment(textElement) {
-        if (!textElement) return;
-        
-        const lineHeight = parseFloat(getComputedStyle(textElement).lineHeight);
-        const height = textElement.offsetHeight;
-        
-        // 如果高度超过一行的高度，则为多行（降低阈值到1.2倍）
-        if (height > lineHeight * 1.2) {
-            textElement.classList.add('multi-line');
-        } else {
-            textElement.classList.remove('multi-line');
-        }
-    }
-    
-    // 立即执行初始化
-    init();
-    
-    // 应用当前设置（从localStorage读取配置）
-    SettingsModule.applySettings();
-})();
-
-// 复制微信号到剪贴板
-window.copyWechatToClipboard = function(event) {
-    // 如果提供了事件对象，处理事件传播和默认行为
-    if (event) {
-        event.stopPropagation();
-        if (event.touches && event.type.includes('touch')) {
-            event.preventDefault(); // 防止触摸事件触发两次
-        }
-    }
-    
-    const wechatNumber = 'kikkua2649';
-    
-    // 方法1: 使用现代 Clipboard API
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(wechatNumber).then(function() {
-            showCopySuccess();
-        }).catch(function(err) {
-            console.error('Clipboard API failed:', err);
-            fallbackCopy(wechatNumber);
-        });
-    } else {
-        // 方法2: 回退到传统方法
-        fallbackCopy(wechatNumber);
-    }
-};
-
-// 为复制按钮添加触摸事件支持
-function setupCopyButtonEvents() {
-    const copyButtons = document.querySelectorAll('[onclick*="copyWechatToClipboard"]');
-    copyButtons.forEach(button => {
-        // 移除原始的onclick属性
-        button.removeAttribute('onclick');
-        
-        // 添加标准化的事件处理
-        const handleCopyClick = function(event) {
-            event.stopPropagation();
-            if (event.touches && event.type.includes('touch')) {
-                event.preventDefault(); // 防止触摸事件触发两次
-            }
-            window.copyWechatToClipboard(event);
-        };
-        
-        button.addEventListener('click', handleCopyClick);
-        button.addEventListener('touchend', handleCopyClick);
+    return output;
+  }
+  function revealThisCloze(event) {
+    event.stopPropagation();
+    const block = this;
+    let tempElem = document.createElement('textarea');
+    tempElem.innerHTML = block.getAttribute('data-original-content');
+    const rawOriginalContent = tempElem.value;
+    block.innerHTML = generateInitialClozeHTML(rawOriginalContent); 
+    setupClozeInteractions(block); 
+    block.classList.remove('cloze-block');
+    block.classList.add('revealed');    
+    block.style.cursor = 'pointer'; 
+    block.onclick = hideThisCloze; 
+  }
+  function hideThisCloze(event) {
+    event.stopPropagation();
+    const block = this;
+    const placeholderText = block.getAttribute('data-placeholder-text');
+    block.innerHTML = placeholderText;
+    block.classList.remove('revealed');
+    block.classList.add('cloze-block');
+    block.style.cursor = 'pointer'; 
+    block.onclick = revealThisCloze; 
+  }
+  function setupClozeInteractions(container) {
+    const newClozeBlocks = container.querySelectorAll('.cloze-block:not(.cloze-handler-attached)');
+    newClozeBlocks.forEach(block => {
+      block.classList.add('cloze-handler-attached'); 
+      block.onclick = revealThisCloze;
     });
+  }
+  const optionsArray = optionsString.split('||').map(option => option.trim()).filter(option => option);
+  const choiceAnswerDefined = choiceAnswerString.length > 0;
+  const isClozeMode = clozeTextContent.length > 0;
+  const isClozeChoiceMode = (() => {
+    const trimmedQuestion = questionContent.trim();
+    const startsWithDoubleOrTripleDollar = trimmedQuestion.startsWith('$$') || trimmedQuestion.startsWith('$$$');
+    if (!startsWithDoubleOrTripleDollar) return false;
+    if (!optionsString.trim() || !choiceAnswerString.trim()) return false;
+    if (!trimmedQuestion.includes('##')) return false;
+    return true;
+  })();
+  const isQAMode = !isClozeMode && !isClozeChoiceMode && questionContent.length > 0 && answerTextContent.length > 0 && (optionsArray.length === 0 || !choiceAnswerDefined);
+const isChoiceMode = !isClozeMode && !isClozeChoiceMode && !isQAMode && questionContent.length > 0 && optionsArray.length > 0 && choiceAnswerDefined;
+  const isImageClozeMode = (() => {
+    try {
+      const masks = JSON.parse(questionContent);
+      if (Array.isArray(masks) && masks.length > 0) {
+        const firstMask = masks[0];
+        return firstMask.hasOwnProperty('x') && firstMask.hasOwnProperty('y') && 
+               firstMask.hasOwnProperty('w') && firstMask.hasOwnProperty('h');
+      }
+    } catch(e) {
+    }
+    return false;
+  })();
+  const SettingsPanelModule = (function() {
+    let isOpen = false;
+    const configOptions = [
+      { key: 'themeMode', label: '主题模式', type: 'select', options: [
+          {value: 'light', text: '明亮'}, {value: 'dark', text: '暗黑'},
+          {value: 'eyeCare', text: '护眼'}, {value: 'system', text: '跟随系统'}
+        ], default: 'system' },
+      { key: 'cardWidthPercent', label: '卡片宽度百分比', type: 'number', default: 55, min: 50, max: 100, step: 5 },
+      { key: 'shuffleOptions', label: '随机打乱选项', type: 'toggle', default: true },
+      { key: 'showOptionLabels', label: '显示选项标签 (正面)', type: 'toggle', default: true },
+      { key: 'showTimer', label: '显示倒计时', type: 'toggle', default: true },
+      { key: 'timerDuration', label: '倒计时长 (秒)', type: 'number', default: 15, min: 5, max: 120, step: 1 },
+      { key: 'showAnalysis', label: '显示解析区域', type: 'toggle', default: true },
+      { key: 'showRefrence', label: '显示知识点区域', type: 'toggle', default: true },
+      { key: 'showSessionStats', label: '显示做题统计 (选择题背面)', type: 'toggle', default: true },
+    ];
+    function createSettingItem(config) {
+      const itemDiv = document.createElement('div');
+      itemDiv.className = 'setting-item';
+      const label = document.createElement('label');
+      label.htmlFor = `setting-${config.key}`;
+      label.textContent = config.label;
+      itemDiv.appendChild(label);
+      if (config.type === 'toggle') {
+        const switchContainer = document.createElement('label');
+        switchContainer.className = 'toggle-switch-container';
+        const input = document.createElement('input');
+        input.type = 'checkbox';
+        input.id = `setting-${config.key}`;
+        input.name = config.key;
+        const slider = document.createElement('span');
+        slider.className = 'toggle-switch-slider';
+        switchContainer.appendChild(input);
+        switchContainer.appendChild(slider);
+        switchContainer.onclick = function(event) {
+          event.stopPropagation();
+          console.log('Toggle switch container clicked, stopped propagation.');
+        };
+        itemDiv.appendChild(switchContainer);
+      } else if (config.type === 'select') {
+        const select = document.createElement('select');
+        select.id = `setting-${config.key}`;
+        select.name = config.key;
+        config.options.forEach(opt => {
+          const option = document.createElement('option');
+          option.value = opt.value;
+          option.textContent = opt.text;
+          select.appendChild(option);
+        });
+        select.onclick = function(event) {
+          event.stopPropagation();
+          console.log('Select element clicked, stopped propagation.');
+        };
+        select.onmousedown = function(event) {
+            event.stopPropagation();
+            console.log('Select element mousedown, stopped propagation.');
+        }
+        itemDiv.appendChild(select);
+      } else if (config.type === 'number') {
+        const adjusterContainer = document.createElement('div');
+        adjusterContainer.className = 'setting-number-adjuster';
+        const minusButton = document.createElement('button');
+        minusButton.type = 'button'; 
+        minusButton.className = 'setting-adjust-button minus';
+        minusButton.textContent = '−'; 
+        minusButton.setAttribute('aria-label', '减少');
+        const valueSpan = document.createElement('span');
+        valueSpan.id = `setting-${config.key}`; 
+        valueSpan.className = 'setting-number-value';
+        valueSpan.textContent = config.default; 
+        const plusButton = document.createElement('button');
+        plusButton.type = 'button';
+        plusButton.className = 'setting-adjust-button plus';
+        plusButton.textContent = '+';
+        plusButton.setAttribute('aria-label', '增加');
+        minusButton.onclick = (event) => {
+          event.stopPropagation();
+          let currentValue = parseInt(valueSpan.textContent, 10);
+          const step = config.step || 1;
+          const min = config.min !== undefined ? config.min : -Infinity;
+          if (!isNaN(currentValue)) {
+            currentValue = Math.max(min, currentValue - step);
+            valueSpan.textContent = currentValue;
+          }
+        };
+        plusButton.onclick = (event) => {
+          event.stopPropagation();
+          let currentValue = parseInt(valueSpan.textContent, 10);
+          const step = config.step || 1;
+          const max = config.max !== undefined ? config.max : Infinity;
+          if (!isNaN(currentValue)) {
+            currentValue = Math.min(max, currentValue + step);
+            valueSpan.textContent = currentValue;
+          }
+        };
+        adjusterContainer.appendChild(minusButton);
+        adjusterContainer.appendChild(valueSpan);
+        adjusterContainer.appendChild(plusButton);
+        itemDiv.appendChild(adjusterContainer);
+      }
+      return itemDiv;
+    }
+    function populatePanel() {
+      if (!settingsPanelBody) return;
+      settingsPanelBody.innerHTML = ''; 
+      configOptions.forEach(config => {
+        const currentValue = getConfig(config.key, config.default);
+        const itemElement = createSettingItem(config);
+        const inputElement = itemElement.querySelector(`#setting-${config.key}`);
+        if (inputElement) {
+          if (config.type === 'toggle') {
+             const boolValue = currentValue === true || String(currentValue).toLowerCase() === 'true';
+             inputElement.checked = boolValue;
+          } else if (config.type === 'number') {
+             inputElement.textContent = parseInt(currentValue, 10) || config.default;
+          } else { 
+            inputElement.value = currentValue;
+          }
+        }
+        settingsPanelBody.appendChild(itemElement);
+      });
+    }
+    function openPanel() {
+      if (!settingsPanel) return;
+      populatePanel(); 
+      settingsPanel.classList.add('visible');
+      isOpen = true;
+    }
+    function closePanel() {
+      if (!settingsPanel) return;
+      settingsPanel.classList.remove('visible');
+      isOpen = false;
+    }
+    function togglePanel() {
+      if (isOpen) {
+        closePanel();
+      } else {
+        openPanel();
+      }
+    }
+    function applySettings() {
+      ThemeManager.init(); 
+      TimerModule.init(); 
+      const cardWidthPercent = getConfig('cardWidthPercent', 55);
+      const cardElement = document.querySelector('.anki-card-root');
+      if (cardElement) {
+        const originalTransition = cardElement.style.transition;
+        cardElement.style.transition = 'none';
+        cardElement.classList.remove('width-percent');
+        if (window.innerWidth >= 769) {
+          cardElement.classList.add('width-percent');
+          cardElement.style.setProperty('--card-width-percent', `${cardWidthPercent}vw`);
+        } else {
+          cardElement.style.removeProperty('--card-width-percent');
+        }
+        cardElement.offsetHeight; 
+        cardElement.style.transition = originalTransition;
+      }
+    }
+    function saveSettings() {
+      if (!settingsPanelBody) return;
+      configOptions.forEach(config => {
+        const inputElement = settingsPanelBody.querySelector(`#setting-${config.key}`);
+        if (inputElement) {
+          let value;
+          if (config.type === 'toggle') {
+            value = inputElement.checked;
+          } else if (config.type === 'number') {
+            value = parseInt(inputElement.textContent, 10);
+            if (isNaN(value)) value = config.default;
+            if (config.min !== undefined && value < config.min) value = config.min;
+            if (config.max !== undefined && value > config.max) value = config.max;
+          } else { 
+            value = inputElement.value;
+          }
+          window.ankiStorage.setConfig(config.key, value);
+        }
+      });
+      console.log("Settings saved to localStorage.");
+      applySettings();
+      closePanel();
+    }
+    function handleResetSettings() {
+      if (confirm("您确定要将所有卡片设置恢复为默认值吗？此操作不可撤销。")) {
+        const configPrefix = 'anki_cfg_'; 
+        configOptions.forEach(config => {
+          try {
+            localStorage.removeItem(configPrefix + config.key);
+          } catch (e) {
+            console.warn(`Error removing ${configPrefix + config.key} from localStorage`, e);
+          }
+        });
+        console.log("All settings reset to defaults (localStorage cleared).");
+        populatePanel(); 
+        applySettings(); 
+      }
+    }
+    return {
+      init: function() {
+        if (settingsPanel) {
+          settingsPanel.addEventListener('click', function(event) {
+            if (isIOS() && event.target === settingsPanel) {
+              console.log("iOS Settings Panel background click intercepted.");
+              event.stopPropagation();
+            }
+          });
+        }
+        if (settingsButton) {
+          settingsButton.onclick = (event) => {
+            event.stopPropagation();
+            togglePanel();
+          };
+        }
+        if (settingsCloseButton) {
+          settingsCloseButton.onclick = (event) => {
+             event.stopPropagation();
+             closePanel();
+          };
+        }
+        if (settingsSaveButton) {
+          settingsSaveButton.onclick = (event) => {
+             event.stopPropagation();
+             saveSettings();
+          };
+        }
+        if (settingsResetButton) {
+           settingsResetButton.onclick = (event) => {
+             event.stopPropagation();
+             handleResetSettings();
+          };
+        }
+        document.addEventListener('keydown', function(event) {
+          if (event.key === 'Escape' && isOpen) {
+            event.preventDefault();
+            closePanel();
+          }
+        });
+      },
+      isOpen: () => isOpen, 
+      applySettings: applySettings 
+    };
+  })();
+  const TimerModule = (function() {
+    const showTimerConfig = getConfig('showTimer', true);
+    const timerDurationConfig = parseInt(getConfig('timerDuration', 15), 10);
+    const timerContainer = document.getElementById('timer-bar-container');
+    const timerBar = document.getElementById('timer-bar');
+    const timerTextElement = document.getElementById('timer-text');
+    let timerInterval;
+    let remainingTimeInSeconds;
+    function updateDisplay(currentTime, totalTime) {
+      if (!timerBar || !timerTextElement || !timerContainer) return;
+      const percentage = (currentTime / totalTime) * 100;
+      timerBar.style.width = percentage + '%';
+      if (currentTime > 0) {
+        timerTextElement.textContent = `${Math.ceil(currentTime)}s`;
+        timerTextElement.style.fontWeight = '500';
+        timerTextElement.style.color = 'var(--text-secondary)';
+      } else {
+        timerTextElement.textContent = "Time's Up!";
+        timerTextElement.style.fontWeight = 'bold';
+      }
+      if (currentTime <= 0) {
+        timerBar.style.backgroundColor = 'var(--color-danger)';
+        timerContainer.classList.add('timer-expired');
+        timerTextElement.style.color = 'var(--color-danger)';
+      } else if (percentage <= 35) {
+        timerBar.style.backgroundColor = 'var(--color-danger)';
+      } else if (percentage <= 70) {
+        timerBar.style.backgroundColor = 'var(--color-warning)';
+      } else {
+        timerBar.style.backgroundColor = 'var(--color-primary)';
+      }
+    }
+    function start(duration) {
+      if (!timerContainer || !timerBar) return;
+      timerContainer.style.display = 'flex';
+      remainingTimeInSeconds = duration;
+      updateDisplay(remainingTimeInSeconds, duration);
+      timerInterval = setInterval(() => {
+        remainingTimeInSeconds -= 0.1;
+        if (remainingTimeInSeconds < 0) remainingTimeInSeconds = 0;
+        updateDisplay(remainingTimeInSeconds, duration);
+        if (remainingTimeInSeconds <= 0) {
+          clearInterval(timerInterval);
+        }
+      }, 100);
+    }
+    return {
+      init: function() {
+        if (showTimerConfig && timerDurationConfig > 0 && timerContainer) {
+          start(timerDurationConfig);
+        } else if (timerContainer) {
+          timerContainer.style.display = 'none';
+        }
+      }
+    };
+  })();
+  const CardTypeHandlers = {
+    cloze: {
+      front: {
+        setup: function() {
+          if (!mainContentArea) return;
+          console.log('[Cloze Front Setup] Initializing...');
+          mainContentArea.innerHTML = ''; 
+          if (optionsContainer) optionsContainer.style.display = 'none';
+          mainContentArea.classList.add('cloze-active-area');
+          mainContentArea.classList.remove('contains-table');
+          if (cardElement) cardElement.classList.remove('anki-card-root-contains-table');
+          console.log('[Cloze Front Setup] Original clozeTextContent from Anki field:', clozeTextContent);
+          let tempElemForDecoding = document.createElement('textarea');
+          tempElemForDecoding.innerHTML = clozeTextContent; 
+          let rawHtmlClozeText = tempElemForDecoding.value;
+          console.log('[Cloze Front Setup] After HTML entity decoding:', JSON.stringify(rawHtmlClozeText));
+          rawHtmlClozeText = rawHtmlClozeText.replace(/\r\n?/g, '\n');
+          console.log('[Cloze Front Setup] After step 1 (newline std):', JSON.stringify(rawHtmlClozeText));
+          rawHtmlClozeText = rawHtmlClozeText
+            .replace(/<p(?:\s[^>]*)?>([\s\S]*?)<\/p>/gi, function(match, content) {
+              if (/^(\s|&nbsp;|<br\s*\/?>)*$/.test(content)) return '';
+              return content + '<br>';
+            })
+            .replace(/<div(?:\s[^>]*)?>([\s\S]*?)<\/div>/gi, function(match, content) {
+              if (/^(\s|&nbsp;|<br\s*\/?>)*$/.test(content)) return '';
+              return content + '<br>';
+            });
+          console.log('[Cloze Front Setup] After step 2 (p/div to br):', JSON.stringify(rawHtmlClozeText));
+          rawHtmlClozeText = rawHtmlClozeText.replace(/(?:<br\s*\/?>\s*){2,}/gi, '<br>');
+          console.log('[Cloze Front Setup] After step 3 (multiple br removal):', JSON.stringify(rawHtmlClozeText));
+          rawHtmlClozeText = rawHtmlClozeText.replace(/>\s*<br\s*\/?>\s*</gi, '><');
+          console.log('[Cloze Front Setup] After step 3a (remove br between tags):', JSON.stringify(rawHtmlClozeText));
+          rawHtmlClozeText = rawHtmlClozeText.replace(/>\s+</gi, '><');
+          console.log('[Cloze Front Setup] After step 3b (remove whitespace between tags):', JSON.stringify(rawHtmlClozeText));
+          rawHtmlClozeText = rawHtmlClozeText.trim();
+          console.log('[Cloze Front Setup] After step 4 (trim):', JSON.stringify(rawHtmlClozeText));
+          rawHtmlClozeText = rawHtmlClozeText.replace(/(\n\s*){2,}/g, '\n');
+          console.log('[Cloze Front Setup] After step 5 (collapse newlines):', JSON.stringify(rawHtmlClozeText));
+          rawHtmlClozeText = rawHtmlClozeText.replace(/(<\/h3\b[^>]*>)(?:\s*<br\s*\/?>\s*|\s+)*?(<table\b[^>]*>)/gi, '$1$2');
+          console.log('[Cloze Front Setup] After step 6 (h3-table gap cleanup):', JSON.stringify(rawHtmlClozeText));
+          rawHtmlClozeText = rawHtmlClozeText.trim();
+          console.log('[Cloze Front Setup] After step 7 (final trim):', JSON.stringify(rawHtmlClozeText));
+          if (rawHtmlClozeText.toLowerCase().includes('<table')) {
+            mainContentArea.classList.add('contains-table');
+            if (cardElement) { 
+              cardElement.classList.add('anki-card-root-contains-table');
+            }
+            console.log('[Cloze Front Setup] Table detected, classes added.');
+          } else {
+            console.log('[Cloze Front Setup] No table detected.');
+          }
+          console.log('[Cloze Front Setup] Final rawHtmlClozeText passed to generateInitialClozeHTML:', JSON.stringify(rawHtmlClozeText));
+          mainContentArea.innerHTML = generateInitialClozeHTML(rawHtmlClozeText);
+          setupClozeInteractions(mainContentArea);
+          addFlipHintIfNeeded(mainContentArea);
+          console.log('[Cloze Front Setup] Setup complete.');
+        }
+      }
+    },
+    qa: {
+      front: {
+        setup: function() {
+          if (!mainContentArea) return;
+          mainContentArea.innerHTML = questionContent.replace(/\n/g, '<br>');
+          if (optionsContainer) optionsContainer.style.display = 'none';
+          mainContentArea.classList.add('qa-active-area');
+    if (!mainContentArea.classList.contains('question')) {
+        mainContentArea.classList.add('question');
+    }
+    mainContentArea.classList.remove('cloze-active-area');
+          addFlipHintIfNeeded(mainContentArea);
+        }
+      }
+    },
+    choice: {
+      front: {
+        setup: function() {
+          if (!mainContentArea || !optionsContainer) return;
+          const questionParts = questionContent.split('##');
+          const mainStem = questionParts[0];
+          const subQuestions = questionParts.slice(1);
+          const optionsGroups = optionsString.split('##').map(g => g.split('||'));
+          const answers = choiceAnswerString.split('##');
+          const isMultiSub = subQuestions.length > 0 && optionsGroups.length === subQuestions.length && answers.length === subQuestions.length;
+          const showOptionLabelsConfig = getConfig('showOptionLabels', true);
+          const shuffleOptionsConfig = getConfig('shuffleOptions', true);
+          /*
+          if (isMultiSub) {
+            subQuestions.forEach((q, idx) => {
+              const subQuestionHash = (q + '_' + idx).slice(0, 100);
+              if (window.ankiStorage && typeof window.ankiStorage.clear === 'function') {
+                window.ankiStorage.clear(subQuestionHash);
+              }
+            });
+          } else {
+            const questionHash = questionContent.slice(0, 100);
+            if (window.ankiStorage && typeof window.ankiStorage.clear === 'function') {
+              window.ankiStorage.clear(questionHash);
+            }
+          }
+          */
+          function renderChoiceQuestion({container, question, options, answer, idx, showOptionLabels, shuffle, onAnswered, isMultiSubMode}) {
+            const opts = options.slice();
+            let order = opts.map((_, i) => i);
+            if (shuffle && opts.length > 1) {
+              for (let i = order.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [order[i], order[j]] = [order[j], order[i]];
+              }
+            }
+            const optionsDiv = isMultiSubMode ? document.createElement('div') : 
+                              (container.classList.contains('options-container') ? container : document.createElement('div'));
+            if (isMultiSubMode) {
+              optionsDiv.className = 'sub-options';
+            } else if (!container.classList.contains('options-container')) {
+              optionsDiv.className = 'options-container';
+            }
+            const originalKeys = opts.map((_, i) => String.fromCharCode(65 + i));
+            let keyBase, selected;
+            if (isMultiSubMode) {
+              const uniqueStr = question + '_' + idx;
+              let hash = 0;
+              for (let i = 0; i < uniqueStr.length; i++) {
+                hash = ((hash << 5) - hash) + uniqueStr.charCodeAt(i);
+                hash = hash & hash;
+              }
+              keyBase = 'subq_' + idx + '_' + Math.abs(hash).toString(36);
+              selected = ankiStorage.get(keyBase) || [];
+            } else {
+              keyBase = questionContent.slice(0, 100);
+              selected = ankiStorage.get(keyBase) || [];
+            }
+            const correctAnswers = answer.toUpperCase().split('');
+            const isMulti = correctAnswers.length > 1;
+            order.forEach((shuffledIdx, i) => {
+              const key = originalKeys[shuffledIdx];
+              const optDiv = document.createElement('div');
+              optDiv.className = 'option';
+              if (showOptionLabels) optDiv.setAttribute('data-key', originalKeys[i]);
+              optDiv.setAttribute('data-original', key);
+              optDiv.setAttribute('data-index', i);
+              optDiv.setAttribute('data-content', opts[shuffledIdx]);
+              optDiv.innerHTML = opts[shuffledIdx];
+              if (selected.includes(key)) {
+                optDiv.classList.add('selected');
+              }
+              optDiv.style.pointerEvents = 'auto';
+              optDiv.classList.remove('disabled');
+              optDiv.onclick = function(event) {
+                event.stopPropagation();
+                let selected = ankiStorage.get(keyBase) || [];
+                if (!isMulti) {
+                  optionsDiv.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+                  selected = [];
+                }
+                const indexInSelected = selected.indexOf(key);
+                if(indexInSelected > -1) {
+                  selected.splice(indexInSelected, 1);
+                  this.classList.remove('selected');
+                } else {
+                  selected.push(key);
+                  this.classList.add('selected');
+                }
+                ankiStorage.set(keyBase, selected);
+                console.log('【调试】front.html 选项点击 set:', keyBase, selected);
+                console.log('【调试】front.html localStorage keys:', Object.keys(localStorage));
+                const safeKey = 'anki_sel_' + btoa(encodeURIComponent(keyBase)).slice(0, 50);
+                console.log('【调试】front.html localStorage value:', localStorage.getItem(safeKey));
+                if (!isMulti && typeof onAnswered === 'function') {
+                  setTimeout(() => { onAnswered(); }, 300);
+                } else if (isMulti && typeof onAnswered === 'function') {
+                  onAnswered();
+                }
+              };
+              optionsDiv.appendChild(optDiv);
+            });
+            if (isMultiSubMode || !container.classList.contains('options-container')) {
+              container.appendChild(optionsDiv);
+            }
+          }
+          if (!isMultiSub) {
+  mainContentArea.innerHTML = questionContent.replace(/\n/g, '<br>');
+  optionsContainer.innerHTML = '';
+  mainContentArea.classList.remove('cloze-active-area', 'qa-active-area');
+  renderChoiceQuestion({
+    container: optionsContainer,
+    question: questionContent,
+    options: optionsArray,
+    answer: choiceAnswerString,
+    idx: 0,
+    showOptionLabels: showOptionLabelsConfig,
+    shuffle: shuffleOptionsConfig,
+    onAnswered: function() { 
+      if (typeof pycmd === 'function') {
+        pycmd("showAnswer");
+      }
+    },
+    isMultiSubMode: false
+  });
+  optionsContainer.style.display = '';
+  addFlipHintIfNeeded(optionsContainer);
+  return;
 }
-
-// 当DOM内容加载完成后设置复制按钮事件
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', setupCopyButtonEvents);
-} else {
-    setupCopyButtonEvents();
-}
-
-function fallbackCopy(text) {
-    // 创建临时文本区域
+          mainContentArea.innerHTML = '';
+          optionsContainer.innerHTML = '';
+          const mainStemDiv = document.createElement('div');
+          mainStemDiv.className = 'main-stem';
+          mainStemDiv.innerHTML = mainStem;
+          mainContentArea.appendChild(mainStemDiv);
+          let answeredArr = new Array(subQuestions.length).fill(false);
+          function checkAllAnswered() {
+            let all = true;
+            for (let i = 0; i < subQuestions.length; i++) {
+              const subQuestionHash = (subQuestions[i] + '_' + i).slice(0, 100);
+              const selected = ankiStorage.get(subQuestionHash) || [];
+              answeredArr[i] = selected.length > 0;
+              if (!answeredArr[i]) all = false;
+            }
+                      if (all && typeof pycmd === 'function') {
+            pycmd("showAnswer");
+          }
+          }
+          subQuestions.forEach((q, idx) => {
+  const subDiv = document.createElement('div');
+  subDiv.className = 'sub-question';
+  const ans = answers[idx] || '';
+  const isMulti = ans.length > 1;
+  const tag = document.createElement('span');
+  tag.className = isMulti ? 'question-type-tag multi' : 'question-type-tag single';
+  tag.textContent = isMulti ? '多选' : '单选';
+  const subTitle = document.createElement('div');
+  subTitle.className = 'sub-q-title';
+  subTitle.appendChild(tag);
+  subTitle.appendChild(document.createTextNode(`(${idx+1}) ${q}`));
+  subDiv.appendChild(subTitle);
+  const subOptionsDiv = document.createElement('div');
+  subOptionsDiv.className = 'sub-options';
+  renderChoiceQuestion({
+    container: subOptionsDiv,
+    question: q,
+    options: optionsGroups[idx] || [],
+    answer: answers[idx] || '',
+    idx,
+    showOptionLabels: showOptionLabelsConfig,
+    shuffle: shuffleOptionsConfig,
+    onAnswered: checkAllAnswered,
+    isMultiSubMode: true
+  });
+  subDiv.appendChild(subOptionsDiv);
+  optionsContainer.appendChild(subDiv);
+});
+          addFlipHintIfNeeded(optionsContainer);
+        }
+      }
+    },
+    fallback: {
+      front: {
+        setup: function() {
+          if (!mainContentArea) return;
+          mainContentArea.innerHTML = questionContent.replace(/\n/g, '<br>');
+          if (optionsContainer) optionsContainer.style.display = 'none';
+          mainContentArea.classList.remove('cloze-active-area', 'qa-active-area');
+          let hintMessage = '';
+          const baseStyle = `display:block; margin-top:15px; padding:10px; border-radius:8px; background-color: var(--bg-warning); color: var(--text-type); font-size: 14px; line-height:1.5;`;
+          if (questionContent.length > 0 && !answerTextContent.length && optionsArray.length === 0 && !clozeTextContent.length && !choiceAnswerDefined) {
+              hintMessage = `<br><span class="empty-hint" style="${baseStyle}">⚠️ 卡片类型不明确或缺少答案！<br>请补充以下任一字段组：<br> • 填空题: <code>{{ClozeText}}</code><br> • 选择题: <code>{{Options}}</code> 和 <code>{{Answer}}</code><br> • 问答题: <code>{{AnswerText}}</code></span>`;
+          } else if (!questionContent.length && !clozeTextContent.length) {
+              hintMessage = `<span class="empty-hint" style="${baseStyle}">⚠️ 卡片缺少问题！<br>请填写 <code>{{Question}}</code> (用于选择/问答题) 或 <code>{{ClozeText}}</code> (用于填空题)。</span>`;
+          } else if (isChoiceMode && optionsArray.length === 0) {
+              hintMessage = `<br><span class="empty-hint" style="${baseStyle}">⚠️ 选择题缺少选项！<br>请填写 <code>{{Options}}</code> 字段，用 <code>||</code> 分隔。</span>`;
+          } else if (isChoiceMode && !choiceAnswerDefined) {
+              hintMessage = `<br><span class="empty-hint" style="${baseStyle}">⚠️ 选择题缺少答案！<br>请填写 <code>{{Answer}}</code> 字段（如 A, BC）。</span>`;
+          } else if (isClozeMode && !clozeTextContent.includes('[[')) {
+               hintMessage = `<br><span class="empty-hint" style="${baseStyle}">⚠️ 填空题缺少挖空标记！<br>请在 <code>{{ClozeText}}</code> 中使用 <code>[[挖空内容]]</code>。</span>`;
+          }
+          if (hintMessage) mainContentArea.innerHTML += hintMessage;
+          addFlipHintIfNeeded(mainContentArea);
+        }
+      }
+    },
+    imageCloze: {
+      front: {
+        setup: function() {
+          if (!mainContentArea) return;
+          if (optionsContainer) optionsContainer.style.display = 'none';
+          mainContentArea.innerHTML = '';
+          mainContentArea.classList.remove('cloze-active-area', 'qa-active-area');
+          mainContentArea.classList.add('image-cloze-active-area');
+          const imgClozeViewport = document.createElement('div');
+          imgClozeViewport.className = 'img-cloze-viewport';
+          imgClozeViewport.id = 'imgClozeViewport';
+          const imageClozeContent = `{{ImageCloze}}`.trim();
+          if (imageClozeContent) {
+            imgClozeViewport.innerHTML = imageClozeContent;
+          } else {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = questionContent;
+            const img = tempDiv.querySelector('img');
+            if (img) {
+              imgClozeViewport.appendChild(img.cloneNode(true));
+            }
+          }
+          mainContentArea.appendChild(imgClozeViewport);
+          (function() {
+            let masks = [];
+            try { 
+              masks = JSON.parse(questionContent); 
+            } catch(e) {
+              console.warn('Failed to parse image cloze masks:', e);
+            }
+            const viewport = document.getElementById('imgClozeViewport');
+            const img = viewport.querySelector('img');
+            if (!img) {
+              console.warn('No image found for image cloze');
+              return;
+            }
+            img.classList.add('img-cloze-img');
+            function handleImageLoad() {
+              console.log('图片加载完成，开始设置样式...');
+              const styleProperties = {
+                'width': '100%',
+                'height': 'auto',
+                'max-width': '100%',
+                'object-fit': 'contain',
+                'margin': '0',
+                'padding': '0',
+                'display': 'block',
+                'vertical-align': 'top',
+                'min-width': '0',
+                'opacity': '1',
+                'visibility': 'visible',
+                'max-height': 'none',
+                'box-sizing': 'border-box',
+                'font-size': '0',
+                'line-height': '0'
+              };
+              Object.entries(styleProperties).forEach(([property, value]) => {
+                img.style.setProperty(property, value, 'important');
+                img.style[property] = value;
+              });
+              if (viewport) {
+                const viewportStyles = {
+                  'width': '100%',
+                  'max-width': '100%',
+                  'height': 'auto',
+                  'display': 'block',
+                  'min-height': '0',
+                  'position': 'relative',
+                  'overflow': 'auto'
+                };
+                Object.entries(viewportStyles).forEach(([property, value]) => {
+                  viewport.style.setProperty(property, value, 'important');
+                  viewport.style[property] = value;
+                });
+              }
+              img.removeAttribute('width');
+              img.removeAttribute('height');
+              img.removeAttribute('style');
+              setTimeout(() => {
+                Object.entries(styleProperties).forEach(([property, value]) => {
+                  img.style.setProperty(property, value, 'important');
+                });
+              }, 10);
+              console.log('样式设置完成，图片尺寸:', {
+                naturalWidth: img.naturalWidth,
+                naturalHeight: img.naturalHeight,
+                clientWidth: img.clientWidth,
+                clientHeight: img.clientHeight,
+                offsetWidth: img.offsetWidth,
+                offsetHeight: img.offsetHeight,
+                computedWidth: getComputedStyle(img).width,
+                computedHeight: getComputedStyle(img).height
+              });
+              renderMasks();
+            }
+            function renderMasks() {
+              viewport.querySelectorAll('.img-cloze-mask').forEach(e => e.remove());
+              masks.forEach((mask, idx) => {
+                const div = document.createElement('div');
+                div.className = 'img-cloze-mask';
+                div.style.left = (mask.x * 100) + '%';
+                div.style.top = (mask.y * 100) + '%';
+                div.style.width = (mask.w * 100) + '%';
+                div.style.height = (mask.h * 100) + '%';
+                div.style.background = mask.c || '#000';
+                div.style.borderRadius = '4px';
+                div.style.cursor = 'pointer';
+                div.style.zIndex = '2';
+                div.style.position = 'absolute';
+                div.style.transition = 'opacity 0.3s ease';
+                div.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.2)';
+                div.style.border = '0.5px solid var(--color-primary)';
+                div.style.opacity = '1';
+                div.style.webkitTapHighlightColor = 'transparent';
+                div.style.webkitTouchCallout = 'none';
+                div.style.outline = 'none';
+                div.onclick = function(event) { 
+                  event.stopPropagation();
+                  if (this.classList.contains('img-cloze-revealed')) {
+                    this.classList.remove('img-cloze-revealed');
+                    this.style.opacity = '1';
+                    this.style.background = mask.c || '#000'; 
+                  } else {
+                    this.classList.add('img-cloze-revealed');
+                    this.style.opacity = '0.2';
+                    this.style.background = mask.c || '#000'; 
+                  }
+                };
+                viewport.appendChild(div);
+              });
+            }
+            if (img.complete && img.naturalWidth > 0) {
+              handleImageLoad();
+            } else {
+              img.onload = handleImageLoad;
+              img.onerror = function() {
+                console.warn('Image failed to load, but continuing with setup');
+                handleImageLoad();
+              };
+            }
+            img.removeAttribute('width');
+            img.removeAttribute('height');
+          })();
+          addFlipHintIfNeeded(mainContentArea);
+        }
+      }
+    },
+    clozeChoice: {
+      front: {
+        setup: function() {
+          if (!mainContentArea) return;
+          if (optionsContainer) optionsContainer.style.display = 'none';
+          mainContentArea.innerHTML = '';
+          mainContentArea.classList.remove('cloze-active-area', 'qa-active-area', 'image-cloze-active-area');
+          mainContentArea.classList.add('cloze-choice-active-area');
+          const trimmedQuestion = questionContent.trim();
+          let clozeQuestionText;
+          if (trimmedQuestion.startsWith('$$$')) {
+            clozeQuestionText = trimmedQuestion.substring(3); 
+          } else if (trimmedQuestion.startsWith('$$')) {
+            clozeQuestionText = trimmedQuestion.substring(2); 
+          } else {
+            clozeQuestionText = trimmedQuestion; 
+          }
+          const questionParts = clozeQuestionText.split('##');
+          const optionsGroups = optionsString.split('##').map(g => g.split('||').map(opt => opt.trim()).filter(opt => opt));
+          const answers = choiceAnswerString.split('##').map(ans => ans.trim().toUpperCase());
+          const isWordChoiceMode = optionsGroups.length === 1;
+          const blankCount = questionParts.length - 1; 
+          if (blankCount !== answers.length) {
+            console.error('完型填空：空位数量与答案数量不匹配');
+            mainContentArea.innerHTML = '<div class="error-message">数据格式错误：空位数量与答案数量不匹配</div>';
+            return;
+          }
+          if (!isWordChoiceMode && optionsGroups.length !== blankCount) {
+            console.error('完型填空：选项组数量与空位数量不匹配');
+            mainContentArea.innerHTML = '<div class="error-message">数据格式错误：选项组数量与空位数量不匹配</div>';
+            return;
+          }
+          let htmlContent = '';
+          questionParts.forEach((part, index) => {
+            if (index === 0) {
+              htmlContent += escapeHTMLTextSegment(part);
+            } else {
+              const blankIndex = index - 1;
+              const blankId = `cloze-blank-${blankIndex}`;
+              htmlContent += `<span class="cloze-blank" id="${blankId}" data-blank-index="${blankIndex}">_____</span>`;
+              htmlContent += escapeHTMLTextSegment(part);
+            }
+          });
+          mainContentArea.innerHTML = htmlContent;
+          setupClozeChoiceInteractions();
+          function setupClozeChoiceInteractions() {
+            const blanks = mainContentArea.querySelectorAll('.cloze-blank');
+            blanks.forEach((blank, index) => {
+              const showPanelHandler = function(event) {
+                event.preventDefault();
+                event.stopPropagation();
+                showOptionsPanel(this, index);
+              };
+              blank.addEventListener('click', showPanelHandler);
+              blank.addEventListener('touchend', showPanelHandler);
+              blank.style.cursor = 'pointer';
+              blank.style.webkitTouchCallout = 'none';
+              blank.style.webkitUserSelect = 'none';
+              blank.style.userSelect = 'none';
+              blank.style.position = 'relative';
+              blank.style.zIndex = '2';
+            });
+            const closeOptionsPanel = function(event) {
+              const optionsPanel = document.querySelector('.cloze-options-panel');
+              if (optionsPanel && !optionsPanel.contains(event.target) && !event.target.classList.contains('cloze-blank')) {
+                optionsPanel.remove();
+              }
+            };
+            document.addEventListener('click', closeOptionsPanel);
+            document.addEventListener('touchend', closeOptionsPanel);
+            document.addEventListener('keydown', function(event) {
+              if (event.key === 'Escape') {
+                const optionsPanel = document.querySelector('.cloze-options-panel');
+                if (optionsPanel) {
+                  optionsPanel.remove();
+                }
+              }
+            });
+          }
+          function showOptionsPanel(blankElement, blankIndex) {
+            const existingPanel = document.querySelector('.cloze-options-panel');
+            if (existingPanel) {
+              existingPanel.remove();
+            }
+            let currentOptions;
+            if (isWordChoiceMode) {
+              currentOptions = optionsGroups[0]; 
+            } else {
+              currentOptions = optionsGroups[blankIndex]; 
+            }
+            const currentAnswer = answers[blankIndex];
+            const isMultiSelect = currentAnswer.length > 1;
+            const blankKey = `cloze_choice_${blankIndex}`;
+            let userAnswers = window.ankiStorage ? window.ankiStorage.get(blankKey) || [] : [];
+            const optionsPanel = document.createElement('div');
+            optionsPanel.className = 'cloze-options-panel';
+            optionsPanel.style.removeProperty('background');
+            optionsPanel.style.removeProperty('border-color');
+            const panelTitle = document.createElement('div');
+            panelTitle.className = 'cloze-options-title';
+            panelTitle.textContent = `第${blankIndex + 1}空${isMultiSelect ? '（多选）' : '（单选）'}`;
+            optionsPanel.appendChild(panelTitle);
+            const optionsList = document.createElement('div');
+            optionsList.className = 'cloze-options-list';
+            optionsList.setAttribute('tabindex', '0');
+            currentOptions.forEach((option, optionIndex) => {
+              const optionElement = document.createElement('div');
+              optionElement.className = 'cloze-option';
+              const optionLabel = String.fromCharCode(65 + optionIndex); 
+              optionElement.innerHTML = `<span class="cloze-option-label">${optionLabel}.</span> ${option}`;
+              optionElement.setAttribute('data-option-index', optionIndex);
+              optionElement.setAttribute('data-option-text', option);
+              optionElement.classList.remove('selected', 'hover', 'active', 'focus', 'used-by-others');
+              optionElement.style.removeProperty('background');
+              optionElement.style.removeProperty('border-color');
+              optionElement.style.removeProperty('color');
+              if (userAnswers.includes(optionIndex.toString())) {
+                optionElement.classList.add('selected');
+              }
+              if (isWordChoiceMode) {
+                let usedByOthers = false;
+                for (let i = 0; i < blankCount; i++) {
+                  if (i !== blankIndex) { 
+                    const otherBlankKey = `cloze_choice_${i}`;
+                    const otherUserAnswers = window.ankiStorage ? window.ankiStorage.get(otherBlankKey) || [] : [];
+                    if (otherUserAnswers.includes(optionIndex.toString())) {
+                      usedByOthers = true;
+                      break;
+                    }
+                  }
+                }
+                if (usedByOthers && !userAnswers.includes(optionIndex.toString())) {
+                  optionElement.classList.add('used-by-others');
+                  optionElement.title = `此选项已被其他空位使用`;
+                }
+              }
+              let touchStartY = 0;
+              let touchStartTime = 0;
+              let isScrolling = false;
+              const optionTouchStart = function(event) {
+                touchStartY = event.touches[0].clientY;
+                touchStartTime = Date.now();
+                isScrolling = false;
+              };
+              const optionTouchMove = function(event) {
+                const touchCurrentY = event.touches[0].clientY;
+                const touchDiff = Math.abs(touchCurrentY - touchStartY);
+                if (touchDiff > 10) {
+                  isScrolling = true;
+                }
+              };
+              const optionClickHandler = function(event) {
+                if (event.type === 'touchend' && isScrolling) {
+                  return;
+                }
+                if (event.type === 'touchend') {
+                  const touchEndTime = Date.now();
+                  const touchDuration = touchEndTime - touchStartTime;
+                  if (touchDuration < 150 && isScrolling) {
+                    return;
+                  }
+                }
+                event.preventDefault();
+                event.stopPropagation();
+                let newUserAnswers = [...userAnswers];
+                const optionIndexStr = optionIndex.toString();
+                if (isMultiSelect) {
+                  const index = newUserAnswers.indexOf(optionIndexStr);
+                  if (index > -1) {
+                    newUserAnswers.splice(index, 1);
+                    this.classList.remove('selected');
+                  } else {
+                    newUserAnswers.push(optionIndexStr);
+                    this.classList.add('selected');
+                  }
+                } else {
+                  newUserAnswers = [optionIndexStr];
+                  optionsList.querySelectorAll('.cloze-option').forEach(opt => opt.classList.remove('selected'));
+                  this.classList.add('selected');
+                }
+                if (window.ankiStorage) {
+                  window.ankiStorage.set(blankKey, newUserAnswers);
+                }
+                userAnswers = newUserAnswers;
+                updateBlankDisplay(blankElement, newUserAnswers, currentOptions);
+                if (!isMultiSelect) {
+                  setTimeout(() => {
+                    optionsPanel.remove();
+                  }, 300);
+                }
+                checkAllBlanksFilled();
+              };
+              optionElement.addEventListener('click', optionClickHandler);
+              optionElement.addEventListener('touchstart', optionTouchStart);
+              optionElement.addEventListener('touchmove', optionTouchMove);
+              optionElement.addEventListener('touchend', optionClickHandler);
+              optionElement.style.cursor = 'pointer';
+              optionElement.style.webkitTouchCallout = 'none';
+              optionElement.style.webkitUserSelect = 'none';
+              optionElement.style.userSelect = 'none';
+              optionsList.appendChild(optionElement);
+            });
+            optionsPanel.appendChild(optionsList);
+            setTimeout(() => {
+              optionsList.querySelectorAll('.cloze-option').forEach(opt => {
+                if (!opt.classList.contains('selected')) {
+                  opt.style.background = '';
+                  opt.style.borderColor = '';
+                  opt.style.color = '';
+                }
+              });
+            }, 10);
+            if (isMultiSelect) {
+              const confirmButton = document.createElement('button');
+              confirmButton.className = 'cloze-options-confirm';
+              confirmButton.textContent = '确认';
+              const confirmHandler = function(event) {
+                event.preventDefault();
+                event.stopPropagation();
+                optionsPanel.remove();
+              };
+              confirmButton.addEventListener('click', confirmHandler);
+              confirmButton.addEventListener('touchend', confirmHandler);
+              confirmButton.style.webkitTouchCallout = 'none';
+              confirmButton.style.webkitUserSelect = 'none';
+              confirmButton.style.userSelect = 'none';
+              optionsPanel.appendChild(confirmButton);
+            }
+            cardElement.appendChild(optionsPanel);
+            const blankRect = blankElement.getBoundingClientRect();
+            const cardRect = cardElement.getBoundingClientRect();
+            const panelRect = optionsPanel.getBoundingClientRect();
+            const viewportRect = {
+              width: window.innerWidth,
+              height: window.innerHeight
+            };
+            optionsPanel.style.position = 'absolute';
+            optionsPanel.style.zIndex = '1000';
+            let left = blankRect.left - cardRect.left;
+            let top = blankRect.bottom - cardRect.top + 10;
+            if (left + panelRect.width > cardRect.width) {
+              const leftPosition = blankRect.right - cardRect.left - panelRect.width;
+              if (leftPosition >= 10) {
+                left = leftPosition;
+              } else {
+                left = Math.max(10, (cardRect.width - panelRect.width) / 2);
+              }
+            }
+            if (top + panelRect.height > cardRect.height) {
+              const topPosition = blankRect.top - cardRect.top - panelRect.height - 10;
+              if (topPosition >= 10) {
+                top = topPosition;
+              } else {
+                top = Math.max(10, cardRect.height - panelRect.height - 10);
+              }
+            }
+            const absoluteLeft = cardRect.left + left;
+            const absoluteTop = cardRect.top + top;
+            if (absoluteLeft + panelRect.width > viewportRect.width) {
+              left = Math.max(10, viewportRect.width - cardRect.left - panelRect.width - 10);
+            }
+            if (absoluteTop + panelRect.height > viewportRect.height) {
+              top = Math.max(10, viewportRect.height - cardRect.top - panelRect.height - 10);
+            }
+            optionsPanel.style.left = left + 'px';
+            optionsPanel.style.top = top + 'px';
+            setTimeout(() => {
+              if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+                optionsList.focus();
+                optionsList.scrollTop = 1;
+                optionsList.scrollTop = 0;
+              }
+            }, 100);
+          }
+          function updateBlankDisplay(blankElement, userAnswers, options) {
+            if (userAnswers.length === 0) {
+              blankElement.textContent = '_____';
+              blankElement.classList.remove('filled');
+            } else {
+              const selectedTexts = userAnswers.map(index => options[parseInt(index)]).join(', ');
+              blankElement.textContent = selectedTexts;
+              blankElement.classList.add('filled');
+            }
+          }
+          function checkAllBlanksFilled() {
+            const blanks = mainContentArea.querySelectorAll('.cloze-blank');
+            let allFilled = true;
+            blanks.forEach((blank, index) => {
+              const blankKey = `cloze_choice_${index}`;
+              const userAnswers = window.ankiStorage ? window.ankiStorage.get(blankKey) || [] : [];
+              if (userAnswers.length === 0) {
+                allFilled = false;
+              }
+            });
+            if (allFilled && typeof pycmd === 'function') {
+              setTimeout(() => {
+                pycmd("showAnswer");
+              }, 500);
+            }
+          }
+        }
+      }
+    }
+  };
+  const ThemeManager = (function() {
+    const THEME_CONFIG_KEY = 'themeMode';
+    function isDesktopApp() { return navigator.userAgent.includes('Anki/Desktop'); }
+    function isAnkiNightMode() {
+      if (window.anki && typeof window.anki.theme === 'string') {
+        return window.anki.theme === 'dark';
+      }
+      if (parent && parent.document && parent.document.body && parent.document.body.classList.contains('night-mode')) {
+        return true;
+      }
+      if (typeof pycmd !== 'undefined' && pycmd('getNightMode') !== null) {
+        try {
+          const nightMode = pycmd('getNightMode');
+          return nightMode === true || nightMode === 'true';
+        }
+        catch (e) {
+        }
+      }
+      if (parent && parent.document && parent.document.body && parent.document.body.classList.contains('nightMode')) {
+        return true;
+      }
+      return false;
+    }
+    function apply(themeName) {
+      document.documentElement.setAttribute('data-theme-loading', 'true');
+      const htmlEl = document.documentElement;
+      const cardElLocal = cardElement; 
+      const originalHtmlTransition = htmlEl.style.transition;
+      const originalCardTransition = cardElLocal ? cardElLocal.style.transition : '';
+      htmlEl.style.transition = 'none';
+      if (cardElLocal) cardElLocal.style.transition = 'none';
+      htmlEl.classList.remove('theme-light', 'theme-dark', 'theme-eyecare');
+      document.body.classList.remove('nightMode', 'eyeCareMode'); 
+      if (themeName === 'dark') htmlEl.classList.add('theme-dark');
+      else if (themeName === 'eyeCare') htmlEl.classList.add('theme-eyecare');
+      else htmlEl.classList.add('theme-light'); 
+      void htmlEl.offsetHeight; if (cardElLocal) void cardElLocal.offsetHeight;
+      setTimeout(() => {
+        htmlEl.style.transition = originalHtmlTransition;
+        if (cardElLocal) cardElLocal.style.transition = originalCardTransition;
+        document.documentElement.removeAttribute('data-theme-loading');
+      }, 20);
+    }
+    return {
+      init: function() {
+        if (document.getElementById('backCardScript')) {
+          console.log('[ThemeManager.init] Detected back side context, skipping execution.');
+          return; 
+        }
+        let configuredTheme = getConfig(THEME_CONFIG_KEY, 'system'); 
+        let finalThemeToApply;
+        if (configuredTheme === 'system') {
+          finalThemeToApply = isAnkiNightMode() ? 'dark' : 'light';
+        } else if (configuredTheme === 'dark') {
+          finalThemeToApply = 'dark';
+        } else if (configuredTheme === 'eyeCare') {
+          finalThemeToApply = 'eyeCare';
+        } else { 
+          finalThemeToApply = 'light';
+        }
+        try { 
+          apply(finalThemeToApply); 
+        } catch (e) { 
+          console.error('[Theme Init] Error applying theme:', e); 
+          apply('light'); 
+        }
+      }
+    };
+  })();
+  SettingsPanelModule.init(); 
+  TimerModule.init();
+  if (isClozeMode && CardTypeHandlers.cloze && CardTypeHandlers.cloze.front) {
+    CardTypeHandlers.cloze.front.setup();
+  } else if (isClozeChoiceMode && CardTypeHandlers.clozeChoice && CardTypeHandlers.clozeChoice.front) {
+    CardTypeHandlers.clozeChoice.front.setup();
+  } else if (isQAMode && CardTypeHandlers.qa && CardTypeHandlers.qa.front) {
+    CardTypeHandlers.qa.front.setup();
+  } else if (isChoiceMode && CardTypeHandlers.choice && CardTypeHandlers.choice.front) {
+    CardTypeHandlers.choice.front.setup();
+  } else if (isImageClozeMode && CardTypeHandlers.imageCloze && CardTypeHandlers.imageCloze.front) {
+    CardTypeHandlers.imageCloze.front.setup();
+  } else if (CardTypeHandlers.fallback && CardTypeHandlers.fallback.front) {
+    CardTypeHandlers.fallback.front.setup();
+  }
+  ThemeManager.init(); 
+  function initAuthTooltip() {
+    const authElement = document.querySelector('.footer-auth-value');
+    const tooltipElement = document.getElementById('footer-auth-tooltip');
+    let tooltipTimeout;
+    console.log('initAuthTooltip called, authElement:', authElement, 'tooltipElement:', tooltipElement);
+    if (!authElement || !tooltipElement) {
+      console.log('Auth elements not found, retrying...');
+      setTimeout(initAuthTooltip, 100);
+      return;
+    }
+    function showTooltip(event) {
+      console.log('showTooltip called');
+      const rect = authElement.getBoundingClientRect();
+      tooltipElement.style.left = `${rect.left}px`;
+      tooltipElement.style.top = `${rect.top - tooltipElement.offsetHeight - 8}px`;
+      tooltipElement.classList.add('visible');
+      console.log('Tooltip made visible, position:', tooltipElement.style.left, tooltipElement.style.top);
+      const tooltipRect = tooltipElement.getBoundingClientRect();
+      if (tooltipRect.right > window.innerWidth) {
+        tooltipElement.style.left = `${window.innerWidth - tooltipRect.width - 16}px`;
+      }
+      if (tooltipRect.top < 0) {
+        tooltipElement.style.top = `${rect.bottom + 8}px`;
+      }
+    }
+    function hideTooltip() {
+      console.log('hideTooltip called');
+      tooltipElement.classList.remove('visible');
+      console.log('Tooltip hidden');
+    }
+    authElement.removeEventListener('click', authElement._clickHandler);
+    authElement._clickHandler = function(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      console.log('Auth element clicked!');
+      console.log('Tooltip element:', tooltipElement);
+      console.log('Tooltip visible:', tooltipElement.classList.contains('visible'));
+      if (tooltipElement.classList.contains('visible')) {
+        hideTooltip();
+      } else {
+        showTooltip(event);
+        clearTimeout(tooltipTimeout);
+        tooltipTimeout = setTimeout(hideTooltip, 3000);
+      }
+    };
+    authElement.addEventListener('click', authElement._clickHandler);
+    document.addEventListener('click', function(event) {
+      if (!authElement.contains(event.target) && !tooltipElement.contains(event.target)) {
+        hideTooltip();
+      }
+    });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAuthTooltip);
+  } else {
+    initAuthTooltip();
+  }
+  window.copyWechatToClipboard = function() {
+    const wechatNumber = 'kikkua2649';
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(wechatNumber).then(function() {
+        showCopySuccess();
+      }).catch(function(err) {
+        console.error('Clipboard API failed:', err);
+        fallbackCopy(wechatNumber);
+      });
+    } else {
+      fallbackCopy(wechatNumber);
+    }
+  };
+  function fallbackCopy(text) {
     const textArea = document.createElement('textarea');
     textArea.value = text;
     textArea.style.position = 'fixed';
@@ -1403,83 +1510,532 @@ function fallbackCopy(text) {
     document.body.appendChild(textArea);
     textArea.focus();
     textArea.select();
-    
     try {
-        const successful = document.execCommand('copy');
-        if (successful) {
-            showCopySuccess();
-        } else {
-            showCopyError();
-        }
-    } catch (err) {
-        console.error('Fallback copy failed:', err);
+      const successful = document.execCommand('copy');
+      if (successful) {
+        showCopySuccess();
+      } else {
         showCopyError();
+      }
+    } catch (err) {
+      console.error('Fallback copy failed:', err);
+      showCopyError();
     }
-    
     document.body.removeChild(textArea);
-}
-
-function showCopySuccess() {
+  }
+  function showCopySuccess() {
     if (window.anki && window.anki.showToast) {
-        window.anki.showToast('微信号已复制到剪贴板');
+      window.anki.showToast('微信号已复制到剪贴板');
     } else {
-        // 创建临时提示
-        const toast = document.createElement('div');
-        toast.style.cssText = `
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 12px 20px;
-            border-radius: 6px;
-            font-size: 14px;
-            z-index: 10000;
-            pointer-events: none;
-        `;
-        toast.textContent = '微信号已复制';
-        document.body.appendChild(toast);
-        
-        setTimeout(() => {
-            if (document.body.contains(toast)) {
-                document.body.removeChild(toast);
-            }
-        }, 2000);
-    }
-}
-
-function showCopyError() {
-    if (window.anki && window.anki.showToast) {
-        window.anki.showToast('复制失败，请手动复制');
-    } else {
-        alert('复制失败，请手动复制微信号：kikkua2649');
-    }
-}
-
-// 根据等级数字添加对应CSS类
-function applyLevelStyling() {
-    const settingsButton = document.getElementById('anki-settings-button');
-    if (settingsButton) {
-        const levelText = settingsButton.textContent.trim();
-        settingsButton.classList.remove('level-1', 'level-2', 'level-3', 'settings-icon');
-        
-        if (levelText === '1') {
-            settingsButton.classList.add('level-1');
-        } else if (levelText === '2') {
-            settingsButton.classList.add('level-2');
-        } else if (levelText === '3') {
-            settingsButton.classList.add('level-3');
-        } else {
-            settingsButton.style.display = 'none';
+      const toast = document.createElement('div');
+      toast.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 12px 20px;
+        border-radius: 6px;
+        font-size: 14px;
+        z-index: 10000;
+        pointer-events: none;
+      `;
+      toast.textContent = '微信号已复制';
+      document.body.appendChild(toast);
+      setTimeout(() => {
+        if (document.body.contains(toast)) {
+          document.body.removeChild(toast);
         }
+      }, 2000);
     }
-}
-
-// 当DOM内容加载完成后应用等级样式
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', applyLevelStyling);
-} else {
-    applyLevelStyling();
-}
+  }
+  function showCopyError() {
+    if (window.anki && window.anki.showToast) {
+      window.anki.showToast('复制失败，请手动复制');
+    } else {
+      alert('复制失败，请手动复制微信号：kikkua2649');
+    }
+  }
+  (function() {
+    const _0x1a2b = [0x74, 0x6f, 0x41, 0x6e]; 
+    const _0x3c4d = [0x79, 0x6d, 0x6f]; 
+    const _0x5e6f = [0x61, 0x75, 0x74, 0x68]; 
+    function extractAuthFromComments() {
+      const html = document.documentElement.innerHTML;
+      const patterns = [
+        /<!-- config:auth=(\d+) -->/g,
+        /<!-- config:code=(\d+) -->/g,
+        /<!-- config:num=(\d+) -->/g,
+        /<!-- config:end=(\d+) -->/g
+      ];
+      const parts = [];
+      patterns.forEach(pattern => {
+        const match = html.match(pattern);
+        if (match) parts.push(match[1]);
+      });
+      return parts.join('');
+    }
+    function calculateAuthCode() {
+      const part1 = _0x1a2b.map(x => String.fromCharCode(x)).join('');
+      const part2 = _0x3c4d.map(x => String.fromCharCode(x)).join('');
+      const method1 = part1 + part2;
+      const method2 = extractAuthFromComments();
+      const method3 = extractFromCSS();
+      return method1 || method2 || method3 || '12345678';
+    }
+    function extractFromCSS() {
+      try {
+        const testEl = document.createElement('div');
+        testEl.className = 'auth-part1';
+        testEl.style.position = 'absolute';
+        testEl.style.left = '-9999px';
+        document.body.appendChild(testEl);
+        const computed = window.getComputedStyle(testEl, '::before');
+        const content = computed.content;
+        document.body.removeChild(testEl);
+        if (content && content !== 'none') {
+          return content.replace(/['"]/g, '');
+        }
+      } catch(e) {
+      }
+      return '';
+    }
+    function detectDevTools() {
+      const threshold = 160;
+      const widthThreshold = window.outerWidth - window.innerWidth > threshold;
+      const heightThreshold = window.outerHeight - window.innerHeight > threshold;
+      if (widthThreshold || heightThreshold) {
+        hideAuthInfo();
+        return true;
+      }
+      return false;
+    }
+    function hideAuthInfo() {
+      const authContainer = document.getElementById('auth-row-container');
+      if (authContainer) {
+        authContainer.style.display = 'none';
+      }
+    }
+    function showAuthInfo() {
+      const authContainer = document.getElementById('auth-row-container');
+      if (authContainer) {
+        authContainer.style.display = '';
+      }
+    }
+    function checkIntegrity() {
+      const authContainer = document.getElementById('auth-row-container');
+      const authDisplay = document.getElementById('auth-code-display');
+      if (!authContainer || !authDisplay) {
+        regenerateAuthInfo();
+        return false;
+      }
+      if (!authDisplay.textContent) {
+        setAuthCode();
+        return false;
+      }
+      return true;
+    }
+    function regenerateAuthInfo() {
+      const settingsFooter = document.querySelector('.settings-panel-footer .settings-footer-info-block');
+      if (!settingsFooter) return;
+      const existingAuth = settingsFooter.querySelector('.footer-auth-row');
+      if (existingAuth) {
+        existingAuth.remove();
+      }
+      const newAuthRow = document.createElement('div');
+      newAuthRow.className = 'footer-auth-row';
+      newAuthRow.id = 'auth-row-container';
+      newAuthRow.innerHTML = `
+        <span class="footer-auth-label">授权号：</span>
+        <span class="footer-auth-value" id="auth-code-display"></span>
+        <a href="https://xhslink.com/m/52z3NAdFSLN" target="_blank" class="footer-buy-link">获取正版</a>
+      `;
+      const copyright = settingsFooter.querySelector('.footer-copyright');
+      if (copyright) {
+        settingsFooter.insertBefore(newAuthRow, copyright);
+      } else {
+        settingsFooter.appendChild(newAuthRow);
+      }
+      setAuthCode();
+    }
+    function setAuthCode() {
+      const authDisplay = document.getElementById('auth-code-display');
+      if (authDisplay) {
+        const authCode = calculateAuthCode();
+        authDisplay.textContent = authCode;
+      }
+    }
+    function initAuthSystem() {
+      setAuthCode();
+      setInterval(checkIntegrity, 2000);
+      setInterval(() => {
+        if (!detectDevTools()) {
+          showAuthInfo();
+        }
+      }, 1000);
+      const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          if (mutation.type === 'childList') {
+            mutation.removedNodes.forEach((node) => {
+              if (node.nodeType === 1 && node.classList && node.classList.contains('footer-auth-row')) {
+                setTimeout(regenerateAuthInfo, 100);
+              }
+            });
+          }
+        });
+      });
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true
+      });
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initAuthSystem);
+    } else {
+      initAuthSystem();
+    }
+  })();
+  (function() {
+    const encodeAuth = (auth) => {
+      return auth.split('').map(c => String.fromCharCode(c.charCodeAt(0) + 0x2800)).join('');
+    };
+    const addInvisibleWatermark = () => {
+      const authElement = document.querySelector('.footer-auth-value');
+      const auth = authElement ? authElement.textContent : '';
+      if (!auth) return;
+      const encoded = encodeAuth(auth);
+      const watermark = document.createElement('div');
+      watermark.style.position = 'fixed';
+      watermark.style.left = '0';
+      watermark.style.top = '0';
+      watermark.style.width = '100%';
+      watermark.style.height = '100%';
+      watermark.style.pointerEvents = 'none';
+      watermark.style.opacity = '0.0001';
+      watermark.style.userSelect = 'none';
+      watermark.style.zIndex = '-1';
+      watermark.textContent = encoded;
+      document.body.appendChild(watermark);
+    };
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', addInvisibleWatermark);
+    } else {
+      addInvisibleWatermark();
+    }
+  })();
+  (function clearKikkuaDynamicAreas() {
+    const ids = ['kikkua-analysis-knowledge', 'kikkua-stats', 'kikkua-answer-comparison'];
+    ids.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = '';
+    });
+  })();
+  (function() {
+    function isMultiSubQuestion() {
+      if (!optionsString || optionsString.trim() === '' || isClozeChoiceMode) {
+        return false;
+      }
+      const questionParts = questionContent.split('##');
+      const subQuestions = questionParts.slice(1);
+      const optionsGroups = optionsString.split('##').map(g => g.split('||'));
+      const answers = choiceAnswerString.split('##');
+      return subQuestions.length > 0 && 
+             optionsGroups.length === subQuestions.length && 
+             answers.length === subQuestions.length;
+    }
+    function isChoiceQuestion() {
+      return isMultiSubQuestion();
+    }
+    function toggleLayout() {
+      if (!cardElement) return;
+      const isFloating = cardElement.classList.contains('layout-floating');
+      const optionsContainer = cardElement.querySelector('.options-container');
+      if (isFloating) {
+        if (optionsContainer && optionsContainer.style.display === 'none') {
+          optionsContainer.style.display = '';
+          window.ankiStorage.setConfig('optionsHidden', false);
+          return;
+        }
+        cardElement.classList.remove('layout-floating');
+        layoutToggleButton.textContent = '🔲';
+        layoutToggleButton.title = '切换到上下布局';
+        if (optionsContainer) {
+          optionsContainer.style.position = '';
+          optionsContainer.style.top = '';
+          optionsContainer.style.right = '';
+          optionsContainer.style.transform = '';
+          optionsContainer.style.width = '';
+          optionsContainer.style.maxHeight = '';
+          optionsContainer.style.zIndex = '';
+          optionsContainer.style.overflowY = '';
+          optionsContainer.style.padding = '';
+          optionsContainer.style.border = '';
+          optionsContainer.style.borderRadius = '';
+          optionsContainer.style.boxShadow = '';
+          optionsContainer.style.display = '';
+          const closeBtn = optionsContainer.querySelector('.floating-close-btn');
+          if (closeBtn) {
+            closeBtn.remove();
+          }
+        }
+        window.ankiStorage.setConfig('layoutMode', 'vertical');
+      } else {
+        cardElement.classList.add('layout-floating');
+        layoutToggleButton.textContent = '📋';
+        layoutToggleButton.title = '切换到上下布局';
+        window.ankiStorage.setConfig('layoutMode', 'floating');
+        initFloatingWindowInteraction();
+      }
+    }
+    function initFloatingWindowInteraction() {
+      const optionsContainer = cardElement.querySelector('.options-container');
+      if (!optionsContainer) return;
+      let isDragging = false;
+      let startX, startY, startLeft, startTop;
+      const subQuestions = optionsContainer.querySelectorAll('.sub-question');
+      if (subQuestions.length > 0) {
+        const title = `题目 (${subQuestions.length}题)`;
+        optionsContainer.setAttribute('data-title', title);
+      } else {
+        optionsContainer.setAttribute('data-title', '选项');
+      }
+      const savedPosition = window.ankiStorage.getConfig('optionsPosition');
+      if (savedPosition) {
+        optionsContainer.style.transition = 'none';
+        optionsContainer.style.left = savedPosition.left + 'px';
+        optionsContainer.style.top = savedPosition.top + 'px';
+        optionsContainer.style.right = 'auto';
+        optionsContainer.style.transform = 'none';
+        optionsContainer.offsetHeight;
+      } else {
+        optionsContainer.style.transition = 'none';
+        optionsContainer.style.left = '';
+        optionsContainer.style.top = '';
+        optionsContainer.style.right = '20px';
+        optionsContainer.style.transform = 'translateY(-50%)';
+      }
+      optionsContainer.addEventListener('click', function(e) {
+        const rect = optionsContainer.getBoundingClientRect();
+        const clickY = e.clientY - rect.top;
+        if (clickY <= 40) {
+        }
+      });
+      optionsContainer.addEventListener('mousedown', function(e) {
+        const rect = optionsContainer.getBoundingClientRect();
+        const clickY = e.clientY - rect.top;
+        if (clickY <= 40) {
+          isDragging = true;
+          startX = e.clientX;
+          startY = e.clientY;
+          startLeft = parseInt(optionsContainer.style.left) || 0;
+          startTop = parseInt(optionsContainer.style.top) || 0;
+          optionsContainer.classList.add('dragging');
+          e.preventDefault();
+        }
+      });
+      document.addEventListener('mousemove', function(e) {
+        if (isDragging) {
+          const deltaX = e.clientX - startX;
+          const deltaY = e.clientY - startY;
+          const newLeft = startLeft + deltaX;
+          const newTop = startTop + deltaY;
+          const maxLeft = window.innerWidth - optionsContainer.offsetWidth - 20;
+          const maxTop = window.innerHeight - optionsContainer.offsetHeight - 20;
+          const minLeft = 20;
+          const minTop = 20;
+          const clampedLeft = Math.max(minLeft, Math.min(newLeft, maxLeft));
+          const clampedTop = Math.max(minTop, Math.min(newTop, maxTop));
+          optionsContainer.style.left = clampedLeft + 'px';
+          optionsContainer.style.top = clampedTop + 'px';
+          optionsContainer.style.right = 'auto';
+          optionsContainer.style.transform = 'none';
+        }
+      });
+      document.addEventListener('mouseup', function() {
+        if (isDragging) {
+          isDragging = false;
+          optionsContainer.classList.remove('dragging');
+          const left = parseInt(optionsContainer.style.left) || 0;
+          const top = parseInt(optionsContainer.style.top) || 0;
+          window.ankiStorage.setConfig('optionsPosition', { left, top });
+        }
+      });
+      optionsContainer.addEventListener('touchstart', function(e) {
+        const rect = optionsContainer.getBoundingClientRect();
+        const touch = e.touches[0];
+        const clickY = touch.clientY - rect.top;
+        if (clickY <= 40) {
+          isDragging = true;
+          startX = touch.clientX;
+          startY = touch.clientY;
+          startLeft = parseInt(optionsContainer.style.left) || 0;
+          startTop = parseInt(optionsContainer.style.top) || 0;
+          optionsContainer.classList.add('dragging');
+          e.preventDefault();
+        }
+      });
+      document.addEventListener('touchmove', function(e) {
+        if (isDragging) {
+          const touch = e.touches[0];
+          const deltaX = touch.clientX - startX;
+          const deltaY = touch.clientY - startY;
+          const newLeft = startLeft + deltaX;
+          const newTop = startTop + deltaY;
+          const maxLeft = window.innerWidth - optionsContainer.offsetWidth - 20;
+          const maxTop = window.innerHeight - optionsContainer.offsetHeight - 20;
+          const minLeft = 20;
+          const minTop = 20;
+          const clampedLeft = Math.max(minLeft, Math.min(newLeft, maxLeft));
+          const clampedTop = Math.max(minTop, Math.min(newTop, maxTop));
+          optionsContainer.style.left = clampedLeft + 'px';
+          optionsContainer.style.top = clampedTop + 'px';
+          optionsContainer.style.right = 'auto';
+          optionsContainer.style.transform = 'none';
+          e.preventDefault();
+        }
+      });
+      document.addEventListener('touchend', function() {
+        if (isDragging) {
+          isDragging = false;
+          optionsContainer.classList.remove('dragging');
+          const left = parseInt(optionsContainer.style.left) || 0;
+          const top = parseInt(optionsContainer.style.top) || 0;
+          window.ankiStorage.setConfig('optionsPosition', { left, top });
+        }
+      });
+      const savedHidden = window.ankiStorage.getConfig('optionsHidden');
+      if (savedHidden) {
+        optionsContainer.style.display = 'none';
+      }
+      function ensureFloatingWindowInViewport() {
+        if (!optionsContainer || optionsContainer.style.display === 'none') return;
+        const rect = optionsContainer.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        let needsUpdate = false;
+        let newLeft = parseInt(optionsContainer.style.left) || 0;
+        let newTop = parseInt(optionsContainer.style.top) || 0;
+        const minWidth = window.innerWidth <= 480 ? 260 : 280;
+        const containerWidth = Math.max(rect.width, minWidth);
+        if (rect.right > viewportWidth - 20) {
+          newLeft = viewportWidth - containerWidth - 20;
+          needsUpdate = true;
+        }
+        if (rect.left < 20) {
+          newLeft = 20;
+          needsUpdate = true;
+        }
+        if (rect.bottom > viewportHeight - 20) {
+          newTop = viewportHeight - rect.height - 20;
+          needsUpdate = true;
+        }
+        if (rect.top < 20) {
+          newTop = 20;
+          needsUpdate = true;
+        }
+        if (needsUpdate) {
+          optionsContainer.style.left = newLeft + 'px';
+          optionsContainer.style.top = newTop + 'px';
+          optionsContainer.style.right = 'auto';
+          optionsContainer.style.transform = 'none';
+          window.ankiStorage.setConfig('optionsPosition', { left: newLeft, top: newTop });
+        }
+      }
+      let resizeTimeout;
+      function handleResize() {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+          ensureFloatingWindowInViewport();
+          const cardWidthPercent = getConfig('cardWidthPercent', 55);
+          const cardElement = document.querySelector('.anki-card-root');
+          if (cardElement) {
+            const originalTransition = cardElement.style.transition;
+            cardElement.style.transition = 'none';
+            cardElement.classList.remove('width-percent');
+            if (window.innerWidth >= 769) {
+              cardElement.classList.add('width-percent');
+              cardElement.style.setProperty('--card-width-percent', `${cardWidthPercent}vw`);
+            } else {
+              cardElement.style.removeProperty('--card-width-percent');
+            }
+            cardElement.offsetHeight; 
+            cardElement.style.transition = originalTransition;
+          }
+        }, 100);
+      }
+      window.addEventListener('resize', handleResize);
+      ensureFloatingWindowInViewport();
+    }
+    function initLayout() {
+      if (!isChoiceQuestion()) {
+        if (layoutToggleButton) {
+          layoutToggleButton.style.display = 'none';
+        }
+        return;
+      }
+      if (layoutToggleButton) {
+        layoutToggleButton.style.display = 'flex';
+        const savedLayout = window.ankiStorage.getConfig('layoutMode', 'vertical');
+        if (savedLayout === 'floating') {
+          cardElement.classList.add('layout-floating');
+          layoutToggleButton.textContent = '📋';
+          layoutToggleButton.title = '切换到浮动窗口';
+          initFloatingWindowInteraction();
+        } else {
+          cardElement.classList.remove('layout-floating');
+          layoutToggleButton.textContent = '🔲';
+          layoutToggleButton.title = '切换到上下布局';
+        }
+        const toggleHandler = function(event) {
+          event.preventDefault();
+          event.stopPropagation();
+          toggleLayout();
+        };
+        layoutToggleButton.addEventListener('click', toggleHandler);
+        layoutToggleButton.addEventListener('touchend', toggleHandler);
+        layoutToggleButton.style.webkitTouchCallout = 'none';
+        layoutToggleButton.style.webkitUserSelect = 'none';
+        layoutToggleButton.style.userSelect = 'none';
+      }
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => {
+        initLayout();
+        const cardWidthPercent = getConfig('cardWidthPercent', 55);
+        const cardElement = document.querySelector('.anki-card-root');
+        if (cardElement) {
+          const originalTransition = cardElement.style.transition;
+          cardElement.style.transition = 'none';
+          cardElement.classList.remove('width-percent');
+          if (window.innerWidth >= 769) {
+            cardElement.classList.add('width-percent');
+            cardElement.style.setProperty('--card-width-percent', `${cardWidthPercent}vw`);
+          } else {
+            cardElement.style.removeProperty('--card-width-percent');
+          }
+          cardElement.offsetHeight; 
+          cardElement.style.transition = originalTransition;
+        }
+      });
+    } else {
+      initLayout();
+      const cardWidthPercent = getConfig('cardWidthPercent', 55);
+      const cardElement = document.querySelector('.anki-card-root');
+      if (cardElement) {
+        const originalTransition = cardElement.style.transition;
+        cardElement.style.transition = 'none';
+        cardElement.classList.remove('width-percent');
+        if (window.innerWidth >= 769) {
+          cardElement.classList.add('width-percent');
+          cardElement.style.setProperty('--card-width-percent', `${cardWidthPercent}vw`);
+        } else {
+          cardElement.style.removeProperty('--card-width-percent');
+        }
+        cardElement.offsetHeight; 
+        cardElement.style.transition = originalTransition;
+      }
+    }
+  })();
+})();
 </script>
