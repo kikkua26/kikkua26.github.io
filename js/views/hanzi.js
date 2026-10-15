@@ -257,6 +257,14 @@ function dispose() {
   if (resizeTimer) clearTimeout(resizeTimer);
   timers.forEach(clearTimeout);
   timers.clear();
+  // 停止朗读，避免离开页面后声音残留
+  speakToken += 1;
+  try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch { /* ignore */ }
+  if (speechAudio) { try { speechAudio.pause(); speechAudio.src = ''; } catch { /* ignore */ } speechAudio = null; }
+  if (window.responsiveVoice && typeof window.responsiveVoice.cancel === 'function') {
+    try { window.responsiveVoice.cancel(); } catch { /* ignore */ }
+  }
+  current = null;
   writers.forEach((w) => { try { w.cancelQuiz && w.cancelQuiz(); } catch { /* ignore */ } });
   writers = [];
   if (root) {
@@ -337,6 +345,151 @@ function sfxFanfare() {
   const t = ctx.currentTime + 0.02;
   [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tone(ctx, f, t + i * 0.09, 0.2, 'triangle', 0.15));
   [523.25, 659.25, 783.99, 1046.5].forEach((f) => tone(ctx, f, t + 0.42, 0.5, 'triangle', 0.07));
+}
+
+// ── 语音朗读（读汉字 + 一个组词，如「公，公园」） ──
+// 多级降级，逐级尝试，任一级成功即停：
+//   1) 有道词典语音接口（Audio，国内可直连，音色自然）
+//   2) 浏览器内置 TTS（无网络依赖，断网兜底）
+//   3) responsiveVoice（可选第三方服务，联网环境下的补充音源）
+// 全部失败时静默降级，仅提示一次，不打断书写。
+let speechAudio = null;      // 复用一个 Audio 元素，避免重叠播放
+let speakToken = 0;          // 令牌：切字/重播时作废上一段朗读
+let speakWarned = false;     // 兼容提示只弹一次
+
+// 文本清洗：只保留汉字与常用停顿符，避免把「?」等占位符读出来
+function speechText(text) {
+  return String(text || '')
+    .replace(/[^\u4e00-\u9fff，、。！？；：]/g, '')
+    .replace(/^[，、。！？；：]+|[，、。！？；：]+$/g, '');
+}
+
+// 组装朗读脚本：单字时读「字，词」，多字时直接读整串
+function buildSpeechScript(char, words) {
+  const w = (words || []).find((x) => x && x.length >= 2);
+  return w ? `${char}，${w}` : char;
+}
+
+// 1) 有道语音接口
+function speakYoudao(text, token) {
+  return new Promise((resolve) => {
+    try {
+      if (speechAudio) { speechAudio.pause(); speechAudio.src = ''; }
+      const audio = new Audio();
+      speechAudio = audio;
+      audio.preload = 'auto';
+      audio.src = 'https://dict.youdao.com/dictvoice?type=2&audio=' + encodeURIComponent(text);
+      let settled = false;
+      const done = (ok) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        if (!ok && speechAudio === audio) speechAudio = null;
+        resolve(ok);
+      };
+      const timer = setTimeout(() => done(false), 3500);
+      audio.addEventListener('ended', () => done(true), { once: true });
+      audio.addEventListener('error', () => done(false), { once: true });
+      audio.play().then(() => {
+        if (token !== speakToken) { audio.pause(); done(false); }
+      }).catch(() => done(false));
+    } catch {
+      resolve(false);
+    }
+  });
+}
+
+// 2) 浏览器内置 TTS
+function speakNative(text, token) {
+  if (!('speechSynthesis' in window)) return Promise.resolve(false);
+  return new Promise((resolve) => {
+    let settled = false;
+    let started = false;
+    let timer = null;
+    let attemptTimer = null;
+    const done = (ok) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      clearTimeout(attemptTimer);
+      resolve(ok);
+    };
+    const attempt = () => {
+      try {
+        const voices = window.speechSynthesis.getVoices();
+        const zh = voices.find((v) => v.lang && /^zh/i.test(v.lang));
+        if (!zh) return done(false);       // 环境无中文语音，交给下一级
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = 'zh-CN';
+        u.rate = 0.8;
+        u.pitch = 1.05;
+        u.voice = zh;
+        u.onstart = () => {
+          started = true;
+          if (token !== speakToken) { window.speechSynthesis.cancel(); return done(false); }
+          done(true);
+        };
+        u.onerror = () => { if (!started) done(false); };
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(u);
+        // 1.2s 未真正出声即判定失败（规避「有语音库但静音」的环境）
+        timer = setTimeout(() => { if (!started) { window.speechSynthesis.cancel(); done(false); } }, 1200);
+      } catch {
+        done(false);
+      }
+    };
+    if (window.speechSynthesis.getVoices().length) attempt();
+    else {
+      window.speechSynthesis.addEventListener('voiceschanged', attempt, { once: true });
+      attemptTimer = setTimeout(attempt, 700);
+    }
+  });
+}
+
+// 3) responsiveVoice（若页面已引入其脚本则启用；未引入时自动跳过）
+function speakResponsiveVoice(text, token) {
+  return new Promise((resolve) => {
+    const rv = window.responsiveVoice;
+    if (!rv || typeof rv.speak !== 'function') return resolve(false);
+    try {
+      if (token !== speakToken) return resolve(false);
+      rv.speak(speechText(text), 'Chinese Female', { rate: 0.85, pitch: 1 });
+      resolve(true);
+    } catch {
+      resolve(false);
+    }
+  });
+}
+
+async function speak(text) {
+  const clean = speechText(text);
+  if (!clean) return;
+  speakToken += 1;
+  const token = speakToken;
+  try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch { /* ignore */ }
+  if (await speakYoudao(clean, token)) return;
+  if (token !== speakToken) return;
+  if (await speakNative(clean, token)) return;
+  if (token !== speakToken) return;
+  if (await speakResponsiveVoice(clean, token)) return;
+  if (!speakWarned) {
+    speakWarned = true;
+    toast('当前环境暂不支持朗读，可换个浏览器试试');
+  }
+}
+
+// 朗读当前字：读「字 + 一个组词」
+function speakCurrentChar() {
+  if (!current) return;
+  const big = $id('hzCharBig');
+  const py = $id('hzPinyin');
+  if (big) big.classList.add('speaking');
+  if (py) py.classList.add('speaking');
+  later(() => {
+    if (big) big.classList.remove('speaking');
+    if (py) py.classList.remove('speaking');
+  }, 1600);
+  speak(buildSpeechScript(current.c, current.w));
 }
 
 // ── 庆祝特效（整字写完后五彩纸屑） ──
@@ -546,7 +699,8 @@ export async function renderHanziStudy(libId) {
           <section class="hz-card hz-current-card">
             <div class="hz-char-unit">
               <div class="hz-pinyin" id="hzPinyin">—</div>
-              <div class="hz-char-cell" id="hzCharBig">?</div>
+              <button class="hz-char-cell hz-speakable" id="hzCharBig" data-action="speak-char"
+                      type="button" aria-label="朗读这个字">?</button>
             </div>
             <div class="hz-current-words" id="hzCurrentWords"></div>
             <div class="hz-writer-center">
@@ -917,6 +1071,8 @@ function selectChar(c) {
   closeSidebar();
   setMode('idle');
   loadCharWriters();
+  // 切换汉字后朗读「字，一个组词」，如「公，公园」
+  later(() => { if (live() && current && current.c === c) speakCurrentChar(); }, 350);
 }
 
 function renderCurrent() {
@@ -1103,6 +1259,8 @@ function startPractice() {
       celebrate('hzPracticeBox');
       floatMsg('太棒了！', true);
       sfxFanfare();
+      // 整字写完后再朗读一次「字，组词」，强化字形与读音的关联
+      later(speakCurrentChar, 600);
     },
   });
 }
@@ -1223,6 +1381,7 @@ function onClick(e) {
       break;
     case 'prev': stepChar(-1); break;
     case 'next': stepChar(1); break;
+    case 'speak-char': speakCurrentChar(); break;
     case 'cb-cell': {
       cbIdx = Number(btn.dataset.index) || 0;
       cbStartNext();
