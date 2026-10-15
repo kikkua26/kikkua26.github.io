@@ -1,13 +1,29 @@
-import { setPageMeta } from './seo.js';
-import { renderHome } from './views/home.js';
-import { renderDeckList } from './views/decks.js';
-import { renderDeckDetail } from './views/detail.js';
-import { renderStudy } from './views/study.js';
-import { renderAbout } from './views/about.js';
-import { renderTools } from './views/tools.js';
-import { renderHanzi, renderHanziStudy, renderCopybook } from './views/hanzi.js';
-import { setRouteHandler } from './navigation.js';
-import { ROUTES, SITE, UI } from './config.js';
+const V = (import.meta.url ? new URL(import.meta.url).searchParams.get('v') : '') || '';
+const load = (path) => import(`./${path}${V ? `?v=${V}` : ''}`);
+
+const [
+    { setPageMeta },
+    { renderHome },
+    { renderDeckList },
+    { renderDeckDetail },
+    { renderStudy },
+    { renderAbout },
+    { renderTools },
+    { renderHanzi, renderHanziStudy, renderCopybook },
+    { setRouteHandler },
+    { ROUTES, SITE, UI },
+] = await Promise.all([
+    load('seo.js'),
+    load('views/home.js'),
+    load('views/decks.js'),
+    load('views/detail.js'),
+    load('views/study.js'),
+    load('views/about.js'),
+    load('views/tools.js'),
+    load('views/hanzi.js'),
+    load('navigation.js'),
+    load('config.js'),
+]);
 
 async function handleRoute() {
     try {
@@ -58,4 +74,9 @@ async function handleRoute() {
 
 setRouteHandler(handleRoute);
 window.addEventListener('popstate', handleRoute);
-window.addEventListener('load', handleRoute);
+// 本模块经由顶层 await 加载，可能已错过 load 事件；需按文档状态择机触发首次路由
+if (document.readyState === 'complete') {
+    handleRoute();
+} else {
+    window.addEventListener('load', handleRoute);
+}
