@@ -44,6 +44,10 @@ const IC = {
   book: icon('<path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>', 20),
   lock: icon('<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>', 14),
   service: icon('<path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>', 14),
+  palette: icon('<circle cx="13.5" cy="6.5" r="1.5"/><circle cx="17.5" cy="10.5" r="1.5"/><circle cx="8.5" cy="7.5" r="1.5"/><circle cx="6.5" cy="12.5" r="1.5"/><path d="M12 2a10 10 0 1 0 0 20c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.3-.3-.4-.5-.8-.5-1.2 0-1 .8-1.8 1.8-1.8H17a5 5 0 0 0 5-5c0-5-4.5-8.7-10-8.7Z"/>', 20),
+  gear: icon('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1.08-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.14.35.4.64.73.83.3.17.64.26.98.26H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/>', 16),
+  dice: icon('<rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.2" fill="currentColor"/><circle cx="16" cy="8" r="1.2" fill="currentColor"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/><circle cx="8" cy="16" r="1.2" fill="currentColor"/><circle cx="16" cy="16" r="1.2" fill="currentColor"/>', 16),
+  brush: icon('<path d="M9.06 11.9 4 17v3h3l5.1-5.06"/><path d="M14.5 3.5a2.12 2.12 0 0 1 3 3L11 13l-3 1 1-3Z"/>', 16),
 };
 
 // ── 解锁机制：高频/常用字加密，任一组密码全部解锁 ──
@@ -243,6 +247,18 @@ let qimengSet = new Set(); // 抄写本：未解锁时可书写的启蒙字集�
 let charsLoaded = false;  // 字库数据会话内缓存
 let libsLoaded = false;   // 字库注册表会话内缓存
 
+// ── 认字涂色：运行时状态 ──
+const CG_PALETTE = ['#f0862a', '#f5b301', '#2e9e5b', '#e8578f', '#3b8be8', '#8a5cd6'];
+const CG_PER_ITEM = 4;                       // 每个字在棋盘上出现的次数
+const CG_KEY = 'kikkua_hz_color';            // 家长自选字的本地存档
+let cgTiles = [];        // [{char, itemIndex, filled, el}]
+let cgBrush = 0;         // 当前选中的色笔（对应 cgItems 下标）
+let cgItems = [];        // [{c, p, w, color}]
+let cgDone = 0;          // 已涂满的格子数
+let cgRootLib = null;    // 进入时的字库（用于「换一批」和「重新随机」）
+let cgSettingsOpen = false;
+let cgDraft = null;      // 家长设置草稿
+
 const later = (fn, ms) => {
   const id = setTimeout(fn, ms);
   timers.add(id);
@@ -336,6 +352,13 @@ function sfxError() {
   const t = ctx.currentTime + 0.02;
   tone(ctx, 196, t, 0.15, 'square', 0.06);
   tone(ctx, 155.56, t + 0.13, 0.22, 'square', 0.06);
+}
+
+// 选中色笔的轻快提示音
+function sfxPop() {
+  const ctx = ensureAudioCtx();
+  if (!ctx) return;
+  tone(ctx, 1046.5, ctx.currentTime + 0.01, 0.07, 'sine', 0.07);
 }
 
 function sfxFanfare() {
@@ -612,18 +635,30 @@ export async function renderHanzi() {
     <div class="hz-wrap">
       <section class="hz-hero">
         <h1 class="hz-hero-title">汉字小书房</h1>
-        <p class="hz-hero-sub">选一个字库，或打开抄写本，开始练字</p>
+        <p class="hz-hero-sub">选一个字库，或打开小游戏，边玩边认字</p>
       </section>
 
-      <a class="hz-lib-card hz-copybook-entry" href="/hanzi/copybook" data-link>
-        <div class="hz-lib-card-head">
-          <span class="hz-lib-name">${IC.book} 抄写本</span>
-          <span class="hz-lib-count">字帖</span>
-        </div>
-        <div class="hz-lib-subtitle">把想写的字组成一句话</div>
-        <p class="hz-lib-desc">搜索或输入汉字组成句子，生成一张田字格字帖，像练字本一样逐字临写。</p>
-        <span class="hz-lib-link">打开抄写本 ${IC.arrowR}</span>
-      </a>
+      <div class="hz-lib-grid hz-tool-grid">
+        <a class="hz-lib-card hz-copybook-entry" href="/hanzi/copybook" data-link>
+          <div class="hz-lib-card-head">
+            <span class="hz-lib-name">${IC.pen} 抄写本</span>
+            <span class="hz-lib-count">字帖</span>
+          </div>
+          <div class="hz-lib-subtitle">把想写的字组成一句话</div>
+          <p class="hz-lib-desc">搜索或输入汉字组成句子，生成一张田字格字帖，像练字本一样逐字临写。</p>
+          <span class="hz-lib-link">打开抄写本 ${IC.arrowR}</span>
+        </a>
+
+        <a class="hz-lib-card hz-color-entry" href="/hanzi/color" data-link>
+          <div class="hz-lib-card-head">
+            <span class="hz-lib-name">${IC.palette} 认字涂色</span>
+            <span class="hz-lib-count">小游戏</span>
+          </div>
+          <div class="hz-lib-subtitle">选出同色的字涂满它</div>
+          <p class="hz-lib-desc">从字库随机取 6 个字，先挑一支色笔，再点棋盘上同样的字把它涂满。点错会抖一抖，全部涂完就通关。</p>
+          <span class="hz-lib-link">开始涂色 ${IC.arrowR}</span>
+        </a>
+      </div>
 
       <section class="hz-lib-grid" id="hzLibGrid">
         <div class="hz-lib-loading">字库加载中…</div>
@@ -692,6 +727,7 @@ export async function renderHanziStudy(libId) {
           </div>
           <div class="header-right">
             ${headerLockButtonHtml()}
+            <a class="hz-color-cta" id="hzColorCta" href="/hanzi/color" data-link aria-label="用这个字库玩认字涂色">${IC.palette}<span>涂色</span></a>
             <button class="hz-menu-btn" id="hzMenuBtn" data-action="menu-open" aria-label="打开字库列表">${IC.menu}</button>
           </div>
         </div>
@@ -774,6 +810,9 @@ export async function renderHanziStudy(libId) {
     libChars = lib.all ? charsData.map((e) => e.c) : lib.chars.filter((c) => byChar.has(c));
     const titleEl = $id('hzLibTitle');
     if (titleEl) titleEl.textContent = lib.name;
+    // 涂色入口带上当前字库，进去默认用这个字库的字
+    const colorCta = $id('hzColorCta');
+    if (colorCta) colorCta.setAttribute('href', `/hanzi/color?lib=${encodeURIComponent(lib.id)}`);
     const searchInput = $id('hzSearch');
     if (searchInput) searchInput.placeholder = `在「${lib.name}」里找字，输入汉字或拼音`;
     const sideTitle = $id('hzSidebarTitle');
@@ -1076,6 +1115,394 @@ function cbFinish() {
   celebrate('cbBox');
   floatMsg('整篇写完了！', true);
   sfxFanfare();
+}
+
+// ══════════════════════════════════════════════════════════
+//  认字涂色
+//  玩法：从字库随机取 6 个字，每个字在棋盘上散布 4 个同字圆点。
+//  先选一支色笔（每支笔绑定一个字），再点同字圆点把它涂满；
+//  点错会抖动并播放提示音。全部涂满即通关。
+// ══════════════════════════════════════════════════════════
+
+const cgHexToRgb = (h) => {
+  const s = String(h).replace('#', '');
+  const f = s.length === 3 ? s.split('').map((c) => c + c).join('') : s;
+  return [parseInt(f.slice(0, 2), 16), parseInt(f.slice(2, 4), 16), parseInt(f.slice(4, 6), 16)];
+};
+
+// 依据底色亮度决定字用深色还是浅色，保证对比度
+function cgTextColor(hex) {
+  const [r, g, b] = cgHexToRgb(hex);
+  const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return lum > 0.62 ? '#1a1a1e' : '#ffffff';
+}
+
+// 把颜色压暗一点，用作描边，增强"涂满"的立体感
+function cgShade(hex, amt) {
+  const [r, g, b] = cgHexToRgb(hex);
+  const f = (v) => Math.max(0, Math.min(255, Math.round(v + 255 * amt)));
+  return '#' + [f(r), f(g), f(b)].map((v) => v.toString(16).padStart(2, '0')).join('');
+}
+
+const cgShuffle = (arr) => {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+};
+
+// 读本地存档的家长自选字（按字库 id 分别记忆）
+function cgLoadSaved(libId) {
+  try {
+    const raw = localStorage.getItem(CG_KEY);
+    if (!raw) return null;
+    const all = JSON.parse(raw);
+    const arr = all && all[libId];
+    return Array.isArray(arr) && arr.length ? arr : null;
+  } catch { return null; }
+}
+
+function cgSaveSelected(libId, chars) {
+  try {
+    const raw = localStorage.getItem(CG_KEY);
+    const all = raw ? JSON.parse(raw) : {};
+    all[libId] = chars;
+    localStorage.setItem(CG_KEY, JSON.stringify(all));
+  } catch { /* ignore */ }
+}
+
+// 从字库可用字里随机取 6 个
+function cgPickRandom(pool, n) {
+  const chars = [...new Set(pool)].filter((c) => byChar.has(c));
+  if (chars.length <= n) return chars;
+  return cgShuffle(chars).slice(0, n);
+}
+
+// 组装本局题目：字 + 拼音 + 组词 + 色笔颜色
+function cgBuildItems(chars) {
+  return chars.map((c, i) => {
+    const e = byChar.get(c) || { c, p: '', w: [] };
+    return { c, p: e.p || '', w: e.w || [], color: CG_PALETTE[i % CG_PALETTE.length] };
+  });
+}
+
+// ── 入口：认字涂色页 ──
+export async function renderColorGame(libId) {
+  dispose();
+  cgTiles = [];
+  cgDone = 0;
+  cgBrush = 0;
+  cgItems = [];
+  cgDraft = null;
+  cgSettingsOpen = false;
+
+  root = document.createElement('div');
+  root.className = 'page hz-page';
+  root.innerHTML = `
+    <header class="header">
+      <div class="header-inner">
+        <div class="header-left">
+          <a href="/hanzi" class="back-btn" data-link aria-label="返回字库列表">${ICONS.back}</a>
+          <span class="header-title">认字涂色</span>
+        </div>
+        <div class="header-right">
+          <button class="hz-header-lock" data-action="cg-settings" title="家长设置">${IC.gear}<span>设置</span></button>
+        </div>
+      </div>
+    </header>
+
+    <div class="hz-wrap hz-cg-wrap">
+      <section class="hz-card hz-cg-card">
+        <div class="hz-cg-topbar">
+          <div class="hz-cg-brushes" id="cgBrushes"></div>
+          <button class="hz-cg-gear" data-action="cg-settings" aria-label="家长设置">${IC.gear}</button>
+        </div>
+        <div class="hz-cg-progress"><i id="cgProgressFill"></i></div>
+        <p class="hz-cg-tip" id="cgTip">先点一个颜色的字，再点棋盘上同样的字，把它涂满～</p>
+      </section>
+
+      <section class="hz-cg-board-card">
+        <div class="hz-cg-board" id="cgBoard"></div>
+        <div class="hz-cg-board-actions">
+          <button class="btn btn-secondary" data-action="cg-again">换一批字</button>
+          <button class="btn btn-primary" data-action="cg-restart">重开一局</button>
+        </div>
+      </section>
+    </div>
+
+    <div class="hz-cg-win" id="cgWin" hidden>
+      <div class="hz-cg-win-card">
+        <div class="hz-cg-win-emoji">🎉</div>
+        <h2>全部涂完啦！</h2>
+        <p>你真棒！</p>
+        <button class="btn btn-primary" data-action="cg-play-again">再玩一次</button>
+      </div>
+    </div>
+
+    <div class="hz-cg-sheet" id="cgSheet" hidden>
+      <div class="hz-cg-sheet-panel">
+        <div class="hz-cg-sheet-head">
+          <h2>家长设置</h2>
+          <button class="btn btn-primary" data-action="cg-settings-ok">完成</button>
+        </div>
+        <div class="hz-cg-sheet-body">
+          <p class="hz-cg-hint">默认从「<b id="cgLibName">字库</b>」随机取 6 个字。也可以自己勾选想让孩子练的字，或点「换一批」重新随机。</p>
+          <div class="hz-cg-sheet-actions">
+            <button class="btn btn-secondary" data-action="cg-reroll">换一批随机</button>
+            <button class="btn btn-secondary" data-action="cg-select-all">全选本页</button>
+            <button class="btn btn-secondary" data-action="cg-select-none">清空选择</button>
+          </div>
+          <p class="hz-cg-count" id="cgSelCount"></p>
+          <div class="hz-cg-picker" id="cgPicker"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hz-feedback" id="hzFeedback" aria-live="polite"></div>
+  `;
+
+  const app = document.getElementById('app');
+  app.innerHTML = '';
+  app.appendChild(root);
+
+  root.addEventListener('click', onClick);
+  const unlockAudio = () => ensureAudioCtx();
+  root.addEventListener('pointerdown', unlockAudio, { once: true });
+  root.addEventListener('touchstart', unlockAudio, { once: true });
+  root.addEventListener('mousedown', unlockAudio, { once: true });
+
+  try {
+    await Promise.all([loadLibraries(), loadChars()]);
+    if (!live()) return;
+    cgRootLib = libs.find((l) => l.id === libId) || null;
+    const nameEl = $id('cgLibName');
+    if (nameEl) nameEl.textContent = cgRootLib ? cgRootLib.name : '启蒙识字';
+    // 当前字库的可用字池（未解锁时只取启蒙字）
+    let pool;
+    if (!cgRootLib) {
+      pool = (libs.find((l) => l.id === 'qimeng')?.chars) || [];
+    } else if (cgRootLib.all) {
+      pool = charsData.map((e) => e.c);
+    } else {
+      pool = cgRootLib.chars || [];
+    }
+    if (!isUnlocked() && !cgRootLib) pool = (libs.find((l) => l.id === 'qimeng')?.chars) || [];
+    const saved = cgRootLib ? cgLoadSaved(cgRootLib.id) : null;
+    const chars = saved && saved.length >= 2 ? saved.filter((c) => byChar.has(c)).slice(0, 6) : cgPickRandom(pool, 6);
+    cgStartRound(chars.length >= 2 ? chars : cgPickRandom(pool, 6));
+  } catch (e) {
+    console.error('涂色数据加载失败:', e);
+    const board = $id('cgBoard');
+    if (board) board.innerHTML = '<div class="hz-cg-empty">数据加载失败，请刷新重试</div>';
+  }
+}
+
+// 开始一局
+function cgStartRound(chars) {
+  if (!live() || !chars || chars.length < 2) {
+    floatMsg('字库里可用字不足，换字库试试', false);
+    return;
+  }
+  cgItems = cgBuildItems(chars);
+  cgBrush = 0;
+  cgDone = 0;
+  const win = $id('cgWin');
+  if (win) win.hidden = true;
+  cgRenderBrushes();
+  cgBuildBoard();
+  cgUpdateProgress();
+}
+
+function cgRenderBrushes() {
+  const box = $id('cgBrushes');
+  if (!box) return;
+  box.innerHTML = cgItems
+    .map((it, i) => `
+      <button class="hz-cg-brush${i === cgBrush ? ' active' : ''}" data-action="cg-brush" data-index="${i}"
+              type="button" aria-label="选择 ${it.c} 的色笔">
+        <span class="hz-cg-dot" style="background:${it.color}"></span>
+        <span class="hz-cg-brush-label">${it.c}</span>
+      </button>`)
+    .join('');
+}
+
+function cgBuildBoard() {
+  const board = $id('cgBoard');
+  if (!board) return;
+  board.innerHTML = '';
+  cgTiles = [];
+  cgDone = 0;
+
+  // 每个字重复出现若干次，打散排布
+  const pool = [];
+  cgItems.forEach((_, i) => {
+    for (let k = 0; k < CG_PER_ITEM; k++) pool.push(i);
+  });
+  const shuffled = cgShuffle(pool);
+
+  shuffled.forEach((idx) => {
+    const it = cgItems[idx];
+    const el = document.createElement('button');
+    el.type = 'button';
+    el.className = 'hz-cg-tile';
+    el.textContent = it.c;
+    el.dataset.action = 'cg-tile';
+    el.dataset.index = String(cgTiles.length);
+    el.setAttribute('aria-label', `${it.c}，点我涂色`);
+    el.style.fontSize = 'clamp(22px, 7vmin, 44px)';
+    board.appendChild(el);
+    cgTiles.push({ itemIndex: idx, filled: false, el });
+  });
+}
+
+function cgUpdateProgress() {
+  const fill = $id('cgProgressFill');
+  if (!fill) return;
+  const total = cgTiles.length || 1;
+  fill.style.width = ((cgDone / total) * 100).toFixed(1) + '%';
+}
+
+// 涂对一格 → 上色 + 粒子 + 音效 + 朗读
+function cgPaint(tile) {
+  const it = cgItems[tile.itemIndex];
+  const el = tile.el;
+  tile.filled = true;
+  el.style.background = it.color;
+  el.style.color = cgTextColor(it.color);
+  el.style.borderColor = cgShade(it.color, -0.22);
+  el.classList.add('painted');
+  el.classList.remove('pop');
+  void el.offsetWidth;
+  el.classList.add('pop');
+
+  cgDone += 1;
+  cgUpdateProgress();
+  sfxSuccess();
+  cgBurst(el, it.color);
+  speak(buildSpeechScript(it.c, it.w));
+  if (cgDone >= cgTiles.length) later(cgWin, 700);
+}
+
+function cgBurst(el, color) {
+  const rect = el.getBoundingClientRect();
+  const cx = rect.left + rect.width / 2;
+  const cy = rect.top + rect.height / 2;
+  const colors = ['#ffd400', '#ffffff', color, '#ff8a65'];
+  for (let i = 0; i < 6; i++) {
+    const p = document.createElement('i');
+    p.className = 'hz-cg-particle';
+    p.style.background = colors[i % colors.length];
+    p.style.left = cx + 'px';
+    p.style.top = cy + 'px';
+    const a = Math.random() * Math.PI * 2;
+    const d = 26 + Math.random() * 46;
+    p.style.setProperty('--dx', (Math.cos(a) * d).toFixed(1) + 'px');
+    p.style.setProperty('--dy', (Math.sin(a) * d).toFixed(1) + 'px');
+    document.body.appendChild(p);
+    later(() => p.remove(), 760);
+  }
+}
+
+function cgWin() {
+  if (!live()) return;
+  sfxFanfare();
+  celebrate('cgBoard');
+  const win = $id('cgWin');
+  if (win) win.hidden = false;
+}
+
+// ── 家长设置面板 ──
+function cgOpenSettings() {
+  if (!live()) return;
+  const pool = cgPoolForPicker();
+  cgDraft = {
+    selected: cgItems.map((it) => it.c),
+    pool,
+  };
+  cgRenderPicker();
+  const sheet = $id('cgSheet');
+  if (sheet) sheet.hidden = false;
+  cgSettingsOpen = true;
+}
+
+// 设置面板里可勾选的字：优先当前字库，未解锁时退回启蒙字
+function cgPoolForPicker() {
+  let pool;
+  if (cgRootLib && !cgRootLib.all) pool = cgRootLib.chars || [];
+  else if (cgRootLib && cgRootLib.all) pool = charsData.map((e) => e.c);
+  else pool = (libs.find((l) => l.id === 'qimeng')?.chars) || [];
+  // 未解锁时，锁定字库的字不可选
+  if (cgRootLib && LOCKED_LIBS.has(cgRootLib.id) && !isUnlocked()) {
+    const q = new Set((libs.find((l) => l.id === 'qimeng')?.chars) || []);
+    pool = pool.filter((c) => q.has(c));
+  }
+  return [...new Set(pool)].filter((c) => byChar.has(c));
+}
+
+function cgRenderPicker() {
+  const box = $id('cgPicker');
+  const countEl = $id('cgSelCount');
+  if (!box || !cgDraft) return;
+  const sel = new Set(cgDraft.selected);
+  // 已选的字排在最前，方便看清
+  const ordered = [...cgDraft.selected.filter((c) => cgDraft.pool.includes(c)), ...cgDraft.pool.filter((c) => !sel.has(c))];
+  box.innerHTML = ordered
+    .map((c) => {
+      const e = byChar.get(c);
+      return `<button class="hz-cg-pick${sel.has(c) ? ' on' : ''}" data-action="cg-pick" data-char="${c}" type="button">
+        <span class="hz-cg-pick-c">${c}</span>
+        <span class="hz-cg-pick-p">${e ? e.p : ''}</span>
+      </button>`;
+    })
+    .join('');
+  if (countEl) countEl.textContent = `已选 ${cgDraft.selected.length} 个字（2–6 个）`;
+}
+
+function cgTogglePick(c) {
+  if (!cgDraft) return;
+  const i = cgDraft.selected.indexOf(c);
+  if (i >= 0) {
+    if (cgDraft.selected.length <= 2) { toast('至少要留 2 个字'); return; }
+    cgDraft.selected.splice(i, 1);
+  } else {
+    if (cgDraft.selected.length >= 6) { toast('最多 6 个字'); return; }
+    cgDraft.selected.push(c);
+  }
+  cgRenderPicker();
+}
+
+function cgApplySettings() {
+  if (!cgDraft) return;
+  const chars = cgDraft.selected.filter((c) => byChar.has(c)).slice(0, 6);
+  if (chars.length < 2) { toast('至少要选 2 个字'); return; }
+  if (cgRootLib) cgSaveSelected(cgRootLib.id, chars);
+  const sheet = $id('cgSheet');
+  if (sheet) sheet.hidden = true;
+  cgSettingsOpen = false;
+  cgStartRound(chars);
+  toast('已按你的选择出题');
+}
+
+function cgReroll() {
+  if (!cgDraft) return;
+  const pool = cgDraft.pool;
+  const n = Math.max(2, Math.min(6, cgDraft.selected.length || 6));
+  cgDraft.selected = cgPickRandom(pool, n);
+  cgRenderPicker();
+}
+
+function cgSelectAll() {
+  if (!cgDraft) return;
+  cgDraft.selected = cgDraft.pool.slice(0, 6);
+  cgRenderPicker();
+}
+
+function cgSelectNone() {
+  if (!cgDraft) return;
+  cgDraft.selected = [];
+  cgRenderPicker();
 }
 
 function safeStateGet() {
@@ -1429,6 +1856,49 @@ function onClick(e) {
       const sheet = $id('cbSheetCard');
       if (compose) compose.hidden = false;
       if (sheet) sheet.hidden = true;
+      break;
+    }
+    // ── 认字涂色 ──
+    case 'cg-brush': {
+      cgBrush = Number(btn.dataset.index) || 0;
+      cgRenderBrushes();
+      sfxPop();
+      speak(cgItems[cgBrush].c);
+      break;
+    }
+    case 'cg-tile': {
+      if (btn.classList.contains('painted')) break;
+      const tile = cgTiles[Number(btn.dataset.index)];
+      if (!tile || tile.filled) break;
+      if (tile.itemIndex === cgBrush) {
+        cgPaint(tile);
+      } else {
+        btn.classList.remove('shake');
+        void btn.offsetWidth;
+        btn.classList.add('shake');
+        later(() => btn.classList.remove('shake'), 460);
+        sfxError();
+        floatMsg('不是这个颜色哦，再看看', false);
+      }
+      break;
+    }
+    case 'cg-settings': cgOpenSettings(); break;
+    case 'cg-settings-ok': cgApplySettings(); break;
+    case 'cg-pick': cgTogglePick(btn.dataset.char); break;
+    case 'cg-reroll': cgReroll(); break;
+    case 'cg-select-all': cgSelectAll(); break;
+    case 'cg-select-none': cgSelectNone(); break;
+    case 'cg-again': {
+      const pool = cgPoolForPicker();
+      const saved = cgRootLib ? cgLoadSaved(cgRootLib.id) : null;
+      cgStartRound(saved && saved.length >= 2 ? saved : cgPickRandom(pool, 6));
+      break;
+    }
+    case 'cg-restart': cgStartRound(cgItems.map((it) => it.c)); break;
+    case 'cg-play-again': {
+      const win = $id('cgWin');
+      if (win) win.hidden = true;
+      cgStartRound(cgItems.map((it) => it.c));
       break;
     }
   }
