@@ -348,8 +348,9 @@ function sfxFanfare() {
 
 // ── 语音朗读（读汉字 + 一个组词，如「公，公园」） ──
 // 音源优先级：
-//   1) responsiveVoice 网络语音（标准音频响应，不受浏览器 ORB 拦截，音色自然）
-//   2) 浏览器内置 TTS（无网络依赖，断网/接口不可用时兜底）
+//   1) 浏览器/系统内置 TTS —— Windows+Edge 上自带晓晓、云希等高质量中文音色，
+//      音质自然且零网络依赖，故优先使用
+//   2) responsiveVoice 网络语音 —— 系统无中文语音时的兜底（免费版仅 Chinese Female）
 // 全部失败时静默降级，仅提示一次，不打断书写。
 let speakToken = 0;          // 令牌：切字/重播时作废上一段朗读
 let speakWarned = false;     // 兼容提示只弹一次
@@ -410,7 +411,25 @@ function speakResponsiveVoice(text, token) {
   });
 }
 
-// 2) 浏览器内置 TTS（兜底，无网络依赖）
+// 挑选最佳中文语音：优先高质量女声（晓晓/晓伊等，适合儿童教学），其次任意中文
+function pickChineseVoice(voices) {
+  const zh = voices.filter((v) => v.lang && /^zh/i.test(v.lang));
+  if (!zh.length) return null;
+  const prefer = ['xiaoxiao', 'xiaoyi', 'xiaomo', 'huihui', 'yaoyao', 'kangkang', 'tingting', 'female'];
+  const scored = zh.map((v) => {
+    const n = (v.name || '').toLowerCase();
+    let s = 0;
+    prefer.forEach((k, i) => { if (n.includes(k)) s = Math.max(s, 100 - i * 5); });
+    // 大陆普通话优先
+    if (/zh[-_]?cn/i.test(v.lang) || /mainland|mandarin/i.test(n)) s += 20;
+    if (v.localService === false) s += 8;   // 在线语音通常音质更好
+    return { v, s };
+  });
+  scored.sort((a, b) => b.s - a.s);
+  return scored[0].v;
+}
+
+// 1) 浏览器/系统内置 TTS（优先，Windows+Edge 音色最佳）
 function speakNative(text, token) {
   if (!('speechSynthesis' in window)) return Promise.resolve(false);
   return new Promise((resolve) => {
@@ -427,14 +446,13 @@ function speakNative(text, token) {
     };
     const attempt = () => {
       try {
-        const voices = window.speechSynthesis.getVoices();
-        const zh = voices.find((v) => v.lang && /^zh/i.test(v.lang));
-        if (!zh) return done(false);       // 环境无中文语音，交给下一级
+        const voice = pickChineseVoice(window.speechSynthesis.getVoices());
+        if (!voice) return done(false);    // 环境无中文语音，交给下一级
         const u = new SpeechSynthesisUtterance(text);
-        u.lang = 'zh-CN';
-        u.rate = 0.8;
+        u.lang = voice.lang || 'zh-CN';
+        u.rate = 0.75;                     // 略慢，便于儿童听清
         u.pitch = 1.05;
-        u.voice = zh;
+        u.voice = voice;
         u.onstart = () => {
           started = true;
           if (token !== speakToken) { window.speechSynthesis.cancel(); return done(false); }
@@ -443,8 +461,8 @@ function speakNative(text, token) {
         u.onerror = () => { if (!started) done(false); };
         window.speechSynthesis.cancel();
         window.speechSynthesis.speak(u);
-        // 1.2s 未真正出声即判定失败（规避「有语音库但静音」的环境）
-        timer = setTimeout(() => { if (!started) { window.speechSynthesis.cancel(); done(false); } }, 1200);
+        // 1.5s 未真正出声即判定失败（规避「有语音库但静音」的环境）
+        timer = setTimeout(() => { if (!started) { window.speechSynthesis.cancel(); done(false); } }, 1500);
       } catch {
         done(false);
       }
@@ -462,10 +480,9 @@ async function speak(text) {
   if (!clean) return;
   speakToken += 1;
   const token = speakToken;
-  try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch { /* ignore */ }
-  if (await speakResponsiveVoice(clean, token)) return;
-  if (token !== speakToken) return;
   if (await speakNative(clean, token)) return;
+  if (token !== speakToken) return;
+  if (await speakResponsiveVoice(clean, token)) return;
   if (!speakWarned) {
     speakWarned = true;
     toast('当前环境暂不支持朗读，可换个浏览器试试');
