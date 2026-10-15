@@ -503,6 +503,17 @@ function speakCurrentChar() {
   speak(buildSpeechScript(current.c, current.w));
 }
 
+// 抄写本：朗读当前正在临写的字（读「字 + 一个组词」，如「公，公园」）
+function speakCopybookChar() {
+  if (!cbChars.length) return;
+  const ch = cbChars[cbIdx];
+  if (!ch) return;
+  const big = $id('cbCharBig');
+  if (big) big.classList.add('speaking');
+  later(() => { if (big) big.classList.remove('speaking'); }, 1600);
+  const entry = byChar.get(ch);
+  speak(buildSpeechScript(ch, entry ? entry.w : []));
+}
 
 // ── 庆祝特效（整字写完后五彩纸屑） ──
 function celebrate(boxId) {
@@ -820,7 +831,8 @@ export async function renderCopybook() {
         <div class="hz-cb-note" id="cbNote" hidden></div>
         <div class="hz-cb-sheet" id="cbSheet"></div>
         <div class="hz-cb-current">
-          <div class="hz-cb-char" id="cbCharBig">?</div>
+          <button class="hz-cb-char hz-speakable" id="cbCharBig" data-action="cb-speak"
+                  type="button" aria-label="朗读这个字">?</button>
           <div class="hz-cb-pinyin" id="cbPinyin"></div>
         </div>
         <div class="hz-writer-center">
@@ -964,6 +976,8 @@ async function cbStartNext() {
   }
   buildCopybookWriters();
   startCbQuiz();
+  // 进入每个新字时朗读「字，组词」，帮助建立字形—读音关联
+  later(speakCopybookChar, 500);
 }
 
 function buildCopybookWriters() {
@@ -1035,6 +1049,8 @@ function startCbQuiz() {
       celebrate('cbBox');
       floatMsg('这个字写好了！', true);
       sfxSuccess();
+      // 先朗读刚写好的字，再切到下一个字（避免两句重叠）
+      speakCopybookChar();
       later(() => {
         cbDone.add(cbIdx);
         // 跳到下一个未写完的字；全部写完则结束
@@ -1394,6 +1410,7 @@ function onClick(e) {
     case 'prev': stepChar(-1); break;
     case 'next': stepChar(1); break;
     case 'speak-char': speakCurrentChar(); break;
+    case 'cb-speak': speakCopybookChar(); break;
     case 'cb-cell': {
       cbIdx = Number(btn.dataset.index) || 0;
       cbStartNext();
