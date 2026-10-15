@@ -425,6 +425,32 @@
   line-height: 1;
 }
 
+/* 抄写本当前字：可点击朗读（button 重置 + 朗读态） */
+button.hz-cb-char {
+  appearance: none;
+  border: none;
+  background: transparent;
+  padding: 2px 8px;
+  border-radius: 10px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s ease, transform 0.12s ease;
+}
+
+button.hz-cb-char:hover {
+  background: rgba(13, 148, 136, 0.1);
+}
+
+button.hz-cb-char.speaking {
+  background: rgba(13, 148, 136, 0.14);
+  transform: scale(0.95);
+}
+
+button.hz-cb-char:focus-visible {
+  outline: 3px solid rgba(13, 148, 136, 0.35);
+  outline-offset: 2px;
+}
+
 .hz-cb-pinyin {
   font-size: 16px;
   font-weight: 600;
