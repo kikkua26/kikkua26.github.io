@@ -258,6 +258,7 @@ let cgDone = 0;          // 已涂满的格子数
 let cgRootLib = null;    // 进入时的字库（用于「换一批」和「重新随机」）
 let cgSettingsOpen = false;
 let cgDraft = null;      // 家长设置草稿
+let cgBoardRO = null;    // 棋盘尺寸观察器
 
 const later = (fn, ms) => {
   const id = setTimeout(fn, ms);
@@ -286,6 +287,7 @@ function dispose() {
   cgDraft = null;
   cgRootLib = null;
   cgSettingsOpen = false;
+  if (cgBoardRO) { try { cgBoardRO.disconnect(); } catch { /* ignore */ } cgBoardRO = null; }
   writers.forEach((w) => { try { w.cancelQuiz && w.cancelQuiz(); } catch { /* ignore */ } });
   writers = [];
   if (root) {
@@ -1219,27 +1221,28 @@ export async function renderColorGame(libId) {
       </div>
     </header>
 
-    <div class="hz-wrap hz-cg-wrap">
+    <div class="hz-cg-stage">
       <section class="hz-card hz-cg-card">
         <div class="hz-cg-topbar">
           <div class="hz-cg-brushes" id="cgBrushes"></div>
         </div>
         <div class="hz-cg-progress"><i id="cgProgressFill"></i></div>
-        <p class="hz-cg-tip" id="cgTip">先点上面的字，再点棋盘上相同的字，把它涂满～</p>
       </section>
 
       <section class="hz-cg-board-card">
         <div class="hz-cg-board" id="cgBoard"></div>
-        <div class="hz-cg-board-actions">
-          <button class="btn btn-secondary" data-action="cg-again">换一批字</button>
-          <button class="btn btn-primary" data-action="cg-restart">重开一局</button>
-        </div>
       </section>
+
+      <div class="hz-cg-board-actions">
+        <button class="btn btn-secondary" data-action="cg-again">换一批字</button>
+        <button class="btn btn-primary" data-action="cg-restart">重开一局</button>
+      </div>
     </div>
 
     <div class="hz-cg-win" id="cgWin" hidden>
       <div class="hz-cg-win-card">
         <div class="hz-cg-win-emoji">🎉</div>
+        <div class="hz-cg-win-stars">⭐️⭐️⭐️</div>
         <h2>全部涂完啦！</h2>
         <p>你真棒！</p>
         <button class="btn btn-primary" data-action="cg-play-again">再玩一次</button>
@@ -1280,6 +1283,12 @@ export async function renderColorGame(libId) {
   root.addEventListener('click', onClick);
   root.addEventListener('input', onInput);
   window.addEventListener('resize', onResize);
+  // 棋盘尺寸随窗口变化时重排，保证始终铺满可视区
+  if ('ResizeObserver' in window) {
+    cgBoardRO = new ResizeObserver(() => cgLayoutBoard());
+    const boardEl = $id('cgBoard');
+    if (boardEl) cgBoardRO.observe(boardEl);
+  }
   const unlockAudio = () => ensureAudioCtx();
   root.addEventListener('pointerdown', unlockAudio, { once: true });
   root.addEventListener('touchstart', unlockAudio, { once: true });
@@ -1367,7 +1376,8 @@ function cgBuildBoard() {
     // 抖动因子：让每个格子相对格心随机偏移，形成自然散布
     cgTiles.push({ itemIndex: idx, filled: false, el, jx: Math.random() * 2 - 1, jy: Math.random() * 2 - 1 });
   });
-  cgLayoutBoard();
+  // 等一帧，确保 flex 高度已算出再定位
+  requestAnimationFrame(cgLayoutBoard);
 }
 
 // 把格子按「网格分配格位 + 随机偏移」摆放，视觉上错落自然
@@ -1443,20 +1453,47 @@ function cgBurst(el, color) {
   const rect = el.getBoundingClientRect();
   const cx = rect.left + rect.width / 2;
   const cy = rect.top + rect.height / 2;
-  const colors = ['#ffd400', '#ffffff', color, '#ff8a65'];
-  for (let i = 0; i < 6; i++) {
+  const colors = ['#ffd400', '#ffffff', color, '#ff8a65', '#7ee0d3'];
+  // 彩色粒子迸发
+  for (let i = 0; i < 9; i++) {
     const p = document.createElement('i');
     p.className = 'hz-cg-particle';
     p.style.background = colors[i % colors.length];
     p.style.left = cx + 'px';
     p.style.top = cy + 'px';
-    const a = Math.random() * Math.PI * 2;
-    const d = 26 + Math.random() * 46;
+    const a = (i / 9) * Math.PI * 2 + Math.random() * 0.5;
+    const d = 30 + Math.random() * 52;
     p.style.setProperty('--dx', (Math.cos(a) * d).toFixed(1) + 'px');
     p.style.setProperty('--dy', (Math.sin(a) * d).toFixed(1) + 'px');
     document.body.appendChild(p);
-    later(() => p.remove(), 760);
+    later(() => p.remove(), 780);
   }
+  // 星星 / 爱心 / 花瓣飘出（宝宝更爱看）
+  const marks = ['⭐', '✨', '🌟', '💛', '🎈', '🌸'];
+  for (let i = 0; i < 3; i++) {
+    const s = document.createElement('span');
+    s.className = 'hz-cg-spark';
+    s.textContent = marks[Math.floor(Math.random() * marks.length)];
+    s.style.left = cx + 'px';
+    s.style.top = cy + 'px';
+    s.style.fontSize = 14 + Math.random() * 12 + 'px';
+    const a = -Math.PI / 2 + (Math.random() - 0.5) * 2.2;
+    const d = 40 + Math.random() * 50;
+    s.style.setProperty('--dx', (Math.cos(a) * d).toFixed(1) + 'px');
+    s.style.setProperty('--dy', (Math.sin(a) * d).toFixed(1) + 'px');
+    document.body.appendChild(s);
+    later(() => s.remove(), 1000);
+  }
+}
+
+// 涂错：温柔地晃一晃 + 一句鼓励
+function cgWrong(btn) {
+  btn.classList.remove('shake');
+  void btn.offsetWidth;
+  btn.classList.add('shake');
+  later(() => btn.classList.remove('shake'), 460);
+  sfxError();
+  floatMsg(pick(['这个不是哦～', '再看看上面的字', '差一点点，加油！']), false);
 }
 
 function cgWin() {
@@ -1465,6 +1502,28 @@ function cgWin() {
   celebrate('cgBoard');
   const win = $id('cgWin');
   if (win) win.hidden = false;
+  cgConfettiRain();
+}
+
+// 通关彩纸雨：从顶部持续飘落，制造"满屏庆祝"的感觉
+function cgConfettiRain() {
+  const colors = ['#ffd400', '#f0862a', '#2e9e5b', '#e8578f', '#3b8be8', '#8a5cd6', '#14b8a6'];
+  for (let i = 0; i < 46; i++) {
+    later(() => {
+      if (!live()) return;
+      const p = document.createElement('span');
+      p.className = 'hz-cg-rain';
+      p.style.left = Math.random() * 100 + 'vw';
+      p.style.width = 6 + Math.random() * 7 + 'px';
+      p.style.height = 9 + Math.random() * 9 + 'px';
+      p.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+      p.style.background = colors[i % colors.length];
+      p.style.animationDuration = (1.6 + Math.random() * 1.4).toFixed(2) + 's';
+      p.style.animationDelay = (Math.random() * 0.5).toFixed(2) + 's';
+      document.body.appendChild(p);
+      later(() => p.remove(), 3600);
+    }, i * 55);
+  }
 }
 
 // ── 家长设置面板 ──
@@ -1946,12 +2005,7 @@ function onClick(e) {
       if (tile.itemIndex === cgBrush) {
         cgPaint(tile);
       } else {
-        btn.classList.remove('shake');
-        void btn.offsetWidth;
-        btn.classList.add('shake');
-        later(() => btn.classList.remove('shake'), 460);
-        sfxError();
-        floatMsg('不是这个颜色哦，再看看', false);
+        cgWrong(btn);
       }
       break;
     }
