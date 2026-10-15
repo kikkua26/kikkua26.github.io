@@ -1435,7 +1435,7 @@ function cgPaint(tile) {
   cgUpdateProgress();
   sfxSuccess();
   cgBurst(el, it.color);
-  speak(buildSpeechScript(it.c, it.w));
+  // 涂对只播提示音，不朗读（朗读只在点上面色笔时触发）
   if (cgDone >= cgTiles.length) later(cgWin, 700);
 }
 
