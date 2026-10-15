@@ -9,7 +9,7 @@ const [
     { renderStudy },
     { renderAbout },
     { renderTools },
-    { renderHanzi, renderHanziStudy, renderCopybook },
+    { renderHanzi, renderHanziStudy, renderCopybook, renderColorGame },
     { setRouteHandler },
     { ROUTES, SITE, UI },
 ] = await Promise.all([
@@ -57,6 +57,10 @@ async function handleRoute() {
         } else if (path.startsWith(ROUTES.hanzi + '/copybook')) {
             setPageMeta('抄写本', '把想写的字组成一句话，像字帖一样逐字临写');
             await renderCopybook();
+        } else if (path.startsWith(ROUTES.hanzi + '/color')) {
+            const libId = query.startsWith('lib=') ? decodeURIComponent(query.slice(4)) : '';
+            setPageMeta('认字涂色', '选出同色的字涂满它，在玩中认字');
+            await renderColorGame(libId);
         } else if (path.startsWith(ROUTES.hanzi + '/')) {
             const libId = decodeURIComponent(path.slice(ROUTES.hanzi.length + 1));
             setPageMeta('汉字小书房', '儿童汉字书写练习：认字、看笔顺、临写、组词');
