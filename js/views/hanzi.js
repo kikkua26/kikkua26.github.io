@@ -260,7 +260,6 @@ function dispose() {
   // 停止朗读，避免离开页面后声音残留
   speakToken += 1;
   try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch { /* ignore */ }
-  if (speechAudio) { try { speechAudio.pause(); speechAudio.src = ''; } catch { /* ignore */ } speechAudio = null; }
   if (window.responsiveVoice && typeof window.responsiveVoice.cancel === 'function') {
     try { window.responsiveVoice.cancel(); } catch { /* ignore */ }
   }
@@ -348,14 +347,13 @@ function sfxFanfare() {
 }
 
 // ── 语音朗读（读汉字 + 一个组词，如「公，公园」） ──
-// 多级降级，逐级尝试，任一级成功即停：
-//   1) 有道词典语音接口（Audio，国内可直连，音色自然）
-//   2) 浏览器内置 TTS（无网络依赖，断网兜底）
-//   3) responsiveVoice（可选第三方服务，联网环境下的补充音源）
+// 音源优先级：
+//   1) responsiveVoice 网络语音（标准音频响应，不受浏览器 ORB 拦截，音色自然）
+//   2) 浏览器内置 TTS（无网络依赖，断网/接口不可用时兜底）
 // 全部失败时静默降级，仅提示一次，不打断书写。
-let speechAudio = null;      // 复用一个 Audio 元素，避免重叠播放
 let speakToken = 0;          // 令牌：切字/重播时作废上一段朗读
 let speakWarned = false;     // 兼容提示只弹一次
+let rvReadyPromise = null;   // responsiveVoice 就绪等待
 
 // 文本清洗：只保留汉字与常用停顿符，避免把「?」等占位符读出来
 function speechText(text) {
@@ -370,36 +368,49 @@ function buildSpeechScript(char, words) {
   return w ? `${char}，${w}` : char;
 }
 
-// 1) 有道语音接口
-function speakYoudao(text, token) {
-  return new Promise((resolve) => {
-    try {
-      if (speechAudio) { speechAudio.pause(); speechAudio.src = ''; }
-      const audio = new Audio();
-      speechAudio = audio;
-      audio.preload = 'auto';
-      audio.src = 'https://dict.youdao.com/dictvoice?type=2&audio=' + encodeURIComponent(text);
+// responsiveVoice 脚本为 async 加载，可能晚于本模块执行；此处等待其就绪
+function whenResponsiveVoiceReady(timeout = 4000) {
+  if (window.responsiveVoice && typeof window.responsiveVoice.speak === 'function') {
+    return Promise.resolve(true);
+  }
+  if (rvReadyPromise) return rvReadyPromise;
+  rvReadyPromise = new Promise((resolve) => {
+    const start = Date.now();
+    const check = () => {
+      if (window.responsiveVoice && typeof window.responsiveVoice.speak === 'function') return resolve(true);
+      if (Date.now() - start > timeout) return resolve(false);
+      setTimeout(check, 150);
+    };
+    check();
+  });
+  return rvReadyPromise;
+}
+
+// 1) responsiveVoice（首选网络语音）
+function speakResponsiveVoice(text, token) {
+  return whenResponsiveVoiceReady().then((ready) => {
+    if (!ready || token !== speakToken) return false;
+    return new Promise((resolve) => {
       let settled = false;
-      const done = (ok) => {
-        if (settled) return;
-        settled = true;
+      const done = (ok) => { if (!settled) { settled = true; resolve(ok); } };
+      const timer = setTimeout(() => done(false), 4000);
+      try {
+        window.responsiveVoice.cancel();
+        window.responsiveVoice.speak(speechText(text), 'Chinese Female', {
+          rate: 0.85,
+          pitch: 1,
+          onstart: () => { clearTimeout(timer); done(true); },
+          onerror: () => { clearTimeout(timer); done(false); },
+        });
+      } catch {
         clearTimeout(timer);
-        if (!ok && speechAudio === audio) speechAudio = null;
-        resolve(ok);
-      };
-      const timer = setTimeout(() => done(false), 3500);
-      audio.addEventListener('ended', () => done(true), { once: true });
-      audio.addEventListener('error', () => done(false), { once: true });
-      audio.play().then(() => {
-        if (token !== speakToken) { audio.pause(); done(false); }
-      }).catch(() => done(false));
-    } catch {
-      resolve(false);
-    }
+        done(false);
+      }
+    });
   });
 }
 
-// 2) 浏览器内置 TTS
+// 2) 浏览器内置 TTS（兜底，无网络依赖）
 function speakNative(text, token) {
   if (!('speechSynthesis' in window)) return Promise.resolve(false);
   return new Promise((resolve) => {
@@ -446,32 +457,15 @@ function speakNative(text, token) {
   });
 }
 
-// 3) responsiveVoice（若页面已引入其脚本则启用；未引入时自动跳过）
-function speakResponsiveVoice(text, token) {
-  return new Promise((resolve) => {
-    const rv = window.responsiveVoice;
-    if (!rv || typeof rv.speak !== 'function') return resolve(false);
-    try {
-      if (token !== speakToken) return resolve(false);
-      rv.speak(speechText(text), 'Chinese Female', { rate: 0.85, pitch: 1 });
-      resolve(true);
-    } catch {
-      resolve(false);
-    }
-  });
-}
-
 async function speak(text) {
   const clean = speechText(text);
   if (!clean) return;
   speakToken += 1;
   const token = speakToken;
   try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch { /* ignore */ }
-  if (await speakYoudao(clean, token)) return;
+  if (await speakResponsiveVoice(clean, token)) return;
   if (token !== speakToken) return;
   if (await speakNative(clean, token)) return;
-  if (token !== speakToken) return;
-  if (await speakResponsiveVoice(clean, token)) return;
   if (!speakWarned) {
     speakWarned = true;
     toast('当前环境暂不支持朗读，可换个浏览器试试');
@@ -491,6 +485,7 @@ function speakCurrentChar() {
   }, 1600);
   speak(buildSpeechScript(current.c, current.w));
 }
+
 
 // ── 庆祝特效（整字写完后五彩纸屑） ──
 function celebrate(boxId) {
