@@ -23,6 +23,8 @@ export const ROUTES = {
     about: 'about',
     tools: 'tools',
     hanzi: 'hanzi',
+    hanziCopybook: 'hanzi/copybook',
+    hanziColor: 'hanzi/color',
 };
 
 export const DATA_PATHS = {
