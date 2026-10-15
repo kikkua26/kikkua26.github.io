@@ -280,6 +280,12 @@ function dispose() {
     try { window.responsiveVoice.cancel(); } catch { /* ignore */ }
   }
   current = null;
+  // 涂色页清理
+  cgTiles = [];
+  cgItems = [];
+  cgDraft = null;
+  cgRootLib = null;
+  cgSettingsOpen = false;
   writers.forEach((w) => { try { w.cancelQuiz && w.cancelQuiz(); } catch { /* ignore */ } });
   writers = [];
   if (root) {
@@ -1217,10 +1223,9 @@ export async function renderColorGame(libId) {
       <section class="hz-card hz-cg-card">
         <div class="hz-cg-topbar">
           <div class="hz-cg-brushes" id="cgBrushes"></div>
-          <button class="hz-cg-gear" data-action="cg-settings" aria-label="家长设置">${IC.gear}</button>
         </div>
         <div class="hz-cg-progress"><i id="cgProgressFill"></i></div>
-        <p class="hz-cg-tip" id="cgTip">先点一个颜色的字，再点棋盘上同样的字，把它涂满～</p>
+        <p class="hz-cg-tip" id="cgTip">先点上面的字，再点棋盘上相同的字，把它涂满～</p>
       </section>
 
       <section class="hz-cg-board-card">
@@ -1249,13 +1254,18 @@ export async function renderColorGame(libId) {
         </div>
         <div class="hz-cg-sheet-body">
           <p class="hz-cg-hint">默认从「<b id="cgLibName">字库</b>」随机取 6 个字。也可以自己勾选想让孩子练的字，或点「换一批」重新随机。</p>
+          <div class="hz-cg-search">
+            <span class="hz-cg-search-icon">${IC.search}</span>
+            <input id="cgSearch" type="search" placeholder="搜字或拼音，如 公 / gong" maxlength="20"
+                   autocomplete="off" spellcheck="false" aria-label="搜索汉字或拼音">
+          </div>
           <div class="hz-cg-sheet-actions">
             <button class="btn btn-secondary" data-action="cg-reroll">换一批随机</button>
-            <button class="btn btn-secondary" data-action="cg-select-all">全选本页</button>
             <button class="btn btn-secondary" data-action="cg-select-none">清空选择</button>
           </div>
           <p class="hz-cg-count" id="cgSelCount"></p>
           <div class="hz-cg-picker" id="cgPicker"></div>
+          <div class="hz-cg-picker-empty" id="cgPickerEmpty" hidden>没有找到这个字，换个字或拼音试试</div>
         </div>
       </div>
     </div>
@@ -1268,6 +1278,8 @@ export async function renderColorGame(libId) {
   app.appendChild(root);
 
   root.addEventListener('click', onClick);
+  root.addEventListener('input', onInput);
+  window.addEventListener('resize', onResize);
   const unlockAudio = () => ensureAudioCtx();
   root.addEventListener('pointerdown', unlockAudio, { once: true });
   root.addEventListener('touchstart', unlockAudio, { once: true });
@@ -1351,9 +1363,51 @@ function cgBuildBoard() {
     el.dataset.action = 'cg-tile';
     el.dataset.index = String(cgTiles.length);
     el.setAttribute('aria-label', `${it.c}，点我涂色`);
-    el.style.fontSize = 'clamp(22px, 7vmin, 44px)';
     board.appendChild(el);
-    cgTiles.push({ itemIndex: idx, filled: false, el });
+    // 抖动因子：让每个格子相对格心随机偏移，形成自然散布
+    cgTiles.push({ itemIndex: idx, filled: false, el, jx: Math.random() * 2 - 1, jy: Math.random() * 2 - 1 });
+  });
+  cgLayoutBoard();
+}
+
+// 把格子按「网格分配格位 + 随机偏移」摆放，视觉上错落自然
+function cgLayoutBoard() {
+  const board = $id('cgBoard');
+  if (!board || !cgTiles.length) return;
+  const W = board.clientWidth;
+  const H = board.clientHeight;
+  if (!W || !H) return;
+
+  const n = cgTiles.length;
+  // 选一个让格子最大化的列数
+  let bestCols = 1;
+  let bestD = 0;
+  for (let cols = 2; cols <= 8; cols++) {
+    const rows = Math.ceil(n / cols);
+    const d = Math.min(W / cols, H / rows) * 0.84;
+    if (d > bestD) { bestD = d; bestCols = cols; }
+  }
+  const cols = bestCols;
+  const rows = Math.ceil(n / cols);
+  const d = Math.max(46, Math.min(bestD, 108));
+  const cw = W / cols;
+  const ch = H / rows;
+  // 偏移幅度不超过半个余量，保证不重叠、不出界
+  const jx = Math.min((cw - d) / 2 * 0.9, d * 0.34);
+  const jy = Math.min((ch - d) / 2 * 0.9, d * 0.34);
+
+  cgTiles.forEach((t, i) => {
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    let x = col * cw + cw / 2 + t.jx * jx;
+    let y = row * ch + ch / 2 + t.jy * jy;
+    x = Math.max(d / 2 + 2, Math.min(W - d / 2 - 2, x));
+    y = Math.max(d / 2 + 2, Math.min(H - d / 2 - 2, y));
+    const el = t.el;
+    el.style.width = d + 'px';
+    el.style.height = d + 'px';
+    el.style.fontSize = Math.round(d * 0.46) + 'px';
+    el.style.transform = `translate(${(x - d / 2).toFixed(1)}px, ${(y - d / 2).toFixed(1)}px)`;
   });
 }
 
@@ -1420,11 +1474,16 @@ function cgOpenSettings() {
   cgDraft = {
     selected: cgItems.map((it) => it.c),
     pool,
+    query: '',
   };
+  const search = $id('cgSearch');
+  if (search) search.value = '';
   cgRenderPicker();
   const sheet = $id('cgSheet');
   if (sheet) sheet.hidden = false;
   cgSettingsOpen = true;
+  // 面板打开后淡入，避免滚动时抢焦点
+  later(() => { const s = $id('cgSearch'); if (s) s.blur(); }, 60);
 }
 
 // 设置面板里可勾选的字：优先当前字库，未解锁时退回启蒙字
@@ -1441,14 +1500,31 @@ function cgPoolForPicker() {
   return [...new Set(pool)].filter((c) => byChar.has(c));
 }
 
+// 支持按汉字或拼音（无声调）筛选
+function cgMatch(c, q) {
+  if (!q) return true;
+  const e = byChar.get(c);
+  if (c.includes(q)) return true;
+  return e ? stripTone(e.p).includes(q) : false;
+}
+
 function cgRenderPicker() {
   const box = $id('cgPicker');
   const countEl = $id('cgSelCount');
+  const emptyEl = $id('cgPickerEmpty');
   if (!box || !cgDraft) return;
+  const q = stripTone((cgDraft.query || '').trim());
   const sel = new Set(cgDraft.selected);
-  // 已选的字排在最前，方便看清
-  const ordered = [...cgDraft.selected.filter((c) => cgDraft.pool.includes(c)), ...cgDraft.pool.filter((c) => !sel.has(c))];
-  box.innerHTML = ordered
+
+  // 搜索时只列出命中的字；未搜索时已选字排最前，方便看清
+  let list;
+  if (q) {
+    list = cgDraft.pool.filter((c) => cgMatch(c, q));
+  } else {
+    list = [...cgDraft.selected.filter((c) => cgDraft.pool.includes(c)), ...cgDraft.pool.filter((c) => !sel.has(c))];
+  }
+
+  box.innerHTML = list
     .map((c) => {
       const e = byChar.get(c);
       return `<button class="hz-cg-pick${sel.has(c) ? ' on' : ''}" data-action="cg-pick" data-char="${c}" type="button">
@@ -1457,6 +1533,7 @@ function cgRenderPicker() {
       </button>`;
     })
     .join('');
+  if (emptyEl) emptyEl.hidden = !(q && !list.length);
   if (countEl) countEl.textContent = `已选 ${cgDraft.selected.length} 个字（2–6 个）`;
 }
 
@@ -1490,12 +1567,6 @@ function cgReroll() {
   const pool = cgDraft.pool;
   const n = Math.max(2, Math.min(6, cgDraft.selected.length || 6));
   cgDraft.selected = cgPickRandom(pool, n);
-  cgRenderPicker();
-}
-
-function cgSelectAll() {
-  if (!cgDraft) return;
-  cgDraft.selected = cgDraft.pool.slice(0, 6);
   cgRenderPicker();
 }
 
@@ -1863,7 +1934,9 @@ function onClick(e) {
       cgBrush = Number(btn.dataset.index) || 0;
       cgRenderBrushes();
       sfxPop();
-      speak(cgItems[cgBrush].c);
+      // 点色笔读「字，一个组词」，如「公，公园」
+      const bit = cgItems[cgBrush];
+      speak(bit ? buildSpeechScript(bit.c, bit.w) : '');
       break;
     }
     case 'cg-tile': {
@@ -1886,7 +1959,6 @@ function onClick(e) {
     case 'cg-settings-ok': cgApplySettings(); break;
     case 'cg-pick': cgTogglePick(btn.dataset.char); break;
     case 'cg-reroll': cgReroll(); break;
-    case 'cg-select-all': cgSelectAll(); break;
     case 'cg-select-none': cgSelectNone(); break;
     case 'cg-again': {
       const pool = cgPoolForPicker();
@@ -1905,6 +1977,13 @@ function onClick(e) {
 }
 
 function onInput(e) {
+  if (e.target.id === 'cgSearch') {
+    if (cgDraft) {
+      cgDraft.query = e.target.value;
+      cgRenderPicker();
+    }
+    return;
+  }
   if (e.target.id !== 'hzSearch') return;
   if (searchTimer) clearTimeout(searchTimer);
   searchTimer = later(() => doSearch(e.target.value), 220);
@@ -1914,6 +1993,11 @@ function onResize() {
   if (resizeTimer) clearTimeout(resizeTimer);
   resizeTimer = later(() => {
     if (!live()) return;
+    // 涂色页：只需重排棋盘
+    if ($id('cgBoard')) {
+      cgLayoutBoard();
+      return;
+    }
     const w = writerSize('hzPracticeBox');
     if (Math.abs(w - lastWriterWidth) < 24) return;
     lastWriterWidth = w;
