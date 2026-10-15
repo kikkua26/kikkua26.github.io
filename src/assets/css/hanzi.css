@@ -1086,3 +1086,57 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ── 朗读：可点击的认字卡片 ── */
+.hz-speakable {
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
+  font-family: var(--font-display);
+  font-size: 58px;
+  font-weight: 600;
+  color: var(--text-primary);
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.12s ease, box-shadow 0.18s ease;
+}
+
+.hz-speakable:hover {
+  box-shadow: 0 4px 14px rgba(13, 148, 136, 0.18);
+  border-color: var(--accent, #0d9488);
+}
+
+.hz-speakable:active,
+.hz-speakable.speaking {
+  transform: scale(0.94);
+  border-color: var(--accent, #0d9488);
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.16);
+}
+
+.hz-speakable:focus-visible {
+  outline: 3px solid rgba(13, 148, 136, 0.35);
+  outline-offset: 2px;
+}
+
+/* 朗读时拼音旁的小喇叭提示 */
+.hz-pinyin.speaking::after {
+  content: '';
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-left: 6px;
+  border-radius: 50%;
+  background: var(--accent, #0d9488);
+  vertical-align: middle;
+  animation: hz-speak-pulse 0.8s ease-in-out infinite;
+}
+
+@keyframes hz-speak-pulse {
+  0%, 100% { opacity: 0.25; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+
+@media (max-width: 640px) {
+  .hz-speakable {
+    font-size: 48px;
+  }
+}
