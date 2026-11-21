@@ -1,13 +1,21 @@
-// kikkua · 数字乐园 — 幼小衔接数学启蒙（认数字 / 点数 / 比大小 / 10 以内加减）
-// 玩法：五张入口卡 → 每轮 8 题（闯关 10 题）→ 星星进度 → 完成撒花
-// 交互：大按键点选、点物品手口一致点数、答对自动下一题、答错温柔重试、音效 + 语音
-// 视觉复用站点设计系统，私有类统一 mt- 前缀。
+// kikkua · 数字乐园 — 幼小衔接数学启蒙
+//
+// 教学主线（按认知顺序，每种玩法解决一件具体的事）：
+//   1 认数字   十格阵数感：5 个一组，一眼看出多与少，不做机械数数
+//   2 分与合   整体与部分：亲手把苹果分进两个筐，发现 5 = 2 和 3（加减法的根）
+//   3 凑十     十格阵填空：8 再加几个满 10，这是 20 以内进位加法的核心技巧
+//   4 算一算   数轴跳跃：加法从大数接着数、减法往回数，看见"怎么算"而不是数总数
+//   5 闯关     混合 10 题
+//
+// 交互：大按键、点格子/点苹果都能动手、答对自动切题、答错给策略提示、音效 + 中文语音
+// 视觉：复用站点设计系统，私有类统一 mt- 前缀。
 
 import { ICONS } from '../icons.js';
 
 const ROUND_SIZE = 8;
 const QUEST_SIZE = 10;
-const ITEM_POOL = ['🍎', '🍓', '🍊', '⭐', '🎈', '🐟', '🍬', '🌸', '🐣', '🍇'];
+const FRAME_TOTAL = 10;
+
 const CN_NUM = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
 
 const IC = {
@@ -15,7 +23,8 @@ const IC = {
     soundOff: `<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="m16 9 5 6M21 9l-5 6"/></svg>`,
     star: `<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M12 2.6l2.9 6 6.6.9-4.8 4.6 1.2 6.5-5.9-3.2-5.9 3.2 1.2-6.5L2.5 9.5l6.6-.9z"/></svg>`,
     speak: `<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg>`,
-    replay: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>`,
+    lightbulb: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7V18h8v-3.3A7 7 0 0 0 12 2z"/></svg>`,
+    play: `<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg>`,
 };
 
 // ══════════════════════════════════════════
@@ -23,20 +32,22 @@ const IC = {
 // ══════════════════════════════════════════
 
 const S = {
-    mode: 'home',      // home | learn | count | compare | calc | quest
+    mode: 'home',
     sound: true,
     voice: true,
-    touched: false,    // 有过用户手势（iOS 朗读需要）
-    q: null,           // 当前题目
-    index: 0,          // 已答对题数
-    firstTry: 0,       // 一次就答对的题数
+    touched: false,
+    q: null,
+    index: 0,
+    firstTry: 0,
     total: ROUND_SIZE,
     tries: 0,
     locked: false,
     timer: null,
-    learnN: 3,
-    counted: 0,        // 当前题点过的物品数
-    used: new Set(),   // 本轮已出过的题（去重）
+    learnN: 5,
+    used: new Set(),
+    // 凑十：孩子点亮的额外格子数
+    filled: 0,
+    hopping: false,
 };
 
 let root = null;
@@ -52,16 +63,8 @@ let numBufferTimer = null;
 
 const rand = (min, max) => min + Math.floor(Math.random() * (max - min + 1));
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
-const cn = (n) => CN_NUM[n] !== undefined ? CN_NUM[n] : String(n);
-
-function shuffle(arr) {
-    const a = arr.slice();
-    for (let i = a.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [a[i], a[j]] = [a[j], a[i]];
-    }
-    return a;
-}
+const cn = (n) => (CN_NUM[n] !== undefined ? CN_NUM[n] : String(n));
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 function esc(s) {
     return String(s == null ? '' : s)
@@ -71,13 +74,12 @@ function esc(s) {
         .replace(/"/g, '&quot;');
 }
 
-// 数字 → emoji 物品数组
-function items(n, emoji) {
-    return Array.from({ length: n }, () => emoji);
+function $(sel) {
+    return root && root.querySelector(sel);
 }
 
 // ══════════════════════════════════════════
-//  音效（Web Audio 合成，零外部文件）
+//  音效
 // ══════════════════════════════════════════
 
 function ctx() {
@@ -108,24 +110,11 @@ function tone(freq, delay, dur, gain = 0.1, type = 'sine') {
 
 const sfx = {
     tap() { if (S.sound) tone(760, 0, 0.07, 0.05, 'triangle'); },
-    right() {
-        if (!S.sound) return;
-        [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tone(f, i * 0.085, 0.22, 0.09));
-    },
-    wrong() {
-        if (!S.sound) return;
-        tone(311, 0, 0.16, 0.07, 'triangle');
-        tone(247, 0.13, 0.2, 0.06, 'triangle');
-    },
-    star() {
-        if (!S.sound) return;
-        tone(1046.5, 0, 0.1, 0.06);
-        tone(1568, 0.08, 0.14, 0.05);
-    },
-    win() {
-        if (!S.sound) return;
-        [523.25, 659.25, 783.99, 1046.5, 1318.5].forEach((f, i) => tone(f, i * 0.11, 0.3, 0.08));
-    },
+    drop() { if (S.sound) { tone(520, 0, 0.1, 0.06); tone(700, 0.05, 0.1, 0.05); } },
+    hop() { if (S.sound) tone(620, 0, 0.09, 0.06, 'triangle'); },
+    right() { if (S.sound) [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tone(f, i * 0.085, 0.22, 0.09)); },
+    wrong() { if (S.sound) { tone(311, 0, 0.16, 0.07, 'triangle'); tone(247, 0.13, 0.2, 0.06, 'triangle'); } },
+    win() { if (S.sound) [523.25, 659.25, 783.99, 1046.5, 1318.5].forEach((f, i) => tone(f, i * 0.11, 0.3, 0.08)); },
 };
 
 // ══════════════════════════════════════════
@@ -138,16 +127,14 @@ function pickVoice() {
     const zh = window.speechSynthesis.getVoices().filter((v) => /^zh/i.test(v.lang || ''));
     if (!zh.length) return null;
     const prefer = ['xiaoxiao', 'xiaoyi', 'huihui', 'yaoyao', 'tingting', 'female'];
-    zh.sort((a, b) => {
-        const score = (v) => {
-            const n = (v.name || '').toLowerCase();
-            let s = 0;
-            prefer.forEach((k, i) => { if (n.includes(k)) s = Math.max(s, 100 - i * 5); });
-            if (/zh[-_]?cn/i.test(v.lang)) s += 20;
-            return s;
-        };
-        return score(b) - score(a);
-    });
+    const score = (v) => {
+        const n = (v.name || '').toLowerCase();
+        let s = 0;
+        prefer.forEach((k, i) => { if (n.includes(k)) s = Math.max(s, 100 - i * 5); });
+        if (/zh[-_]?cn/i.test(v.lang)) s += 20;
+        return s;
+    };
+    zh.sort((a, b) => score(b) - score(a));
     speechVoice = zh[0];
     return speechVoice;
 }
@@ -155,11 +142,11 @@ function pickVoice() {
 function say(text, { force = false } = {}) {
     if (!('speechSynthesis' in window)) return;
     if (!S.voice && !force) return;
-    if (!S.touched && !force) return;      // 未发生用户交互时，移动端会被静音
+    if (!S.touched && !force) return;
     const v = pickVoice();
     if (!v) return;
     try {
-        const u = new SpeechSynthesisUtterance(text);
+        const u = new SpeechSynthesisUtterance(String(text));
         u.lang = v.lang || 'zh-CN';
         u.voice = v;
         u.rate = 0.86;
@@ -169,56 +156,46 @@ function say(text, { force = false } = {}) {
     } catch { /* 静默降级 */ }
 }
 
-// 题目朗读脚本
-function questionSpeech(q) {
-    if (q.type === 'count') return '数一数，有几个？';
-    if (q.type === 'compare') return '哪边多？';
-    if (q.type === 'add') return `${q.a} 加 ${q.b} 等于几？`;
-    if (q.type === 'sub') return `${q.a} 减 ${q.b} 等于几？`;
-    if (q.type === 'make10') return `${q.a} 再加几，就是 10？`;
-    return '';
-}
-
 // ══════════════════════════════════════════
-//  出题
+//  题目生成
 // ══════════════════════════════════════════
 
-function qCount() {
-    const n = rand(2, 10);
-    return { type: 'count', n, emoji: pick(ITEM_POOL), answer: n };
+function qSplit() {
+    const n = rand(4, 10);
+    const part = rand(1, n - 1);
+    return { type: 'split', n, part, answer: n - part };
 }
 
-function qCompare() {
-    let left = rand(1, 10);
-    let right = rand(1, 10);
-    // 避免过多相同，但保留 1/6 的相等题
-    for (let i = 0; i < 20 && left === right && Math.random() > 0.17; i++) right = rand(1, 10);
-    const answer = left > right ? '>' : left < right ? '<' : '=';
-    return { type: 'compare', left, right, answer };
+function qTenframe() {
+    const a = rand(3, 9);
+    return { type: 'tenframe', a, b: FRAME_TOTAL - a, answer: FRAME_TOTAL - a };
 }
 
 function qAdd() {
-    const a = rand(1, 8);
-    const b = rand(1, 10 - a);
+    // 结果不超过 10；加法用"接着数"策略，所以 b 取小一点更贴近幼小衔接
+    const a = rand(2, 8);
+    const b = rand(1, Math.min(4, 10 - a));
     return { type: 'add', a, b, answer: a + b };
 }
 
 function qSub() {
-    const a = rand(3, 10);
-    const b = rand(1, a - 1);
+    const a = rand(5, 10);
+    const b = rand(1, Math.min(4, a - 1));
     return { type: 'sub', a, b, answer: a - b };
 }
 
-function qMake10() {
-    const a = rand(2, 9);
-    return { type: 'make10', a, b: 10 - a, answer: 10 - a };
+function qCompare() {
+    let a = rand(2, 10);
+    let b = rand(2, 10);
+    for (let i = 0; i < 12 && a === b; i++) b = rand(2, 10);
+    return { type: 'compare', a, b, answer: a > b ? '>' : a < b ? '<' : '=' };
 }
 
 function buildQuestion(mode, used) {
-    const make = mode === 'count' ? qCount
-        : mode === 'compare' ? qCompare
-        : mode === 'calc' ? () => pick([qAdd, qAdd, qSub, qSub, qMake10])()
-        : () => pick([qCount, qCompare, qAdd, qSub, qMake10])();
+    const make = mode === 'split' ? qSplit
+        : mode === 'tenframe' ? qTenframe
+        : mode === 'calc' ? () => pick([qAdd, qAdd, qSub, qSub, qTenframe, qSplit])()
+        : () => pick([qSplit, qTenframe, qAdd, qSub, qCompare])();
 
     let q = make();
     for (let i = 0; i < 24; i++) {
@@ -229,23 +206,74 @@ function buildQuestion(mode, used) {
     return q;
 }
 
+// 每题朗读
+function questionSpeech(q) {
+    if (!q) return '';
+    if (q.type === 'split') return `${q.n} 可以分成 ${q.part} 和几？`;
+    if (q.type === 'tenframe') return `已经有 ${q.a} 个，再放几个就是 10 个？`;
+    if (q.type === 'add') return `${q.a} 加 ${q.b} 等于几？`;
+    if (q.type === 'sub') return `${q.a} 减 ${q.b} 等于几？`;
+    if (q.type === 'compare') return '哪边多？';
+    return '';
+}
+
+// 策略提示（答错两次后给出，教方法而不是报答案）
+function strategyHint(q) {
+    if (!q) return '';
+    if (q.type === 'split') {
+        return `把 ${q.part} 个苹果放进红筐，剩下的就是 ${q.answer} 个`;
+    }
+    if (q.type === 'tenframe') {
+        return `十格阵还空着 ${q.answer} 格，填满就是 10`;
+    }
+    if (q.type === 'add') {
+        const steps = [];
+        for (let i = 1; i <= q.b; i++) steps.push(q.a + i);
+        return `从 ${q.a} 往后数 ${q.b} 个：${steps.join('、')}`;
+    }
+    if (q.type === 'sub') {
+        const steps = [];
+        for (let i = 1; i <= q.b; i++) steps.push(q.a - i);
+        return `从 ${q.a} 往回数 ${q.b} 个：${steps.join('、')}`;
+    }
+    if (q.type === 'compare') {
+        return q.answer === '=' ? '两边一样多，用 =' : `开口对着多的那一边，是 ${q.answer}`;
+    }
+    return '';
+}
+
 // ══════════════════════════════════════════
 //  渲染：首页
 // ══════════════════════════════════════════
 
 const MODES = [
-    { id: 'learn', tone: 'mint', icon: '🔢', name: '认数字', desc: '1 到 10，点一点听读音', go: '去看看' },
-    { id: 'count', tone: 'sky', icon: '🍎', name: '数一数', desc: '数数有几个，点物品帮你数', go: '开始数' },
-    { id: 'compare', tone: 'grape', icon: '⚖️', name: '比一比', desc: '哪边多？学 > < =', go: '比一比' },
-    { id: 'calc', tone: 'sun', icon: '➕', name: '算一算', desc: '10 以内加减，看得见', go: '算一算' },
-    { id: 'quest', tone: 'rose', icon: '🏆', name: '闯关', desc: '混合 10 题，拿满星星', go: '去闯关' },
+    {
+        id: 'learn', tone: 'mint', icon: '🔢', name: '认数字',
+        desc: '十格阵看数量，5 个一组一眼认出', goal: '数感', go: '看一看',
+    },
+    {
+        id: 'split', tone: 'sky', icon: '🍎', name: '分与合',
+        desc: '5 分成 2 和几？亲手分苹果找出答案', goal: '加减法的基础', go: '分一分',
+    },
+    {
+        id: 'tenframe', tone: 'grape', icon: '🧩', name: '凑十',
+        desc: '再放几个正好满 10 格？这是进位加法的钥匙', goal: '凑十法', go: '凑一凑',
+    },
+    {
+        id: 'calc', tone: 'sun', icon: '➕', name: '算一算',
+        desc: '在数轴上接着数、往回数，看见怎么算', goal: '加减策略', go: '算一算',
+    },
+    {
+        id: 'quest', tone: 'rose', icon: '🏆', name: '闯关',
+        desc: '四种题型混合 10 题，都答对拿满星星', goal: '综合', go: '去闯关',
+    },
 ];
 
 function homeHTML() {
     return `
 <section class="mt-hero">
     <h1 class="mt-hero-title">数字乐园</h1>
-    <p class="mt-hero-sub">数一数、比一比、算一算，10 以内加减在这里学会</p>
+    <p class="mt-hero-sub">不靠数手指：先认出数量，再学会分与合，最后在数轴上算</p>
 </section>
 
 <div class="mt-modes">
@@ -253,7 +281,7 @@ function homeHTML() {
     <button class="mt-mode" type="button" data-mode="${m.id}" data-tone="${m.tone}">
         <span class="mt-mode-icon" aria-hidden="true">${m.icon}</span>
         <span class="mt-mode-body">
-            <span class="mt-mode-name">${m.name}</span>
+            <span class="mt-mode-name">${m.name}<em class="mt-mode-goal">${m.goal}</em></span>
             <span class="mt-mode-desc">${m.desc}</span>
         </span>
         <span class="mt-mode-go">${m.go}<span aria-hidden="true">→</span></span>
@@ -261,30 +289,71 @@ function homeHTML() {
 </div>
 
 <footer class="mt-foot">
-    <p>一轮 8 题，答对亮一颗星；答错没关系，可以再试。</p>
+    <p>一轮 8 题 · 答对亮一颗星 · 答错会给方法提示，不扣星</p>
 </footer>`;
 }
 
 // ══════════════════════════════════════════
-//  渲染：认数字
+//  组件：十格阵
 // ══════════════════════════════════════════
 
-function learnHTML() {
-    const n = S.learnN;
-    const emoji = '⭐';
+// filled：已填格数；holes：允许点亮的空格（凑十模式）
+function frameHTML(filled, { interactive = false, count = FRAME_TOTAL, holes = 0 } = {}) {
+    let cells = '';
+    for (let i = 0; i < count; i++) {
+        const on = i < filled;
+        const hole = !on && i < filled + holes;
+        cells += `<span class="mt-cell${on ? ' is-on' : ''}${hole ? ' is-hole' : ''}" data-cell="${i}"${interactive && hole ? ' role="button" tabindex="0"' : ''}></span>`;
+    }
+    return `<div class="mt-frame" data-frame>${cells}</div>`;
+}
+
+// ══════════════════════════════════════════
+//  组件：分苹果（池子 / 红筐 / 绿筐）
+// ══════════════════════════════════════════
+
+function applesHTML(count, zone, offset) {
+    return Array.from({ length: count }, (_, i) => `
+        <button class="mt-apple" type="button" data-apple="${zone}" data-idx="${offset + i}" aria-label="苹果">
+            <span aria-hidden="true">🍎</span>
+        </button>`).join('');
+}
+
+function splitHTML(q) {
     return `
-<div class="mt-learn">
-    <div class="mt-learn-card">
-        <button class="mt-learn-num" type="button" data-action="say-num" aria-label="读一读 ${n}">${n}</button>
-        <div class="mt-learn-cn">${cn(n)}</div>
-        <div class="mt-learn-items">${items(n, emoji).map(() => `<span class="mt-learn-item">${emoji}</span>`).join('')}</div>
-        <button class="mt-learn-say" type="button" data-action="say-num">${IC.speak}<span>读一读</span></button>
+<div class="mt-split">
+    <div class="mt-basket mt-basket--left" data-zone="pool">
+        <div class="mt-basket-items">${applesHTML(q.n, 'pool', 0)}</div>
+        <div class="mt-basket-tag">还没分</div>
     </div>
-    <div class="mt-learn-picker" role="group" aria-label="选择数字">
-        ${Array.from({ length: 10 }, (_, i) => i + 1).map((v) => `
-        <button class="mt-learn-key${v === n ? ' is-on' : ''}" type="button" data-learn="${v}" aria-pressed="${v === n}">${v}</button>`).join('')}
+    <div class="mt-split-arrow" aria-hidden="true">→</div>
+    <div class="mt-basket mt-basket--right" data-zone="red">
+        <div class="mt-basket-items"></div>
+        <div class="mt-basket-tag mt-basket-tag--red">分出来 ${q.part} 个</div>
     </div>
-    <p class="mt-learn-tip">点数字听一听，再看看有几个 ⭐</p>
+</div>`;
+}
+
+// ══════════════════════════════════════════
+//  组件：数轴
+// ══════════════════════════════════════════
+
+function lineHTML(from, to) {
+    const p1 = (from / 10) * 100;
+    const p2 = (to / 10) * 100;
+    const left = Math.min(p1, p2);
+    const width = Math.abs(p2 - p1);
+    const ticks = Array.from({ length: 11 }, (_, i) =>
+        `<span class="mt-tick${i === from ? ' is-start' : ''}${i === to ? ' is-end' : ''}"><b>${i}</b></span>`).join('');
+    return `
+<div class="mt-line" data-line>
+    <div class="mt-line-inner">
+        <span class="mt-arc" style="left:${left}%;width:${width}%" aria-hidden="true"></span>
+        <div class="mt-line-track">
+            ${ticks}
+            <span class="mt-line-mark" data-mark style="left:${p1}%">${from}</span>
+        </div>
+    </div>
 </div>`;
 }
 
@@ -292,104 +361,97 @@ function learnHTML() {
 //  渲染：题目
 // ══════════════════════════════════════════
 
-function itemsHTML(list) {
-    return list.map((emoji, i) => `<button class="mt-item" type="button" data-item="${i}" aria-label="${emoji}">
-            <span class="mt-item-emoji" aria-hidden="true">${emoji}</span>
-            <span class="mt-item-tag" aria-hidden="true"></span>
-        </button>`).join('');
-}
-
-// 算式行：{k:'num'} 数字 / {k:'op'} 运算符 / {k:'slot'} 待填答案
-function eqHTML(parts) {
-    return `<div class="mt-eq">${parts.map((p) => {
-        if (p.k === 'op') return `<span class="mt-eq-op" aria-hidden="true">${p.v}</span>`;
-        if (p.k === 'slot') return `<span class="mt-slot" data-slot>?</span>`;
-        return `<span class="mt-eq-num">${p.v}</span>`;
-    }).join('')}</div>`;
-}
-
 function questionHTML(q) {
-    if (q.type === 'count') {
+    if (q.type === 'split') {
         return `
 <div class="mt-q-head">
-    <span class="mt-q-title">数一数，有几个？</span>
+    <span class="mt-q-title">${q.n} 可以分成 <b>${q.part}</b> 和几？</span>
 </div>
-<div class="mt-board" data-kind="count">
-    <div class="mt-items mt-items--grid" data-group="all">${itemsHTML(items(q.n, q.emoji))}</div>
+<div class="mt-stage">
+    ${splitHTML(q)}
+    <div class="mt-stage-note">点左边苹果，把 ${q.part} 个分到右边</div>
 </div>
-<div class="mt-counter" data-counter aria-live="polite">点一下物品，帮你数</div>`;
+<div class="mt-eq">
+    <span class="mt-eq-num">${q.n}</span>
+    <span class="mt-eq-op">=</span>
+    <span class="mt-eq-num">${q.part}</span>
+    <span class="mt-eq-op">+</span>
+    <span class="mt-slot" data-slot>?</span>
+</div>`;
     }
 
-    if (q.type === 'compare') {
+    if (q.type === 'tenframe') {
         return `
 <div class="mt-q-head">
-    <span class="mt-q-title">哪边多？点中间合适的符号</span>
+    <span class="mt-q-title">已经有 <b>${q.a}</b> 个，再放几个正好满 10？</span>
 </div>
-<div class="mt-board" data-kind="compare">
-    <div class="mt-compare-grid">
-        <div class="mt-compare-cell">
-            <div class="mt-items mt-items--small" data-group="left">${itemsHTML(items(q.left, '🍎'))}</div>
-            <div class="mt-compare-num">${q.left}</div>
-        </div>
-        <div class="mt-compare-mid"><span class="mt-slot mt-slot--mid" data-slot>?</span></div>
-        <div class="mt-compare-cell">
-            <div class="mt-items mt-items--small" data-group="right">${itemsHTML(items(q.right, '🍊'))}</div>
-            <div class="mt-compare-num">${q.right}</div>
-        </div>
-    </div>
+<div class="mt-stage">
+    ${frameHTML(q.a + S.filled, { interactive: true, holes: q.b - S.filled })}
+    <div class="mt-stage-note">点空格子把点放进去，填满看看</div>
 </div>
-<div class="mt-counter" data-counter aria-live="polite">可以点物品数一数</div>`;
+<div class="mt-eq">
+    <span class="mt-eq-num">${q.a}</span>
+    <span class="mt-eq-op">+</span>
+    <span class="mt-slot" data-slot>?</span>
+    <span class="mt-eq-op">=</span>
+    <span class="mt-eq-num">10</span>
+</div>`;
     }
 
     if (q.type === 'add') {
-        // 两组用不同水果区分；第二组另起一行，避免混在同一行里数不清
         return `
 <div class="mt-q-head">
-    <span class="mt-q-title">算一算，一共几个？</span>
+    <span class="mt-q-title">算一算：从 ${q.a} 接着往后数</span>
 </div>
-<div class="mt-board" data-kind="add">
-    <div class="mt-figgrid">
-        ${itemsHTML(items(q.a, '🍎'))}
-        <div class="mt-figrow">${itemsHTML(items(q.b, '🍊'))}</div>
-    </div>
-    ${eqHTML([{ k: 'num', v: q.a }, { k: 'op', v: '+' }, { k: 'num', v: q.b }, { k: 'op', v: '=' }, { k: 'slot' }])}
+<div class="mt-stage">
+    ${lineHTML(q.a, q.a + q.b)}
+    <button class="mt-show" type="button" data-action="show-how">${IC.play}<span>看怎么跳</span></button>
 </div>
-<div class="mt-counter" data-counter aria-live="polite">红苹果 ${q.a} 个，橙子 ${q.b} 个，合起来几个？</div>`;
+<div class="mt-eq">
+    <span class="mt-eq-num">${q.a}</span>
+    <span class="mt-eq-op">+</span>
+    <span class="mt-eq-num">${q.b}</span>
+    <span class="mt-eq-op">=</span>
+    <span class="mt-slot" data-slot>?</span>
+</div>`;
     }
 
     if (q.type === 'sub') {
-        const a = items(q.a, '🍎');
-        const kept = q.a - q.b;
         return `
 <div class="mt-q-head">
-    <span class="mt-q-title">算一算，还剩几个？</span>
+    <span class="mt-q-title">算一算：从 ${q.a} 往回数</span>
 </div>
-<div class="mt-board" data-kind="sub">
-    <div class="mt-figgrid">
-        ${a.map((emoji, i) => `
-        <button class="mt-item${i >= kept ? ' is-ghost' : ''}" type="button" data-item="${i}" aria-label="${emoji}">
-            <span class="mt-item-emoji" aria-hidden="true">${emoji}</span>
-            <span class="mt-item-tag" aria-hidden="true">${i >= kept ? '✕' : ''}</span>
-        </button>`).join('')}
-    </div>
-    ${eqHTML([{ k: 'num', v: q.a }, { k: 'op', v: '−' }, { k: 'num', v: q.b }, { k: 'op', v: '=' }, { k: 'slot' }])}
+<div class="mt-stage">
+    ${lineHTML(q.a, q.a - q.b)}
+    <button class="mt-show" type="button" data-action="show-how">${IC.play}<span>看怎么退</span></button>
 </div>
-<div class="mt-counter" data-counter aria-live="polite">划掉的 ${q.b} 个拿走了，还剩几个？</div>`;
+<div class="mt-eq">
+    <span class="mt-eq-num">${q.a}</span>
+    <span class="mt-eq-op">−</span>
+    <span class="mt-eq-num">${q.b}</span>
+    <span class="mt-eq-op">=</span>
+    <span class="mt-slot" data-slot>?</span>
+</div>`;
     }
 
-    // make10：凑十 —— 一排 10 个格子，前面已有 a 个，后面空着
+    // compare：两个十格阵比多少
     return `
 <div class="mt-q-head">
-    <span class="mt-q-title">再添几个，正好是 10？</span>
+    <span class="mt-q-title">哪边多？点中间合适的符号</span>
 </div>
-<div class="mt-board" data-kind="make10">
-    <div class="mt-figgrid">
-        ${itemsHTML(items(q.a, '🍬'))}
-        ${Array.from({ length: q.b }, () => '<span class="mt-hole" aria-hidden="true"></span>').join('')}
+<div class="mt-stage">
+    <div class="mt-compare">
+        <div class="mt-compare-col">
+            ${frameHTML(q.a)}
+            <span class="mt-compare-num">${q.a}</span>
+        </div>
+        <span class="mt-slot mt-slot--mid" data-slot>?</span>
+        <div class="mt-compare-col">
+            ${frameHTML(q.b)}
+            <span class="mt-compare-num">${q.b}</span>
+        </div>
     </div>
-    ${eqHTML([{ k: 'num', v: q.a }, { k: 'op', v: '+' }, { k: 'slot' }, { k: 'op', v: '=' }, { k: 'num', v: 10 }])}
-</div>
-<div class="mt-counter" data-counter aria-live="polite">还差几个空位？</div>`;
+</div>`;
 }
 
 function answersHTML(q) {
@@ -416,6 +478,31 @@ function starsHTML(filled) {
 }
 
 // ══════════════════════════════════════════
+//  渲染：认数字（自由探索）
+// ══════════════════════════════════════════
+
+function learnHTML() {
+    const n = S.learnN;
+    return `
+<div class="mt-learn">
+    <p class="mt-learn-head">十格阵：上排 5 个、下排 5 个，一眼看出有几个</p>
+    <div class="mt-learn-main">
+        ${frameHTML(n)}
+        <div class="mt-learn-num-row">
+            <span class="mt-learn-num">${n}</span>
+            <span class="mt-learn-cn">${cn(n)}</span>
+        </div>
+        <button class="mt-show" type="button" data-action="say-num">${IC.speak}<span>读一读</span></button>
+        <p class="mt-learn-tip">${n >= 6 ? `满了一排 5 个，再加 ${n - 5} 个，就是 ${n}` : `${n} 个还没排满第一排`}</p>
+    </div>
+    <div class="mt-learn-picker" role="group" aria-label="选择数字">
+        ${Array.from({ length: 10 }, (_, i) => i + 1).map((v) => `
+        <button class="mt-learn-key${v === n ? ' is-on' : ''}" type="button" data-learn="${v}" aria-pressed="${v === n}">${v}</button>`).join('')}
+    </div>
+</div>`;
+}
+
+// ══════════════════════════════════════════
 //  渲染：完成
 // ══════════════════════════════════════════
 
@@ -423,10 +510,10 @@ function doneHTML() {
     const total = S.total;
     const perfect = S.firstTry === total;
     const words = perfect
-        ? pick(['太厉害了，一次都没错！', '全部一次答对，真棒！', '好厉害，满分星星！'])
+        ? pick(['全对！一次都没错', '太厉害了，满分星星', '思路很稳，全对'])
         : S.firstTry >= total * 0.6
-            ? '很棒，大部分一次就答对了！'
-            : '这一轮完成啦，再练一次会更快！';
+            ? '大部分一次就对了，不错'
+            : '做完了，再来一轮会更熟';
     return `
 <div class="mt-done-card">
     <div class="mt-done-emoji" aria-hidden="true">${perfect ? '🏆' : '🎉'}</div>
@@ -441,10 +528,7 @@ function doneHTML() {
 <div class="mt-confetti" aria-hidden="true">
     ${Array.from({ length: 26 }, () => {
         const e = pick(['⭐', '🌟', '🎈', '✨', '🍎', '🍬']);
-        const left = rand(2, 96);
-        const delay = (Math.random() * 1.2).toFixed(2);
-        const dur = (1.8 + Math.random() * 1.4).toFixed(2);
-        return `<span style="left:${left}%;animation-delay:${delay}s;animation-duration:${dur}s">${e}</span>`;
+        return `<span style="left:${rand(2, 96)}%;animation-delay:${(Math.random() * 1.2).toFixed(2)}s;animation-duration:${(1.8 + Math.random() * 1.4).toFixed(2)}s">${e}</span>`;
     }).join('')}
 </div>`;
 }
@@ -452,10 +536,6 @@ function doneHTML() {
 // ══════════════════════════════════════════
 //  画面切换
 // ══════════════════════════════════════════
-
-function $(sel) {
-    return root && root.querySelector(sel);
-}
 
 function showHome() {
     S.mode = 'home';
@@ -465,10 +545,7 @@ function showHome() {
     const home = $('#mtHome');
     const play = $('#mtPlay');
     const done = $('#mtDone');
-    if (home) {
-        home.hidden = false;
-        home.innerHTML = homeHTML();
-    }
+    if (home) { home.hidden = false; home.innerHTML = homeHTML(); }
     if (play) play.hidden = true;
     if (done) done.hidden = true;
     root.scrollTo({ top: 0, behavior: 'smooth' });
@@ -481,7 +558,6 @@ function startMode(mode) {
     S.firstTry = 0;
     S.tries = 0;
     S.q = null;
-    S.counted = 0;
     S.used = new Set();
     S.total = mode === 'quest' ? QUEST_SIZE : ROUND_SIZE;
     clearTimeout(S.timer);
@@ -503,7 +579,6 @@ function startMode(mode) {
         $('#mtQuestion').innerHTML = learnHTML();
         $('#mtAnswers').innerHTML = '';
         $('#mtHint').textContent = '';
-        say('这是 ' + S.learnN, { force: false });
         return;
     }
 
@@ -517,7 +592,8 @@ function nextQuestion() {
     clearTimeout(S.timer);
     S.tries = 0;
     S.locked = false;
-    S.counted = 0;
+    S.filled = 0;
+    S.hopping = false;
 
     if (S.index >= S.total) {
         finish();
@@ -525,19 +601,21 @@ function nextQuestion() {
     }
 
     S.q = buildQuestion(S.mode, S.used);
+
     const qEl = $('#mtQuestion');
     const aEl = $('#mtAnswers');
     const hint = $('#mtHint');
     if (!qEl || !aEl) return;
+
     qEl.innerHTML = questionHTML(S.q);
     aEl.innerHTML = answersHTML(S.q);
     if (hint) hint.textContent = '';
-    $('#mtStars').innerHTML = starsHTML(S.index);
+    const stars = $('#mtStars');
+    if (stars) stars.innerHTML = starsHTML(S.index);
 
-    // 入场动画：物品逐个弹出
-    const its = qEl.querySelectorAll('.mt-item');
-    its.forEach((el, i) => {
-        el.style.animationDelay = Math.min(i * 32, 420) + 'ms';
+    // 入场动画
+    qEl.querySelectorAll('.mt-cell, .mt-apple, .mt-tick').forEach((el, i) => {
+        el.style.animationDelay = Math.min(i * 26, 360) + 'ms';
         el.classList.add('is-in');
     });
 
@@ -554,7 +632,7 @@ function finish() {
         done.innerHTML = doneHTML();
     }
     sfx.win();
-    say(S.firstTry === S.total ? '太厉害了，全部一次答对！' : '这一轮完成啦，你真棒！');
+    say(S.firstTry === S.total ? '全部一次答对，太厉害了' : '这一轮完成啦');
     root.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -581,11 +659,12 @@ function onRight(btn) {
     S.index += 1;
     if (S.tries === 0) S.firstTry += 1;
     if (btn) btn.classList.add('is-right');
-    root.querySelectorAll('button').forEach((b) => {
-        if (b !== btn && (b.classList.contains('mt-key') || b.classList.contains('mt-sign'))) b.classList.add('is-dim');
+    root.querySelectorAll('.mt-key, .mt-sign, .mt-cell.is-hole, .mt-apple').forEach((b) => {
+        if (b !== btn) b.classList.add('is-dim');
+        b.classList.remove('is-hole');
     });
+
     sfx.right();
-    setTimeout(() => sfx.star(), 260);
     bumpStar();
 
     const slot = $('[data-slot]');
@@ -594,18 +673,17 @@ function onRight(btn) {
         slot.classList.add('is-filled');
     }
 
-    const counter = $('[data-counter]');
-    if (counter && S.q.type === 'count') counter.textContent = `一共 ${S.q.n} 个`;
-
-    const praise = pick(['对啦！', '真棒！', '好厉害！', '答对了！']);
-    setHint(praise);
-    say(praise);
+    const praise = pick(['对啦', '真棒', '答对了', '就是这样']);
+    setHint(S.q.type === 'split'
+        ? `${S.q.n} 可以分成 ${S.q.part} 和 ${S.q.answer}`
+        : praise);
+    say(S.q.type === 'split'
+        ? `${S.q.n} 可以分成 ${S.q.part} 和 ${S.q.answer}`
+        : praise);
 
     if (navigator.vibrate) { try { navigator.vibrate(14); } catch { /* ignore */ } }
 
-    S.timer = setTimeout(() => {
-        nextQuestion();
-    }, 1150);
+    S.timer = setTimeout(() => nextQuestion(), 1150);
 }
 
 function onWrong(btn) {
@@ -616,21 +694,12 @@ function onWrong(btn) {
         setTimeout(() => btn.classList.remove('is-wrong'), 520);
     }
     if (S.tries >= 2) {
-        setHint(hintText());
+        setHint(strategyHint(S.q));
         highlightAnswer();
     } else {
-        setHint(pick(['再数一数？', '差一点点，再试试', '不着急，慢慢来']));
+        setHint(pick(['再想想，不着急', '差一点，试试看', '慢慢来']));
     }
-    say(S.tries >= 2 ? hintText() : '再试试');
-}
-
-function hintText() {
-    const q = S.q;
-    if (!q) return '';
-    if (q.type === 'count') return `一共 ${q.n} 个哦`;
-    if (q.type === 'compare') return q.answer === '=' ? '两边一样多，用 =' : `大数在${q.answer === '>' ? '左' : '右'}边，开口朝大的`;
-    if (q.type === 'make10') return `还差 ${q.answer} 个`;
-    return `答案是 ${q.answer}`;
+    say(S.tries >= 2 ? strategyHint(S.q) : '再试试');
 }
 
 function highlightAnswer() {
@@ -650,41 +719,102 @@ function answer(value) {
     else onWrong(btn);
 }
 
-// 点物品：手口一致点数
-function tapItem(el) {
-    if (S.locked || !el) return;
+// ══════════════════════════════════════════
+//  动手交互
+// ══════════════════════════════════════════
+
+// 分与合：苹果在「还没分」和「分出来」两个筐之间来回搬
+// 直接搬 DOM 节点，不重建整块区域，孩子连点几个也不会闪
+function moveApple(el) {
+    if (S.locked || !S.q || S.q.type !== 'split' || !el) return;
     S.touched = true;
-    if (el.classList.contains('is-counted') || el.classList.contains('is-ghost')) return;
-    el.classList.add('is-counted');
-    S.counted += 1;
-    const tag = el.querySelector('.mt-item-tag');
-    if (tag) tag.textContent = String(S.counted);
-    sfx.tap();
-    say(cn(S.counted));
+    const zone = el.dataset.apple;
+    const target = $(zone === 'pool' ? '.mt-basket--right .mt-basket-items' : '.mt-basket--left .mt-basket-items');
+    if (!target) return;
 
-    const counter = $('[data-counter]');
-    if (counter) counter.textContent = `数到 ${S.counted} 了`;
+    el.dataset.apple = zone === 'pool' ? 'red' : 'pool';
+    el.classList.remove('is-in');
+    void el.offsetWidth;
+    el.classList.add('is-in');
+    target.appendChild(el);
+    sfx.drop();
 
-    if (S.q && S.q.type === 'count' && S.counted === S.q.n) {
-        setTimeout(() => {
-            const c = $('[data-counter]');
-            if (c) c.textContent = `${S.q.n} 个，选出这个数字吧`;
-        }, 380);
+    const note = $('.mt-stage-note');
+    if (note) {
+        const moved = root.querySelectorAll('.mt-basket--right .mt-apple').length;
+        const rest = root.querySelectorAll('.mt-basket--left .mt-apple').length;
+        note.textContent = moved === S.q.part
+            ? `分出 ${moved} 个了，左边还剩 ${rest} 个`
+            : `分出来 ${moved} 个，再分 ${S.q.part - moved} 个`;
     }
 }
 
-// 认数字：切换数字
-function setLearnNum(n) {
-    S.learnN = n;
+// 凑十：点空格子放点，点已放的点取消
+function toggleCell(cell) {
+    if (S.locked || !S.q || S.q.type !== 'tenframe' || !cell) return;
+    const idx = Number(cell.dataset.cell);
+    const on = cell.classList.contains('is-on');
+    const extra = idx >= S.q.a;      // 只允许操作题目自己那一批空格
+
+    if (!on) {
+        if (!cell.classList.contains('is-hole')) return;
+        cell.classList.remove('is-hole');
+        cell.classList.add('is-on', 'is-in');
+        S.filled += 1;
+        sfx.drop();
+    } else if (extra) {
+        cell.classList.remove('is-on');
+        cell.classList.add('is-hole');
+        S.filled = Math.max(0, S.filled - 1);
+        sfx.tap();
+    } else {
+        return;
+    }
+
+    const note = $('.mt-stage-note');
+    if (note) {
+        const now = S.q.a + S.filled;
+        note.textContent = now >= FRAME_TOTAL
+            ? '满啦！一共 10 个'
+            : `现在有 ${now} 个，还空着 ${FRAME_TOTAL - now} 格`;
+    }
+}
+
+// 数轴跳跃演示
+async function playHops() {
+    if (S.hopping || S.locked || !S.q) return;
+    const q = S.q;
+    if (q.type !== 'add' && q.type !== 'sub') return;
+    S.hopping = true;
     S.touched = true;
-    const qEl = $('#mtQuestion');
-    if (qEl) qEl.innerHTML = learnHTML();
-    sfx.tap();
-    say(n === 10 ? '十，十个' : `这是${cn(n)}，${cn(n)}个`);
+
+    const mark = $('[data-mark]');
+    const dir = q.type === 'add' ? 1 : -1;
+    const show = $('[data-action="show-how"]');
+    if (show) show.classList.add('is-off');
+
+    for (let i = 1; i <= q.b; i++) {
+        const pos = q.a + dir * i;
+        if (mark) {
+            mark.style.left = (pos / 10 * 100) + '%';
+            mark.textContent = String(pos);
+            mark.classList.add('is-hop');
+            setTimeout(() => mark.classList.remove('is-hop'), 260);
+        }
+        const tick = root.querySelectorAll('.mt-tick')[pos];
+        if (tick) tick.classList.add('is-passed');
+        sfx.hop();
+        say(cn(pos));
+        await sleep(430);
+    }
+
+    const eqOp = q.type === 'add' ? `从 ${q.a} 往后数 ${q.b} 个，就是 ${q.answer}` : `从 ${q.a} 往回数 ${q.b} 个，就是 ${q.answer}`;
+    setHint(eqOp);
+    S.hopping = false;
 }
 
 // ══════════════════════════════════════════
-//  事件
+//  设置
 // ══════════════════════════════════════════
 
 function toggleSound() {
@@ -726,6 +856,10 @@ function toast(msg) {
     toast._t = setTimeout(() => el.classList.remove('is-on'), 1800);
 }
 
+// ══════════════════════════════════════════
+//  事件
+// ══════════════════════════════════════════
+
 function onClick(e) {
     S.touched = true;
 
@@ -749,15 +883,25 @@ function onClick(e) {
         return;
     }
 
-    const item = e.target.closest('.mt-item');
-    if (item && !item.classList.contains('is-ghost')) {
-        tapItem(item);
+    const apple = e.target.closest('.mt-apple');
+    if (apple) {
+        moveApple(apple);
+        return;
+    }
+
+    const cell = e.target.closest('.mt-cell');
+    if (cell) {
+        toggleCell(cell);
         return;
     }
 
     const learn = e.target.closest('[data-learn]');
     if (learn) {
-        setLearnNum(Number(learn.dataset.learn));
+        S.learnN = Number(learn.dataset.learn);
+        const qEl = $('#mtQuestion');
+        if (qEl) qEl.innerHTML = learnHTML();
+        sfx.tap();
+        say(`${cn(S.learnN)}，${cn(S.learnN)}个`);
         return;
     }
 
@@ -770,28 +914,13 @@ function onClick(e) {
         case 'home': showHome(); break;
         case 'again': startMode(S.mode); break;
         case 'exit': showHome(); break;
+        case 'show-how': playHops(); break;
         case 'say-num':
-            S.touched = true;
             sfx.tap();
-            say(`这是${cn(S.learnN)}，${cn(S.learnN)}个`, { force: true });
-            break;
-        case 'replay':
-            say(questionSpeech(S.q));
-            replayAnim();
+            say(`${cn(S.learnN)}，${cn(S.learnN)}个`, { force: true });
             break;
         default: break;
     }
-}
-
-function replayAnim() {
-    const qEl = $('#mtQuestion');
-    if (!qEl) return;
-    qEl.querySelectorAll('.mt-item').forEach((el, i) => {
-        el.style.animationDelay = Math.min(i * 32, 420) + 'ms';
-        el.classList.remove('is-in');
-        void el.offsetWidth;
-        el.classList.add('is-in');
-    });
 }
 
 function onKeydown(e) {
@@ -799,28 +928,16 @@ function onKeydown(e) {
     if (e.metaKey || e.ctrlKey || e.altKey) return;
     if (S.mode === 'home' || S.mode === 'learn' || !S.q) return;
 
-    if (e.key === 'Escape') {
-        showHome();
-        return;
-    }
-    if (e.key === 'Enter') {
-        say(questionSpeech(S.q));
-        return;
-    }
-
-    // 比大小用符号作答，键盘只保留 Esc / Enter
+    if (e.key === 'Escape') { showHome(); return; }
+    if (e.key === 'Enter') { say(questionSpeech(S.q)); return; }
     if (S.q.type === 'compare') return;
 
     if (e.key >= '0' && e.key <= '9') {
         e.preventDefault();
-        // 先按 1 再按 0 组合成 10（300ms 窗口），其余数字立即作答
         if (e.key === '1') {
             numBuffer = '1';
             clearTimeout(numBufferTimer);
-            numBufferTimer = setTimeout(() => {
-                numBuffer = '';
-                answer(1);
-            }, 300);
+            numBufferTimer = setTimeout(() => { numBuffer = ''; answer(1); }, 300);
             return;
         }
         if (e.key === '0' && numBuffer === '1') {
@@ -847,7 +964,7 @@ export function renderMath() {
     S.q = null;
     S.locked = false;
     S.tries = 0;
-    S.counted = 0;
+    S.filled = 0;
 
     root = document.createElement('div');
     root.className = 'page mt-page';
@@ -871,10 +988,7 @@ export function renderMath() {
     <section class="mt-play" id="mtPlay" hidden>
         <div class="mt-bar">
             <div class="mt-stars" id="mtStars" aria-label="进度星星"></div>
-            <div class="mt-bar-right">
-                <button class="mt-icon-btn" type="button" data-action="replay" aria-label="再听一遍">${IC.replay}</button>
-                <button class="mt-exit" type="button" data-action="exit" id="mtExit">换玩法</button>
-            </div>
+            <button class="mt-exit" type="button" data-action="exit" id="mtExit">换玩法</button>
         </div>
         <div class="mt-question" id="mtQuestion"></div>
         <div class="mt-answers" id="mtAnswers"></div>
