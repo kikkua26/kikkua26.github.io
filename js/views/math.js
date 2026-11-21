@@ -5,7 +5,8 @@
 //   2 分与合   整体与部分：亲手把苹果分进两个筐，发现 5 = 2 和 3（加减法的根）
 //   3 凑十     十格阵填空：8 再加几个满 10，这是 20 以内进位加法的核心技巧
 //   4 算一算   数轴跳跃：加法从大数接着数、减法往回数，看见"怎么算"而不是数总数
-//   5 闯关     混合 10 题
+//   5 格子路   摇到几，自己在路上点出落点 —— 不替孩子走，走对了才有反馈
+//   6 闯关     混合 10 题
 //
 // 交互：大按键、点格子/点苹果都能动手、答对自动切题、答错给策略提示、音效 + 中文语音
 // 视觉：复用站点设计系统，私有类统一 mt- 前缀。
@@ -15,6 +16,8 @@ import { ICONS } from '../icons.js';
 const ROUND_SIZE = 8;
 const QUEST_SIZE = 10;
 const FRAME_TOTAL = 10;
+const TRACK_SIZE = 20;       // 格子路一共 20 格
+const TRACK_PER_ROW = 5;     // 手机上每行 5 格，蛇形排布
 
 const CN_NUM = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
 
@@ -48,6 +51,8 @@ const S = {
     // 凑十：孩子点亮的额外格子数
     filled: 0,
     hopping: false,
+    // 格子路：pos 当前格、dice 摇到的点数、dir 方向、target 正确落点
+    board: null,
 };
 
 let root = null;
@@ -264,6 +269,10 @@ const MODES = [
         desc: '在数轴上接着数、往回数，看见怎么算', goal: '加减策略', go: '算一算',
     },
     {
+        id: 'board', tone: 'sky', icon: '🎲', name: '格子路',
+        desc: '摇到几格，自己点出公主该站的位置', goal: '数格子', go: '出发',
+    },
+    {
         id: 'quest', tone: 'rose', icon: '🏆', name: '闯关',
         desc: '四种题型混合 10 题，都答对拿满星星', goal: '综合', go: '去闯关',
     },
@@ -454,6 +463,230 @@ function questionHTML(q) {
 </div>`;
 }
 
+// ══════════════════════════════════════════
+//  格子路：摇骰子 → 孩子自己点落点
+//  ｜ 关键：骰子只给出「走几格」，落点必须孩子自己在路上点出来，
+//  ｜ 点对公主才走，点错原地不动 —— 思考这一步不能由程序代劳。
+// ══════════════════════════════════════════
+
+const PIP_MAP = {
+    1: [4],
+    2: [0, 8],
+    3: [0, 4, 8],
+    4: [0, 2, 6, 8],
+    5: [0, 2, 4, 6, 8],
+    6: [0, 2, 3, 5, 6, 8],
+};
+
+function dicePips(n) {
+    const on = new Set(PIP_MAP[n] || []);
+    return `<span class="mt-pips">${Array.from({ length: 9 }, (_, i) =>
+        `<i${on.has(i) ? ' class="is-on"' : ''}></i>`).join('')}</span>`;
+}
+
+function boardTitle() {
+    const b = S.board;
+    if (!b) return '';
+    if (b.phase === 'roll') return '公主在第 ' + b.pos + ' 格，摇骰子出发';
+    if (b.phase === 'think') {
+        return b.dir > 0
+            ? `往前走 ${b.dice} 格，点出公主该站的那一格`
+            : `往后退 ${b.dice} 格，点出公主该退到的那一格`;
+    }
+    return `公主走到第 ${b.pos} 格`;
+}
+
+function cellHTML(n) {
+    const b = S.board;
+    const hero = n === b.pos;
+    const goal = n === TRACK_SIZE;
+    const start = n === 1;
+    return `<button class="mt-bcell${hero ? ' is-hero' : ''}${goal ? ' is-goal' : ''}${start ? ' is-start' : ''}"
+        type="button" data-cell="${n}" aria-label="第 ${n} 格">
+        ${hero ? '<span class="mt-bcell-hero" aria-hidden="true">👸</span>' : ''}
+        <span class="mt-bcell-num">${n}</span>
+        ${start ? '<span class="mt-bcell-mark" aria-hidden="true">🏠</span>' : ''}
+        ${goal ? '<span class="mt-bcell-mark" aria-hidden="true">🏰</span>' : ''}
+    </button>`;
+}
+
+function trackHTML() {
+    const rows = [];
+    for (let r = 0; r * TRACK_PER_ROW < TRACK_SIZE; r++) {
+        const start = r * TRACK_PER_ROW + 1;
+        const cells = [];
+        for (let i = 0; i < TRACK_PER_ROW; i++) {
+            const n = start + i;
+            if (n > TRACK_SIZE) break;
+            cells.push(cellHTML(n));
+        }
+        // 奇数行反向，走出蛇形连续的路
+        rows.push(`<div class="mt-brow${r % 2 ? ' mt-brow--rev' : ''}">${cells.join('')}</div>`);
+    }
+    return `<div class="mt-track">${rows.join('')}</div>`;
+}
+
+function diceHTML() {
+    const b = S.board;
+    if (b.phase === 'roll') {
+        return `<button class="mt-dice" type="button" data-action="roll">
+            <span class="mt-dice-face" data-dice-face><span class="mt-dice-icon" aria-hidden="true">🎲</span></span>
+            <span class="mt-dice-label">摇骰子</span>
+        </button>`;
+    }
+    return `<div class="mt-dice-done">
+        <div class="mt-dice-face">${dicePips(b.dice)}</div>
+        <div class="mt-dice-dir ${b.dir > 0 ? 'is-fwd' : 'is-back'}">
+            ${b.dir > 0 ? '往前走' : '往后退'} ${b.dice} 格
+        </div>
+    </div>`;
+}
+
+function renderBoard() {
+    const qEl = $('#mtQuestion');
+    const aEl = $('#mtAnswers');
+    if (!qEl || !aEl) return;
+    // 骰子跟棋盘放在同一个操作区里，整体居中，避免上下留白分散
+    qEl.innerHTML = `
+<div class="mt-q-head"><span class="mt-q-title">${boardTitle()}</span></div>
+<div class="mt-stage mt-stage--board">
+    ${trackHTML()}
+    ${diceHTML()}
+</div>`;
+    aEl.innerHTML = '';
+}
+
+function startBoard() {
+    S.board = { pos: 1, dice: 0, dir: 1, target: 1, phase: 'roll', tries: 0, rolls: 0, perfect: 0 };
+    renderBoard();
+    setHint('');
+    say('公主从第一格出发，摇骰子看看走几格');
+}
+
+async function rollDice() {
+    const b = S.board;
+    if (!b || b.phase !== 'roll') return;
+    S.touched = true;
+
+    const btn = root.querySelector('.mt-dice');
+    if (btn) btn.classList.add('is-rolling');
+
+    // 骰子先空转几圈，孩子看得见"在摇"
+    for (let i = 0; i < 9; i++) {
+        const face = root.querySelector('[data-dice-face]');
+        if (face) face.innerHTML = dicePips(rand(1, 6));
+        sfx.tap();
+        await sleep(65);
+    }
+
+    b.dice = rand(1, 6);
+    b.dir = Math.random() < 0.24 ? -1 : 1;
+    b.rolls += 1;
+
+    let target = b.pos + b.dir * b.dice;
+    if (target < 1) target = 1;
+    if (target > TRACK_SIZE) target = TRACK_SIZE;
+    b.target = target;
+    b.phase = 'think';
+    b.tries = 0;
+
+    renderBoard();
+    sfx.drop();
+    const word = b.dir > 0 ? '往前走' : '往后退';
+    say(`${word} ${b.dice} 格，公主会到第几格呢`);
+}
+
+function onCellTap(n) {
+    const b = S.board;
+    if (!b || b.phase !== 'think') return;
+    S.touched = true;
+    const cell = root.querySelector(`.mt-bcell[data-cell="${n}"]`);
+    if (!cell) return;
+    if (n === b.target) onBoardRight(cell, n);
+    else onBoardWrong(cell);
+}
+
+function onBoardRight(cell, n) {
+    const b = S.board;
+    const firstTry = b.tries === 0;
+    b.phase = 'done';
+    b.pos = n;
+    if (firstTry) b.perfect += 1;
+
+    renderBoard();
+    const arrived = root.querySelector(`.mt-bcell[data-cell="${n}"]`);
+    if (arrived) arrived.classList.add('is-arrive');
+
+    sfx.right();
+    setHint(`对啦：${b.dir > 0 ? `${n - b.dice} + ${b.dice}` : `${n + b.dice} − ${b.dice}`} = ${n} 格`);
+    say(`对啦，第 ${cn(n)} 格`);
+    if (navigator.vibrate) { try { navigator.vibrate(14); } catch { /* ignore */ } }
+
+    S.timer = setTimeout(() => {
+        if (b.pos >= TRACK_SIZE) { finishBoard(); return; }
+        b.phase = 'roll';
+        b.dice = 0;
+        renderBoard();
+        setHint('');
+    }, 1500);
+}
+
+function onBoardWrong(cell) {
+    const b = S.board;
+    b.tries += 1;
+    sfx.wrong();
+    cell.classList.add('is-wrong');
+    setTimeout(() => cell.classList.remove('is-wrong'), 520);
+
+    if (b.tries >= 2) {
+        setHint(trackHint());
+        const right = root.querySelector(`.mt-bcell[data-cell="${b.target}"]`);
+        if (right) right.classList.add('is-hint');
+        say(trackHint());
+    } else {
+        const msg = pick(['再数一数', '从这里开始数哦', '差一点，再走走']);
+        setHint(msg);
+        say(msg);
+    }
+}
+
+function trackHint() {
+    const b = S.board;
+    if (!b) return '';
+    const steps = [];
+    for (let i = 1; i <= b.dice; i++) steps.push(b.pos + b.dir * i);
+    return `从 ${b.pos} ${b.dir > 0 ? '往后数' : '往回数'} ${b.dice} 个：${steps.join('、')}`;
+}
+
+function finishBoard() {
+    const b = S.board;
+    const play = $('#mtPlay');
+    const done = $('#mtDone');
+    if (play) play.hidden = true;
+    if (done) {
+        done.hidden = false;
+        done.innerHTML = `
+<div class="mt-done-card">
+    <div class="mt-done-emoji" aria-hidden="true">🏰</div>
+    <h2 class="mt-done-title">公主回家啦</h2>
+    <p class="mt-done-sub">摇了 ${b.rolls} 次骰子 · 一次就点对 ${b.perfect} 次</p>
+    <div class="mt-done-actions">
+        <button class="mt-btn mt-btn--primary" type="button" data-action="again">再玩一次</button>
+        <button class="mt-btn" type="button" data-action="home">换一种玩法</button>
+    </div>
+</div>
+<div class="mt-confetti" aria-hidden="true">
+    ${Array.from({ length: 24 }, () => {
+        const e = pick(['👸', '⭐', '🏰', '✨', '🎈']);
+        return `<span style="left:${rand(2, 96)}%;animation-delay:${(Math.random() * 1.2).toFixed(2)}s;animation-duration:${(1.8 + Math.random() * 1.4).toFixed(2)}s">${e}</span>`;
+    }).join('')}
+</div>`;
+    }
+    sfx.win();
+    say('公主回家啦，你真棒');
+    root.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 function answersHTML(q) {
     if (q.type === 'compare') {
         const opts = [
@@ -559,6 +792,7 @@ function startMode(mode) {
     S.tries = 0;
     S.q = null;
     S.used = new Set();
+    S.board = null;
     S.total = mode === 'quest' ? QUEST_SIZE : ROUND_SIZE;
     clearTimeout(S.timer);
 
@@ -571,7 +805,16 @@ function startMode(mode) {
     play.hidden = false;
 
     const title = $('#mtTitle');
-    if (title) title.textContent = mode === 'learn' ? '认数字' : (MODES.find((m) => m.id === mode) || {}).name || '儿童数学';
+    const modeInfo = MODES.find((m) => m.id === mode);
+    if (title) title.textContent = mode === 'learn' ? '认数字' : (modeInfo ? modeInfo.name : '儿童数学');
+
+    if (mode === 'board') {
+        $('#mtStars').innerHTML = '<span class="mt-bar-tip">走到第 20 格</span>';
+        $('#mtExit').hidden = false;
+        startBoard();
+        root.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+    }
 
     if (mode === 'learn') {
         $('#mtStars').innerHTML = '<span class="mt-bar-tip">1 到 10，随便点</span>';
@@ -895,6 +1138,12 @@ function onClick(e) {
         return;
     }
 
+    const bcell = e.target.closest('.mt-bcell');
+    if (bcell) {
+        onCellTap(Number(bcell.dataset.cell));
+        return;
+    }
+
     const learn = e.target.closest('[data-learn]');
     if (learn) {
         S.learnN = Number(learn.dataset.learn);
@@ -915,6 +1164,7 @@ function onClick(e) {
         case 'again': startMode(S.mode); break;
         case 'exit': showHome(); break;
         case 'show-how': playHops(); break;
+        case 'roll': rollDice(); break;
         case 'say-num':
             sfx.tap();
             say(`${cn(S.learnN)}，${cn(S.learnN)}个`, { force: true });
