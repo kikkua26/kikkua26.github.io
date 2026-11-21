@@ -11,6 +11,7 @@ const [
     { renderTools },
     { renderHanzi, renderHanziStudy, renderCopybook, renderColorGame },
     { renderKids },
+    { renderMath },
     { setRouteHandler },
     { ROUTES, SITE, UI },
 ] = await Promise.all([
@@ -23,6 +24,7 @@ const [
     load('views/tools.js'),
     load('views/hanzi.js'),
     load('views/kids.js'),
+    load('views/math.js'),
     load('navigation.js'),
     load('config.js'),
 ]);
@@ -56,6 +58,9 @@ async function handleRoute() {
         } else if (path === ROUTES.kids) {
             setPageMeta('儿童导航', '给孩子精选的学习网站导航：识字、数学、英语、科学、编程、美术、博物馆，手机平板电脑都能用');
             await renderKids();
+        } else if (path === ROUTES.math) {
+            setPageMeta('数字乐园', '幼小衔接数学启蒙：认数字、数一数、比大小、10 以内加减法，点一点就会');
+            renderMath();
         } else if (path === ROUTES.hanzi) {
             setPageMeta('汉字小书房', '儿童汉字书写学习：选择字库，认字、看笔顺、临写、组词');
             await renderHanzi();

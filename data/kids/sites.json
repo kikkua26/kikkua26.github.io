@@ -38,6 +38,9 @@
     { "name": "洪恩识字", "url": "https://et.hongen.com/", "cat": "chinese", "icon": "🐣", "note": "部分付费",
       "desc": "幼儿识字与英语启蒙课程，App 更好用", "tags": ["识字", "幼儿"] },
 
+    { "name": "数字乐园", "url": "/math", "cat": "math", "icon": "🔢", "local": true, "note": "本站",
+      "desc": "认数字、数一数、比大小、10 以内加减，点一点就会", "tags": ["数字", "加减", "幼小衔接"] },
+
     { "name": "可汗学院（中文）", "url": "https://zh.khanacademy.org/", "cat": "math", "icon": "🧮",
       "desc": "从数数到代数都有短视频课，中文界面", "tags": ["数学", "视频课", "免费"] },
     { "name": "GeoGebra", "url": "https://www.geogebra.org/", "cat": "math", "icon": "📐",

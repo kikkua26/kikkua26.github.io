@@ -26,6 +26,7 @@ export const ROUTES = {
     hanziCopybook: 'hanzi/copybook',
     hanziColor: 'hanzi/color',
     kids: 'kids',
+    math: 'math',
 };
 
 export const DATA_PATHS = {

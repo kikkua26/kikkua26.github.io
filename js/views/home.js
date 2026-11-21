@@ -131,6 +131,7 @@ export async function renderHome() {
         <footer class="home-footer">
             <a href="/decks" data-link>浏览牌组</a>
             <a href="/kids" data-link>儿童导航</a>
+            <a href="/math" data-link>数字乐园</a>
             <a href="/hanzi" data-link>汉字练字</a>
             <a href="/tools" data-link>学习工具</a>
             <a href="/about" data-link>关于 kikkua</a>
