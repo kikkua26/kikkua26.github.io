@@ -129,9 +129,11 @@ export async function renderHome() {
 
         <!-- Footer -->
         <footer class="home-footer">
-            <a href="/about" data-link>关于 kikkua</a>
-            <a href="/tools" data-link>学习工具</a>
+            <a href="/decks" data-link>浏览牌组</a>
+            <a href="/kids" data-link>儿童导航</a>
             <a href="/hanzi" data-link>汉字练字</a>
+            <a href="/tools" data-link>学习工具</a>
+            <a href="/about" data-link>关于 kikkua</a>
             <a href="https://github.com/kikkua26/kikkua26.github.io" target="_blank" rel="noopener">GitHub</a>
         </footer>
     </div>`;

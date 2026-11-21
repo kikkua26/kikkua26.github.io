@@ -666,6 +666,16 @@ export async function renderHanzi() {
           <p class="hz-lib-desc">从字库随机取 6 个字，先挑一支色笔，再点棋盘上同样的字把它涂满。点错会抖一抖，全部涂完就通关。</p>
           <span class="hz-lib-link">开始涂色 ${IC.arrowR}</span>
         </a>
+
+        <a class="hz-lib-card hz-kids-entry" href="/kids" data-link>
+          <div class="hz-lib-card-head">
+            <span class="hz-lib-name">${IC.book} 儿童导航</span>
+            <span class="hz-lib-count">好网站</span>
+          </div>
+          <div class="hz-lib-subtitle">挑过的学习网站，点开就能用</div>
+          <p class="hz-lib-desc">识字、数学、英语、科学、编程、美术、博物馆 …… 一共 65 个好站，没有广告弹窗，手机平板电脑都能用。</p>
+          <span class="hz-lib-link">去逛一逛 ${IC.arrowR}</span>
+        </a>
       </div>
 
       <section class="hz-lib-grid" id="hzLibGrid">

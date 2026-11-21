@@ -70,6 +70,15 @@
 
 详见 [专业工具](#专业工具) 章节。
 
+### 儿童学习页面
+
+面向小朋友的趣味学习页，手机 / iPad / 电脑三端适配：
+
+- **汉字小书房**（`/hanzi`）— 选字库认字、笔顺演示、临写、组词朗读；含「抄写本」（`/hanzi/copybook`）与「认字涂色」小游戏（`/hanzi/color`）
+- **儿童导航**（`/kids`）— 65 个精选儿童学习站点，按 10 个分类分组，支持搜索、收藏（localStorage 记忆）、随机推荐、回到顶部
+
+儿童导航的站点清单在 `data/kids/sites.json`，**加站点或改文案只需编辑这个文件**（`name` 名称、`url` 链接、`cat` 分类、`icon` 表情、`desc` 一句话说明、`note` 可选角标、`local: true` 表示站内页面）；分类定义在同文件的 `categories` 里，新增分类会自动出现在筛选栏。
+
 ---
 
 ## 技术栈
@@ -120,18 +129,22 @@
 │       ├── detail.js                   # 牌组详情：Markdown 描述 + 开始学习 + 购买入口
 │       ├── study.js                    # 学习页：侧边目录树 + iframe 卡片 + 键盘导航
 │       ├── about.js                    # 文档页：左侧导航 + 目录 + 滚动监听
+│       ├── hanzi.js                    # 汉字小书房：字库导航 + 认字/笔顺/临写 + 抄写本 + 认字涂色
+│       ├── kids.js                     # 儿童导航：分类分组 + 搜索 + 收藏 + 随机推荐
 │       └── tools.js                    # 工具宿主页：Tab 切换 + iframe 嵌入工具
 │
 ├── src/assets/css/
 │   ├── variables.css                   # CSS 自定义属性（配色、间距、阴影、圆角）
 │   ├── reset.css                       # 浏览器默认样式重置
 │   ├── base.css                        # 全局基础样式、布局、动画
+│   ├── kids.css                        # 儿童导航样式（手机 / 平板 / 桌面三端断点）
 │   └── components.css                  # 全部组件样式（~2040 行）：头部、卡片、学习页、文档页、工具页
 │
 ├── data/
 │   ├── index.json                      # 牌组注册表（所有牌组的元数据）
 │   ├── tags.json                       # 层级标签树注册表
 │   ├── pages.json                      # CMS 页面注册（关于、教程、牌组介绍等）
+│   ├── kids/sites.json                 # 儿童导航站点清单（分类 + 站点，改这里即可增删）
 │   ├── media/                          # 上传的媒体文件（教程图片、牌组封面等）
 │   ├── 方剂学牌组/data.csv              # 278 张卡片 — 方剂学
 │   ├── 中药学/data.csv                  # 390 张卡片 — 中药学
@@ -410,13 +423,17 @@ Canvas 实现的图片遮挡区域绘制工具：
 纯静态项目，无需安装依赖，无需构建步骤。
 
 ```bash
-# 方式一：Python
+# 方式一：自带脚本（推荐，带 SPA 回退，直接访问 /kids、/hanzi 不会 404）
+node tools/preview.js          # → http://localhost:3000
+node tools/preview.js 8080     # 指定端口
+
+# 方式二：Python（没有 SPA 回退，深链接会 404，只能从首页点进去）
 python -m http.server 3000
 
-# 方式二：Node.js
+# 方式三：Node.js
 npx serve .
 
-# 方式三：VS Code
+# 方式四：VS Code
 # 安装 Live Server 扩展，右键 index.html → Open with Live Server
 
 # 然后访问

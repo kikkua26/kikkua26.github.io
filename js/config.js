@@ -25,11 +25,13 @@ export const ROUTES = {
     hanzi: 'hanzi',
     hanziCopybook: 'hanzi/copybook',
     hanziColor: 'hanzi/color',
+    kids: 'kids',
 };
 
 export const DATA_PATHS = {
     index: '/data/index.json',
     pages: '/data/pages.json',
+    kidsSites: '/data/kids/sites.json',
     deckData: (name) => `/data/${encodeURIComponent(name)}/data.csv`,
     templateFront: (name) => `/templates/${encodeURIComponent(name)}/正面模板.html`,
     templateBack: (name) => `/templates/${encodeURIComponent(name)}/背面模板.html`,

@@ -10,6 +10,7 @@ const [
     { renderAbout },
     { renderTools },
     { renderHanzi, renderHanziStudy, renderCopybook, renderColorGame },
+    { renderKids },
     { setRouteHandler },
     { ROUTES, SITE, UI },
 ] = await Promise.all([
@@ -21,6 +22,7 @@ const [
     load('views/about.js'),
     load('views/tools.js'),
     load('views/hanzi.js'),
+    load('views/kids.js'),
     load('navigation.js'),
     load('config.js'),
 ]);
@@ -51,6 +53,9 @@ async function handleRoute() {
         } else if (path === ROUTES.tools || path.startsWith(ROUTES.tools + '?')) {
             setPageMeta('工具箱', '专业制卡工具集');
             renderTools();
+        } else if (path === ROUTES.kids) {
+            setPageMeta('儿童导航', '给孩子精选的学习网站导航：识字、数学、英语、科学、编程、美术、博物馆，手机平板电脑都能用');
+            await renderKids();
         } else if (path === ROUTES.hanzi) {
             setPageMeta('汉字小书房', '儿童汉字书写学习：选择字库，认字、看笔顺、临写、组词');
             await renderHanzi();

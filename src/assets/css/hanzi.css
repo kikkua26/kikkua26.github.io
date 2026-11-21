@@ -125,6 +125,22 @@
   }
 }
 
+/* 三个入口时：第三张（儿童导航）独占一行，避免半宽卡片右边留空 */
+@media (min-width: 720px) {
+  .hz-tool-grid .hz-kids-entry {
+    grid-column: 1 / -1;
+  }
+}
+
+.hz-kids-entry {
+  border-color: rgba(124, 58, 237, 0.28);
+  background: linear-gradient(180deg, rgba(124, 58, 237, 0.05), var(--bg-primary));
+}
+
+.hz-kids-entry:hover {
+  border-color: #7c3aed;
+}
+
 .hz-copybook-entry {
   border-color: rgba(245, 158, 11, 0.35);
   background: linear-gradient(180deg, rgba(245, 158, 11, 0.05), var(--bg-primary));
